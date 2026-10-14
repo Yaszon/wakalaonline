@@ -13,10 +13,19 @@
 
   /* ---------- seva ---------- */
   function server() { return String(window.YZ_SERVER || '').trim(); }
-  function api(action, body) {
+  function api(action, body, opts) {
     var url = server();
     if (!url) return Promise.reject(new Error('Seva haijawekwa kwenye app'));
     var payload = Object.assign({ action: action }, body || {}); if (S.wt) payload.wt = S.wt;
+    var parse = function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Seva haikujibu vizuri. Jaribu tena'); } if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); } return j; };
+    if (opts && opts.progress) return new Promise(function (ok, no) {   // kutuma data nzito (risiti): asilimia halisi ya upakiaji
+      var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+      x.upload.onprogress = function (ev) { if (ev.lengthComputable) opts.progress(ev.loaded / ev.total); };
+      x.upload.onload = function () { opts.progress(1); };   // data zote zimefika — sasa seva inathibitisha
+      x.onload = function () { try { ok(parse(x.responseText)); } catch (e) { no(e); } };
+      x.onerror = function () { no(new Error('Hakuna mtandao. Angalia intaneti yako')); };
+      x.send(JSON.stringify(payload));
+    });
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' })
       .then(function (r) { return r.text(); })
       .then(function (t) {
@@ -24,6 +33,30 @@
         if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); }
         return j;
       }, function () { throw new Error('Hakuna mtandao. Angalia intaneti yako'); });
+  }
+
+  /* ---------- kipakia cha kidigitali: nembo ya W inajichora, pete ya asilimia, na namba ---------- */
+  var LOAD = { on: false, t: 0 };
+  function loadUi() {
+    var el = $('yzLoad'); if (el) return el;
+    el = document.createElement('div'); el.id = 'yzLoad';
+    el.innerHTML = '<div class="yzl-box"><div class="yzl-ring"><svg viewBox="0 0 120 120" class="yzl-svg"><circle class="yzl-bg" cx="60" cy="60" r="54"/><circle class="yzl-arc" cx="60" cy="60" r="54" id="yzlArc"/></svg>'
+      + '<svg viewBox="0 0 100 100" class="yzl-mark"><path id="yzlPath" d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46" fill="none" stroke="#A6D33C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + '<div class="yzl-pct" id="yzlPct">0%</div></div><div class="yzl-lbl" id="yzlLbl"></div><div class="yzl-sub" id="yzlSub"></div><div class="yzl-bits" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>';
+    document.body.appendChild(el); return el;
+  }
+  function loadShow(label, sub) { var el = loadUi(); LOAD.on = true; LOAD.t = Date.now(); $('yzlLbl').textContent = label || 'Inatuma…'; $('yzlSub').textContent = sub || ''; loadSet(0); el.classList.add('on'); el.classList.remove('done'); }
+  function loadSet(p, sub) { var pct = Math.max(0, Math.min(100, Math.round(p * 100))), arc = $('yzlArc'), C = 2 * Math.PI * 54;
+    if (arc) { arc.style.strokeDasharray = C; arc.style.strokeDashoffset = C * (1 - pct / 100); } var t = $('yzlPct'); if (t) t.textContent = pct + '%';
+    var el = $('yzLoad'); if (el) el.classList.toggle('wait', pct >= 100); if (sub != null) $('yzlSub').textContent = sub; }
+  function loadDone(okMsg) { var el = $('yzLoad'); if (!el) return; LOAD.on = false;
+    if (okMsg) { loadSet(1); $('yzlLbl').textContent = okMsg; el.classList.add('done'); el.classList.remove('wait'); setTimeout(function () { el.classList.remove('on', 'done'); }, 700); }
+    else el.classList.remove('on', 'wait', 'done'); }
+  /* tuma kwa seva ukionyesha asilimia: label (mf. "Inatuma oda…"); baada ya upakiaji 100% → "Inathibitisha…" mpaka seva ijibu */
+  function apiLoad(action, body, label, okMsg) {
+    loadShow(label, 'Inapakia risiti na taarifa…');
+    return api(action, body, { progress: function (p) { loadSet(p * 0.98, p >= 0.98 ? 'Inathibitisha na seva…' : 'Inapakia risiti na taarifa…'); } })
+      .then(function (j) { if (j && j.ok !== false) loadDone(okMsg || '✓ Imekamilika'); else loadDone(); return j; }, function (e) { loadDone(); throw e; });
   }
 
   /* ---------- msaada ---------- */
@@ -166,7 +199,25 @@
     $('upNotes').style.display = i.appNotes ? 'block' : 'none'; $('upNotes').textContent = i.appNotes ? '✨ ' + i.appNotes : '';
     $('up').classList.add('on');
   }
-  $('upGo').onclick = function () { var i = (S.me && S.me.info) || S.info || {}; if (i.appUrl) window.open(i.appUrl, '_blank'); toast('Inapakua… fungua faili likiisha'); };
+  $('upGo').onclick = function () {
+    var i = (S.me && S.me.info) || S.info || {}; if (!i.appUrl) return;
+    var C = window.Capacitor && window.Capacitor.Plugins, FS = C && C.Filesystem, FO = C && C.FileOpener;
+    if (!FS || !FO) { window.open(i.appUrl, '_blank'); toast('Inapakua… fungua faili likiisha'); return; }
+    $('up').classList.remove('on'); loadShow('Inapakua toleo jipya 1.' + (Number(i.appVer) || '') + '…', 'WakalaOnline.apk');
+    var x = new XMLHttpRequest(); x.open('GET', i.appUrl, true); x.responseType = 'blob';
+    x.onprogress = function (ev) { if (ev.lengthComputable) loadSet(ev.loaded / ev.total, Math.round(ev.loaded / 1048576 * 10) / 10 + ' / ' + Math.round(ev.total / 1048576 * 10) / 10 + ' MB'); };
+    x.onerror = function () { loadDone(); window.open(i.appUrl, '_blank'); toast('Inapakua kwa kivinjari… fungua faili likiisha'); };
+    x.onload = function () {
+      if (x.status >= 400) return x.onerror();
+      loadSet(1, 'Inafungua kisakinishi…');
+      var rd = new FileReader(); rd.onload = function () {
+        var b64 = String(rd.result).split(',')[1];
+        FS.writeFile({ path: 'WakalaOnline.apk', data: b64, directory: 'CACHE' }).then(function (w) { return FO.open({ filePath: w.uri, contentType: 'application/vnd.android.package-archive' }); })
+          .then(function () { loadDone('✓ Imepakuliwa — sakinisha'); }).catch(function () { loadDone(); window.open(i.appUrl, '_blank'); toast('Fungua faili lililopakuliwa ulisakinishe'); });
+      }; rd.readAsDataURL(x.response);
+    };
+    x.send();
+  };
   $('upLater').onclick = function () { var i = (S.me && S.me.info) || S.info || {}; LS.set('yzw_upskip', { v: Number(i.appVer) || 0, at: Date.now() }); $('up').classList.remove('on'); };
   $('upBar').onclick = showUpdate;
   function loadMe() { return api('w_me', { v: Number(window.YZ_VER) || 0 }).then(function (j) { if (j.ok) setMe(j); return j; }).catch(function () {}); }
@@ -505,7 +556,7 @@
       var open = S.orders.filter(function (o) { return o.st === 'new'; }).slice(0, 6), need = open.filter(function (o) { return !o.proof; });
       var attach = function (ref, btn, done) {
         if (btn) busy(btn, true, 'Inapakia…');
-        return api('w_proofadd', { ref: ref, img: d }).then(function (j) { if (btn) busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+        return apiLoad('w_proofadd', { ref: ref, img: d }, 'Inaambatisha risiti kwenye oda ' + ref + '…', '✓ Risiti imeambatishwa').then(function (j) { if (btn) busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
           S.orders = S.orders.map(function (x) { return x.ref === ref ? j.order : x; }); LS.set('yzw_orders', S.orders); if (done) done(); haptic(); toast('✓ Risiti imeambatishwa kwenye oda ' + ref); openTrack(ref); })
           .catch(function (e) { if (btn) busy(btn, false); toast(e.message); });
       };
@@ -633,7 +684,7 @@
     if (btn.disabled) return;
     busy(btn, true, 'Inatuma oda…');
     var send = Object.assign({}, body); delete send.warn;   // onyo ni la skrini tu
-    api('w_order', send).then(function (j) {
+    apiLoad('w_order', send, 'Inatuma oda…', '✓ Oda imepokelewa').then(function (j) {
       busy(btn, false);
       if (!j.ok && j.error === 'twin') {
         if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return submit(body, btn); }
@@ -739,7 +790,7 @@
     $('tBody').innerHTML = h;
     var tp = $('tProof'); if (tp) tp.onchange = function () {
       var f = this.files && this.files[0]; if (!f) return; toast('Inaandaa risiti…');
-      shrink(f, 1600, 0.82).then(function (d) { return api('w_proofadd', { ref: o.ref, img: d }); }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana');
+      shrink(f, 1600, 0.82).then(function (d) { return apiLoad('w_proofadd', { ref: o.ref, img: d }, 'Inaambatisha risiti…', '✓ Risiti imeambatishwa'); }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana');
         S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); haptic(); toast('✓ Risiti imeambatishwa kwenye oda ' + o.ref); drawTrack(); })
         .catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
     };
@@ -755,7 +806,7 @@
     var retPick = function (btn, choice) {
       if (choice === 'refund' && !confirm('Tukurudishie OMR ' + omr(o.back || o.omr) + ' badala ya kuzitumia kwenye oda ijayo?')) return;
       busy(btn, true, 'Inatuma…');
-      api('w_retchoice', { ref: o.ref, choice: choice }).then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+      apiLoad('w_retchoice', { ref: o.ref, choice: choice }, 'Inatuma chaguo lako…', '✓ Imepokelewa').then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
         S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); haptic(); toast(choice === 'refund' ? '✓ Ombi la refund limetumwa' : '✓ Zimebaki kwenye salio lako'); })
         .catch(function (e) { busy(btn, false); toast(e.message); });
     };
@@ -763,7 +814,7 @@
     var hy = $('tHoldYes'), hn = $('tHoldNo'), hs = $('tHoldSend');
     var holdReply = function (btn, body, okMsg) {
       busy(btn, true, 'Inatuma…');
-      api('w_holdreply', body).then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+      apiLoad('w_holdreply', body, 'Inathibitisha mpokeaji…', '✓ Imepokelewa').then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
         haptic(); S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast(okMsg); })
         .catch(function (e) { busy(btn, false); toast(e.message); });
     };
@@ -1143,7 +1194,7 @@
   function bSubmit(body, btn) {
     var err = $('cfErr'); err.textContent = ''; if (btn.disabled) return;
     busy(btn, true, 'Inatuma oda ' + body.items.length + '…');
-    api('w_batch', body).then(function (j) {
+    apiLoad('w_batch', body, 'Inatuma oda za kundi…', '✓ Oda zimepokelewa').then(function (j) {
       busy(btn, false);
       if (!j.ok && j.error === 'twin') { if (confirm(j.msg + '\n\nBonyeza OK kuendelea.')) { body.again = 1; return bSubmit(body, btn); } $('cf').classList.remove('on'); if (j.row != null) bBad(j.row, j.msg); return; }
       if (!j.ok) {
@@ -1221,7 +1272,7 @@
     if (!PD.proof) { err.textContent = 'Pakia picha ya risiti ya malipo yako'; return; }
     if (!PD.ck) PD.ck = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
-    api('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck, src: PD.src || '' }).then(function (j) {
+    apiLoad('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck, src: PD.src || '' }, 'Inatuma malipo…', '✓ Malipo yamepokelewa').then(function (j) {
       busy(btn, false); if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
       setMe(j); PD.proof = ''; PD.ck = ''; $('pdProof').value = ''; $('pdProofImg').style.display = 'none'; $('pdProofTxt').textContent = 'Pakia picha ya risiti';
       $('pd').classList.remove('on'); haptic(); toast(PD.src === 'share' && !owe() ? '✓ Amana ya ' + omr(a) + ' OMR imetumwa — ikithibitishwa, tuma mpokeaji ulipe kwa salio' : '✓ Malipo ya ' + omr(a) + ' OMR yametumwa — utapata taarifa yakithibitishwa'); PD.src = '';
