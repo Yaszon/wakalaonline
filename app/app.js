@@ -1153,9 +1153,9 @@
   function drawAcct() {
     var me = S.me || {};
     $('aName').value = me.name || '';
-    $('aName').disabled = !!me.known;
-    $('aSave').style.display = me.known ? 'none' : 'flex';
-    $('aNameNote').textContent = me.known ? 'Jina hili limesajiliwa na WakalaOnline. Kubadilisha, tuandikie WhatsApp.' : 'Jina hili linaonekana kwenye oda zako.';
+    $('aName').disabled = false;
+    $('aSave').style.display = 'flex';
+    $('aNameNote').textContent = me.known ? 'Jina hili linaonekana kwenye oda na risiti zako. Ukilibadilisha, linabadilika pia kwenye daftari la WakalaOnline.' : 'Jina hili linaonekana kwenye oda zako.';
     $('aPhone').textContent = me.phone ? '+' + me.phone : '';
     $('aNameTop').textContent = me.name || 'Mteja wa WakalaOnline'; $('aAv').textContent = initials(me.name || 'W');
     $('aHelp').href = 'https://wa.me/' + HELP_WA;
@@ -1164,7 +1164,8 @@
     var btn = this; busy(btn, true, 'Inahifadhi…');
     api('w_name', { name: $('aName').value }).then(function (j) {
       busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
-      S.me.name = j.name; setMe(S.me); toast('✓ Jina limehifadhiwa');
+      S.me.name = j.name; setMe(S.me); drawAcct(); toast(j.prev && j.prev !== j.name ? '✓ Jina limebadilishwa — ' + j.prev + ' → ' + j.name : '✓ Jina limehifadhiwa');
+      api('w_me', {}).then(function (m) { if (m && m.ok) { S.me = m; setMe(m); drawAcct(); } }).catch(function () {});
     }).catch(function (e) { busy(btn, false); toast(e.message); });
   };
   $('aOut').onclick = function () { if (confirm('Unataka kutoka kwenye app?')) logout(); };
