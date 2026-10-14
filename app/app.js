@@ -150,7 +150,7 @@
 
   /* ---------- data ---------- */
   function setMe(j) { S.me = j; LS.set('yzw_me', j); if (j.info) { S.info = j.info; LS.set('yzw_info', j.info); } checkUpdate(); }
-  /* update ya app: seva inajua toleo jipya (GitHub Actions inalituma kila build); app inamwonyesha mteja */
+  /* toleo jipya la app: seva inajua toleo jipya (GitHub Actions inalituma kila build); app inamwonyesha mteja */
   var upShown = false;
   function checkUpdate() {
     var i = (S.me && S.me.info) || S.info || {}, mine = Number(window.YZ_VER) || 0, nv = Number(i.appVer) || 0;
@@ -196,7 +196,7 @@
     var act = S.orders.filter(function (o) { return o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part'; }).slice(0, 3);
     $('hActive').innerHTML = act.map(function (o) {
       return '<button class="card" data-ref="' + esc(o.ref) + '" style="width:100%;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:12px;color:var(--ink)">'
-        + '<div class="row" style="justify-content:space-between"><span class="row" style="gap:10px;min-width:0"><span class="avs">' + esc(initials(o.rn)) + '</span><span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Order') + '</span><span class="mut" style="font-size:12px;font-weight:600">Order inayoendelea · ' + esc(o.ref) + '</span></span></span>' + pill(o) + '</div>'
+        + '<div class="row" style="justify-content:space-between"><span class="row" style="gap:10px;min-width:0"><span class="avs">' + esc(initials(o.rn)) + '</span><span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Order') + '</span><span class="mut" style="font-size:12px;font-weight:600">Oda inayoendelea · ' + esc(o.ref) + '</span></span></span>' + pill(o) + '</div>'
         + '<div class="num" style="font-size:18px;font-weight:700">' + tzs(o.tzs) + ' <span style="font-size:13px;color:var(--mut)">TZS</span></div>'
         + '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">' + [1, 2, 3].map(function (s) { return '<div style="height:6px;border-radius:3px;background:' + (o.step >= s ? 'var(--ok)' : 'var(--line)') + '"></div>'; }).join('') + '</div></button>';
     }).join('');
@@ -437,7 +437,7 @@
     $('sRateTxt').textContent = r ? 'Rate: 1 OMR = ' + tzs(r) + ' TZS' : 'Rate: —';
     var bn = bonusFor(o);
     $('sTzs').textContent = S.amtT ? omr(o) + ' OMR' : tzs(o * r + bn) + ' TZS';
-    $('sBonus').style.display = bn ? 'block' : 'none'; if (bn) $('sBonus').textContent = '🎁 Pamoja na bonus ya rafiki TZS ' + tzs(bn);
+    $('sBonus').style.display = bn ? 'block' : 'none'; if (bn) $('sBonus').textContent = '🎁 Pamoja na zawadi ya rafiki TZS ' + tzs(bn);
     chipsOn('sChips', o);
     var e = limErr(o, r), i = info() || {}, k = curKind();
     $('sLim').textContent = k === 'bank' ? 'Benki: hadi ' + omr(i.maxBank || 10000) + ' OMR' : k === 'bill' ? (S.amtT && o ? 'Rate ' + tzs(r) : '') : 'Simu: hadi ' + tzs(i.maxMob || 5000000) + ' TZS';
@@ -453,8 +453,8 @@
   function limErr(o, r) {
     var i = info() || {}, mm = i.maxMob || 5000000, mb = i.maxBank || 10000;
     if (curKind() === 'bill') return o > mb ? 'Kiasi cha bili ni kikubwa mno' : '';
-    if (curKind() === 'bank') return o > mb ? 'Kwa benki, kiasi cha juu ni ' + omr(mb) + ' OMR kwa order moja' : '';
-    return r && o * r > mm ? 'Kwa pesa ya simu, kiasi cha juu ni ' + tzs(mm) + ' TZS kwa order moja (≈ ' + omr(Math.floor(mm / r)) + ' OMR). Kwa zaidi chagua akaunti ya benki' : '';
+    if (curKind() === 'bank') return o > mb ? 'Kwa benki, kiasi cha juu ni ' + omr(mb) + ' OMR kwa oda moja' : '';
+    return r && o * r > mm ? 'Kwa pesa ya simu, kiasi cha juu ni ' + tzs(mm) + ' TZS kwa oda moja (≈ ' + omr(Math.floor(mm / r)) + ' OMR). Kwa zaidi chagua akaunti ya benki' : '';
   }
   $('sChips').onclick = function (e) { var b = e.target.closest('[data-amt]'); if (!b) return; $('sOmr').value = b.getAttribute('data-amt'); sCalc(); };
   $('sOmr').addEventListener('input', sCalc);
@@ -531,7 +531,7 @@
       if (S.kind === 'bank') { var BF = BANK_FMT[body.net], ba = String(body.rp).toUpperCase().replace(/[\s-]/g, ''); if (BF && !BF.re.test(ba)) body.warn = 'Akaunti za ' + body.net + ' kwa kawaida: ' + BF.h + '.'; }
     }
     if (S.useBal) {
-      if (balAvail() + 0.0005 < o) { err.textContent = 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa order hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.'; return; }
+      if (balAvail() + 0.0005 < o) { err.textContent = 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa oda hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.'; return; }
       body.useBal = 1;
     } else {
       if (!S.proof) { err.textContent = 'Pakia picha ya risiti ya malipo yako ya OMR kwanza'; return; }
@@ -541,7 +541,7 @@
     body.ck = S.ck;
     review(body);
   };
-  /* hakiki kabla ya kutuma — hakuna order inayotumwa bila mteja kuthibitisha */
+  /* hakiki kabla ya kutuma — hakuna oda inayotumwa bila mteja kuthibitisha */
   function review(body) {
     var r = rateFor(body.omr), net = body.net || '';
     $('cfAmt').textContent = omr(body.omr) + ' OMR';
@@ -550,7 +550,7 @@
     if (body.tzs) $('cfTzs').textContent = tzs(body.tzs + bn) + ' TZS';
     var bb = body.kind === 'bill' ? (BL[net] || {}) : null;
     $('cfRows').innerHTML = (bb ? [['Malipo', (bb.ic || '') + ' ' + (bb.t || net)], [bb.f || 'Namba', body.rp]].concat(body.bref ? [[bb.r || 'Kumbukumbu', body.bref]] : []).concat(body.rn ? [['Jina', body.rn]] : []).concat([['Rate', '1 OMR = ' + tzs(r) + ' TZS']])
-      : [['Mpokeaji', String(body.rn || '').toUpperCase()], [body.kind === 'bank' ? 'Benki' : 'Mtandao', net], [body.kind === 'bank' ? 'Akaunti' : 'Namba', body.rp], ['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(bn ? [['🎁 Bonus ya rafiki', '+ ' + tzs(bn) + ' TZS']] : [])
+      : [['Mpokeaji', String(body.rn || '').toUpperCase()], [body.kind === 'bank' ? 'Benki' : 'Mtandao', net], [body.kind === 'bank' ? 'Akaunti' : 'Namba', body.rp], ['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(bn ? [['🎁 Zawadi ya rafiki', '+ ' + tzs(bn) + ' TZS']] : [])
       .map(function (x) { return '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">' + esc(x[0]) + '</span><b class="num" style="text-align:right">' + esc(x[1]) + '</b></div>'; }).join('');
     if (body.useBal) $('cfRows').innerHTML += '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">Malipo</span><b style="color:var(--ok-ink)">💰 Kutoka salio lako</b></div>';
     if (body.warn) $('cfRows').innerHTML += '<div style="padding:10px 12px;margin-top:8px;border-radius:10px;background:var(--warn-soft,#FBF1DC);color:var(--warn);font-size:13px;font-weight:600">⚠️ ' + esc(body.warn) + ' Ukiendelea na namba isiyo sahihi, malipo yanaweza kwenda kwa mtu mwingine.</div>';
@@ -562,12 +562,12 @@
   function submit(body, btn) {
     var err = $('cfErr'); err.textContent = '';
     if (btn.disabled) return;
-    busy(btn, true, 'Inatuma order…');
+    busy(btn, true, 'Inatuma oda…');
     var send = Object.assign({}, body); delete send.warn;   // onyo ni la skrini tu
     api('w_order', send).then(function (j) {
       busy(btn, false);
       if (!j.ok && j.error === 'twin') {
-        if (confirm(j.msg + '\n\nBonyeza OK kutuma order nyingine tena.')) { body.again = 1; return submit(body, btn); }
+        if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return submit(body, btn); }
         $('cf').classList.remove('on'); loadOrders().then(function () { S.stack = ['home']; openTrack(j.ref); }); return;
       }
       if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; if (j.error === 'bal') loadMe().then(drawBalOpt); if (j.error === 'rate') Promise.all([loadInfo(), loadMe()]).then(function () { sCalc(); $('cf').classList.remove('on'); $('sErr').textContent = j.msg; }); return; }
@@ -577,12 +577,12 @@
       if (!j.dup) { S.orders.unshift(j.order); LS.set('yzw_orders', S.orders); }
       S.stack = ['home']; showOk(j.order);
       loadMe(); loadOrders();
-    }).catch(function (e) { busy(btn, false); err.textContent = e.message + ' — order haijatumwa, jaribu tena.'; });
+    }).catch(function (e) { busy(btn, false); err.textContent = e.message + ' — oda haijatumwa, jaribu tena.'; });
   }
 
   /* ---------- imefanikiwa ---------- */
   function showOk(o) {
-    $('okT').textContent = 'Order imepokelewa!'; $('okTrack').textContent = 'Fuatilia order';
+    $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order';
     $('okAmt').textContent = tzs(o.tzs) + ' TZS';
     $('okTxt').textContent = o.kind === 'bill' ? (o.net || 'Bili') + ' · ' + o.rp + '. Tunathibitisha malipo yako sasa — utapata taarifa ikilipwa' + (/LUKU|ZECO|TUKUZA/.test(o.net) ? ', na TOKEN itaonekana kwenye app.' : '.') : 'Kwa ' + (o.rn || 'mpokeaji') + (o.net ? ' · ' + o.net : '') + '. Tunathibitisha malipo yako sasa — utapata taarifa pesa ikifika.';
     $('okRef').textContent = o.ref; $('ok').classList.add('on'); haptic();
@@ -594,10 +594,10 @@
   function openTrack(ref) { S.cur = ref; S.stack.push('track'); show('track', false); }
   function drawTrack() {
     var o = S.orders.filter(function (x) { return x.ref === S.cur; })[0];
-    $('tTitle').textContent = 'Order ' + (S.cur || '');
-    if (!o) { $('tBody').innerHTML = '<div class="empty">Order haipatikani</div>'; return; }
+    $('tTitle').textContent = 'Oda ' + (S.cur || '');
+    if (!o) { $('tBody').innerHTML = '<div class="empty">Oda haipatikani</div>'; return; }
     var steps = [
-      ['Order imepokelewa', when(o.at), 1],
+      ['Oda imepokelewa', when(o.at), 1],
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
       [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika Tanzania', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
     ];
@@ -605,10 +605,10 @@
     var h = '<div style="background:var(--brand);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
       + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut)">' + (o.kind === 'bill' ? ((BL[o.net] || {}).ic || '🧾') + ' ' + esc(o.net) + ' · ' + esc(o.rp) : 'Kwa ' + esc(o.rn || 'mpokeaji') + (o.net ? ' · ' + esc(o.net) : '')) + '</span>' + pill(o) + '</div>'
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
-      + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 bonus TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
+      + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 zawadi TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
     if (o.st === 'cancel') {
-      h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi order hii.</b> Haitashughulikiwa. Kama ulishalipa OMR, wasiliana nasi WhatsApp tukurudishie.</div>'
-        + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, nimeghairi order ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
+      h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b> Haitashughulikiwa. Kama ulishalipa OMR, wasiliana nasi WhatsApp tukurudishie.</div>'
+        + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, nimeghairi oda ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
     } else if (o.st === 'hold') {
       var wa = function (t) { return 'https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent(t); };
       h += '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);display:flex;flex-direction:column;gap:10px">'
@@ -622,7 +622,7 @@
     } else if (bad) {
       h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">' + esc(o.label) + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '')
         + '<div style="margin-top:8px;font-size:14px">Tafadhali wasiliana nasi kwenye WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b>.</div></div>'
-        + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu order ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
+        + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu oda ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
     } else {
       if (o.kind === 'bill' && /LUKU|ZECO|TUKUZA/.test(o.net || '')) h += o.token
         ? '<div class="tokbox"><span class="lbl">🔑 TOKEN YA UMEME</span><span class="num" style="font-size:24px;font-weight:700;letter-spacing:.06em;line-height:1.3">' + esc(o.token) + '</span><button class="btn dark" type="button" data-tok="' + esc(o.token) + '">Nakili token</button><span class="mut" style="font-size:12px">Ingiza token hii kwenye mita ' + esc(o.rp) + '</span></div>'
@@ -641,7 +641,7 @@
       } else if (o.st === 'paid') {
         h += '<div class="card mut" style="font-size:14px">Pesa imetumwa. Risiti itaonekana hapa wakala akiipakia.</div>';
       } else {
-        if (o.st === 'new') h += '<button class="btn ghost" id="tCancel" style="color:var(--bad)">Ghairi order hii</button>';
+        if (o.st === 'new') h += '<button class="btn ghost" id="tCancel" style="color:var(--bad)">Ghairi oda hii</button>';
         h += '<div class="card mut" style="font-size:14px">Ukurasa huu unajisasisha wenyewe. Pesa ikifika, risiti itaonekana hapa na pia utatumiwa kwenye WhatsApp.</div>';
       }
     }
@@ -649,10 +649,10 @@
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
     var cb = $('tCancel');
     if (cb) cb.onclick = function () {
-      if (!confirm('Ghairi order ' + o.ref + ' ya ' + omr(o.omr) + ' OMR kwa ' + o.rn + '?')) return;
+      if (!confirm('Ghairi oda ' + o.ref + ' ya ' + omr(o.omr) + ' OMR kwa ' + o.rn + '?')) return;
       var b = this; busy(b, true, 'Inaghairi…');
       api('w_cancel', { ref: o.ref }).then(function (j) { busy(b, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
-        S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast('Order imeghairiwa'); })
+        S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast('Oda imeghairiwa'); })
         .catch(function (e) { busy(b, false); toast(e.message); });
     };
     if (o.receipt) {
@@ -702,7 +702,7 @@
           y += hs[k] + gap;
         });
         g.fillStyle = '#5B6B62'; g.font = '600 28px Manrope, sans-serif'; g.textAlign = 'center';
-        g.fillText('WakalaOnline · Transactions made easy to Tanzania', W / 2, H - 58); g.textAlign = 'left';
+        g.fillText('WakalaOnline · Tuma pesa Tanzania kwa urahisi', W / 2, H - 58); g.textAlign = 'left';
         var url = c.toDataURL('image/jpeg', 0.9); RC[o.ref] = url; return url;
       });
     });
@@ -714,7 +714,7 @@
     $('rvShare').onclick = function () { shareReceipt(o, this); };
     $('rvClose').onclick = function () { v.classList.remove('on'); };
   }
-  /* faili (picha au PDF) → menyu ya Android ya kushiriki; kwenye browser → kupakua */
+  /* faili (picha au PDF) → menyu ya Android ya kushiriki; kwenye kivinjari → kupakua */
   function shareFile(name, b64, mime, text) {
     var C = window.Capacitor && window.Capacitor.Plugins, FS = C && C.Filesystem, SH = C && C.Share;
     if (FS && SH) return FS.writeFile({ path: name, data: b64, directory: 'CACHE' }).then(function (w) { return SH.share({ title: name, text: text, files: [w.uri], dialogTitle: 'Shiriki' }); });
@@ -731,7 +731,7 @@
     receiptImg(o).then(function (url) { return shareFile(name, url.split(',')[1], 'image/jpeg', text); }).catch(shareErr).then(function () { busy(btn, false); });
   }
 
-  /* ---------- PDF: risiti ya order na taarifa ya miamala ---------- */
+  /* ---------- PDF: risiti ya oda na taarifa ya miamala ---------- */
   function PDF() { var J = window.jspdf && window.jspdf.jsPDF; if (!J) throw new Error('PDF haipatikani'); return J; }
   function logoPng() {
     var c = document.createElement('canvas'); c.width = c.height = 120; var g = c.getContext('2d');
@@ -749,7 +749,7 @@
   function pdfFoot(doc, W, H) {
     var n = doc.getNumberOfPages();
     for (var p = 1; p <= n; p++) { doc.setPage(p); doc.setFontSize(8); doc.setTextColor(120, 130, 125);
-      doc.text('WakalaOnline · Transactions made easy to Tanzania', 12, H - 8); doc.text('Ukurasa ' + p + '/' + n, W - 12, H - 8, { align: 'right' }); }
+      doc.text('WakalaOnline · Tuma pesa Tanzania kwa urahisi', 12, H - 8); doc.text('Ukurasa ' + p + '/' + n, W - 12, H - 8, { align: 'right' }); }
   }
   function receiptPdf(o, btn) {
     busy(btn, true, 'Inaandaa PDF…');
@@ -935,7 +935,7 @@
     var f = R(), bi = -1; if (f.on && f.bonus) B.rows.some(function (x, k) { if ((Number(x.omr) || 0) >= (f.min || 0)) { bi = k; return true; } });
     var bn = bi >= 0 ? f.bonus : 0;
     $('bTotO').textContent = omr(Math.round(to * 1000) / 1000) + ' OMR'; $('bTotT').textContent = tzs(tt + bn) + ' TZS';
-    $('bBonus').style.display = bn ? 'block' : 'none'; if (bn) $('bBonus').textContent = '🎁 Pamoja na bonus ya rafiki TZS ' + tzs(bn) + ' (kwa mpokeaji wa ' + (bi + 1) + ')';
+    $('bBonus').style.display = bn ? 'block' : 'none'; if (bn) $('bBonus').textContent = '🎁 Pamoja na zawadi ya rafiki TZS ' + tzs(bn) + ' (kwa mpokeaji wa ' + (bi + 1) + ')';
     $('bCount').textContent = '(' + B.rows.length + ')';
     $('bGo').textContent = n ? 'Endelea — hakiki (' + n + ')' : 'Endelea — hakiki';
     return { omr: to, tzs: tt + bn, n: n, bonus: bn, bi: bi };
@@ -1011,7 +1011,7 @@
     }).join('');
     $('cfImg').src = body.img; $('cfImg').parentNode.style.display = 'flex';
     var cf = $('cf'); cf.classList.add('on'); $('cfErr').textContent = '';
-    $('cfNo').onclick = function () { cf.classList.remove('on'); $('cfT').textContent = 'Hakiki order yako'; };
+    $('cfNo').onclick = function () { cf.classList.remove('on'); $('cfT').textContent = 'Hakiki oda yako'; };
     $('cfGo').onclick = function () { bSubmit(body, this); };
   }
   function bSubmit(body, btn) {
@@ -1025,7 +1025,7 @@
         if (j.row != null) { $('cf').classList.remove('on'); bBad(j.row, j.msg); return; }
         err.textContent = j.msg || 'Imeshindikana'; return;
       }
-      $('cf').classList.remove('on'); $('cfT').textContent = 'Hakiki order yako';
+      $('cf').classList.remove('on'); $('cfT').textContent = 'Hakiki oda yako';
       B.rows = []; B.proof = ''; B.ck = ''; bSave(); $('bProof').value = ''; $('bProofImg').style.display = 'none'; $('bProofTxt').textContent = 'Pakia picha ya risiti';
       if (!j.dup) { S.orders = (j.orders || []).slice().reverse().concat(S.orders); LS.set('yzw_orders', S.orders); }
       var tot = (j.orders || []).reduce(function (a, o) { return a + (o.tzs || 0); }, 0);
@@ -1035,8 +1035,8 @@
       $('okTxt').textContent = 'Kundi ' + (j.bt || '') + ' · wapokeaji ' + (j.orders || []).length + '. Tunathibitisha malipo yako sasa — utapata taarifa pesa ikifika kwa kila mmoja.';
       $('okRef').textContent = j.bt || ''; $('ok').classList.add('on'); haptic();
       $('okTrack').textContent = 'Ona oda zote';
-      $('okTrack').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Order imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['hist']; show('hist', false); };
-      $('okHome').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Order imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['home']; show('home', false); };
+      $('okTrack').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['hist']; show('hist', false); };
+      $('okHome').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['home']; show('home', false); };
       loadMe(); loadOrders();
     }).catch(function (e) { busy(btn, false); err.textContent = e.message + ' — oda hazijatumwa, jaribu tena.'; });
   }
@@ -1051,7 +1051,7 @@
     var o = owe(), am = amana(), c = $('hDebt'); c.style.display = o || am ? 'flex' : 'none'; if (!o && !am) return;
     var red = !!o; c.style.background = red ? 'var(--bad-soft)' : 'var(--ok-soft)'; c.style.borderColor = red ? '#F3C4BE' : 'transparent';
     $('hDebtL').textContent = red ? 'Deni lako' : '💰 Salio lako (amana)'; $('hDebtL').style.color = $('hDebtAmt').style.color = red ? 'var(--bad)' : 'var(--ok-ink)';
-    $('hDebtSub').style.display = red ? 'none' : 'block'; $('hDebtSub').textContent = 'Unaweza kulipia order kwa salio hili — bila risiti';
+    $('hDebtSub').style.display = red ? 'none' : 'block'; $('hDebtSub').textContent = 'Unaweza kulipia oda kwa salio hili — bila risiti';
     $('hDebtBtn').textContent = red ? '💳 Lipa deni' : '➕ Weka amana zaidi'; $('hDebtBtn').className = red ? 'btn dark' : 'btn ghost';
     $('hDebtAmt').textContent = omr(red ? o : am) + ' OMR';
     var P = pendPays(), ps = P.reduce(function (a, p) { return a + p.omr; }, 0);
@@ -1080,7 +1080,7 @@
     var a = Number(String($('pdAmt').value).replace(/,/g, '')) || 0, o = owe(), ps = pendPays().reduce(function (x, p) { return x + p.omr; }, 0), left = Math.max(0, o - ps), h = $('pdHint');
     var extra = Math.round((a - left) * 1000) / 1000;
     h.style.display = a > 0 && (extra > 0.0005 || !o) ? 'block' : 'none';
-    h.textContent = !o ? '💰 ' + omr(a) + ' OMR zitakuwa amana yako — unaweza kulipia order bila kutuma risiti tena.' : '✓ Deni litafutwa, na ziada ' + omr(extra) + ' OMR itakuwa amana yako.';
+    h.textContent = !o ? '💰 ' + omr(a) + ' OMR zitakuwa amana yako — unaweza kulipia oda bila kutuma risiti tena.' : '✓ Deni litafutwa, na ziada ' + omr(extra) + ' OMR itakuwa amana yako.';
   }
   $('pdAmt').addEventListener('input', pdHint);
   $('pdPay').onclick = function (e) { $('sPay').onclick.call(this, e); };
@@ -1108,25 +1108,25 @@
   function bonusFor(o) { var f = R(); return f.on && f.bonus && o >= (f.min || 0) ? f.bonus : 0; }
   function drawRefCard() {
     var f = R(), c = $('hRef'); c.style.display = f.on ? 'flex' : 'none'; if (!f.on) return;
-    if (f.bonus) { $('hRefT').textContent = '🎉 Una bonus ya TZS ' + tzs(f.bonus); $('hRefS').textContent = 'Itaongezwa kwenye order yako ijayo (kuanzia ' + omr(f.min) + ' OMR)'; }
-    else if (f.canEnter) { $('hRefT').textContent = 'Umeletwa na rafiki?'; $('hRefS').textContent = 'Weka code yake upate bonus ya TZS ' + tzs(f.get); }
+    if (f.bonus) { $('hRefT').textContent = '🎉 Una zawadi ya TZS ' + tzs(f.bonus); $('hRefS').textContent = 'Itaongezwa kwenye oda yako ijayo (kuanzia ' + omr(f.min) + ' OMR)'; }
+    else if (f.canEnter) { $('hRefT').textContent = 'Umeletwa na rafiki?'; $('hRefS').textContent = 'Weka code yake upate zawadi ya TZS ' + tzs(f.get); }
     else { $('hRefT').textContent = 'Mlete rafiki, mfaidike wote'; $('hRefS').textContent = 'Wewe TZS ' + tzs(f.give) + ' · rafiki yako TZS ' + tzs(f.get); }
   }
   function refMsg() {
     var f = R(), i = info() || {}, link = f.link || ('https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari WakalaOnline, nimeletwa na rafiki (code ' + f.code + '). Naomba kutuma pesa Tanzania.'));
     return 'Habari! Mimi natuma pesa Tanzania kwa *WakalaOnline* — haraka, salama, na pesa inafika ndani ya dakika.\n'
       + (rateFor(0) ? 'Rate ya leo: 1 OMR = ' + tzs(i.rate || rateFor(0)) + ' TZS.\n' : '')
-      + '\n🎁 Jiunge kwa code yangu *' + f.code + '* upate bonus ya *TZS ' + tzs(f.get) + '* kwenye muamala wako wa kwanza (kuanzia ' + omr(f.min) + ' OMR).\n\n' + link;
+      + '\n🎁 Jiunge kwa code yangu *' + f.code + '* upate zawadi ya *TZS ' + tzs(f.get) + '* kwenye muamala wako wa kwanza (kuanzia ' + omr(f.min) + ' OMR).\n\n' + link;
   }
   function openRef() {
     var f = R(); if (!f.on) return;
     $('rfHow').innerHTML = 'Rafiki yako akijiunga kwa code yako na kutuma kwa mara ya kwanza, <b>wewe unapata TZS ' + tzs(f.give) + '</b> na <b>yeye anapata TZS ' + tzs(f.get) + '</b> — zinaongezwa kwenye pesa anayopokea mpokeaji.';
-    $('rfBonus').innerHTML = f.bonus ? '<div class="card" style="background:var(--lime-soft);border-color:transparent;display:flex;flex-direction:column;gap:4px;text-align:center"><span class="mut" style="font-size:12px;font-weight:700">Bonus yako sasa</span><b class="num" style="font-size:26px;color:var(--ok-ink)">TZS ' + tzs(f.bonus) + '</b><span style="font-size:13px;font-weight:600">Itaongezwa yenyewe kwenye order yako ijayo ya ' + omr(f.min) + ' OMR au zaidi</span></div>' : '';
+    $('rfBonus').innerHTML = f.bonus ? '<div class="card" style="background:var(--lime-soft);border-color:transparent;display:flex;flex-direction:column;gap:4px;text-align:center"><span class="mut" style="font-size:12px;font-weight:700">Zawadi yako sasa</span><b class="num" style="font-size:26px;color:var(--ok-ink)">TZS ' + tzs(f.bonus) + '</b><span style="font-size:13px;font-weight:600">Itaongezwa yenyewe kwenye oda yako ijayo ya ' + omr(f.min) + ' OMR au zaidi</span></div>' : '';
     $('rfEnter').style.display = f.canEnter ? 'flex' : 'none'; $('rfErr').textContent = '';
     $('rfEnterTxt').textContent = 'Weka code ya aliyekuleta kabla ya kutuma mara ya kwanza, upate TZS ' + tzs(f.get) + '.';
     $('rfMine').textContent = f.code;
     $('rfJ').textContent = f.joined || 0; $('rfW').textContent = f.wait || 0; $('rfE').textContent = tzs(f.earned || 0);
-    $('rfRules').textContent = (f.by ? 'Uliletwa na ' + f.by + '. ' : '') + 'Bonus inahesabiwa baada ya order ya kwanza ya rafiki yako (kuanzia ' + omr(f.min) + ' OMR) kuthibitishwa. Code ni kwa wateja wapya tu. Order ikikataliwa, bonus inarudi.';
+    $('rfRules').textContent = (f.by ? 'Uliletwa na ' + f.by + '. ' : '') + 'Zawadi inahesabiwa baada ya oda ya kwanza ya rafiki yako (kuanzia ' + omr(f.min) + ' OMR) kuthibitishwa. Code ni kwa wateja wapya tu. Oda ikikataliwa, zawadi inarudi.';
     $('rf').classList.add('on');
   }
   $('hRef').onclick = openRef;
@@ -1145,7 +1145,7 @@
     busy(btn, true, '…');
     api('w_refer', { code: c }).then(function (j) {
       busy(btn, false); if (!j.ok) { $('rfErr').textContent = j.msg || 'Imeshindikana'; return; }
-      setMe(j); haptic(); toast(j.msg || '🎁 Bonus imewekwa'); openRef(); drawHome();
+      setMe(j); haptic(); toast(j.msg || '🎁 Zawadi imewekwa'); openRef(); drawHome();
     }).catch(function (e) { busy(btn, false); $('rfErr').textContent = e.message; });
   };
 
@@ -1155,7 +1155,7 @@
     $('aName').value = me.name || '';
     $('aName').disabled = !!me.known;
     $('aSave').style.display = me.known ? 'none' : 'flex';
-    $('aNameNote').textContent = me.known ? 'Jina hili limesajiliwa na WakalaOnline. Kubadilisha, tuandikie WhatsApp.' : 'Jina hili linaonekana kwenye order zako.';
+    $('aNameNote').textContent = me.known ? 'Jina hili limesajiliwa na WakalaOnline. Kubadilisha, tuandikie WhatsApp.' : 'Jina hili linaonekana kwenye oda zako.';
     $('aPhone').textContent = me.phone ? '+' + me.phone : '';
     $('aNameTop').textContent = me.name || 'Mteja wa WakalaOnline'; $('aAv').textContent = initials(me.name || 'W');
     $('aHelp').href = 'https://wa.me/' + HELP_WA;
@@ -1196,7 +1196,7 @@
     var P = window.YZ_PUSH && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
     if (!P || pushReady || !S.wt) return; pushReady = true;
     try {
-      P.createChannel && P.createChannel({ id: 'yz_wateja', name: 'Order zangu', description: 'Hali ya order na risiti', importance: 5, visibility: 0, vibration: true }).catch(function () {});
+      P.createChannel && P.createChannel({ id: 'yz_wateja', name: 'Oda zangu', description: 'Hali ya oda na risiti', importance: 5, visibility: 0, vibration: true }).catch(function () {});
       P.addListener('registration', function (t) {
         if (t && t.value && LS.get('yzw_push', '') !== t.value + '|' + (S.me && S.me.phone)) api('w_push', { tok: t.value }).then(function (j) { if (j.ok) LS.set('yzw_push', t.value + '|' + (S.me && S.me.phone)); });
       });

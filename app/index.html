@@ -215,7 +215,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
   <div class="hero" style="flex:1;border-radius:0;box-shadow:none;padding:calc(52px + var(--safe-t)) 26px 28px;gap:16px;justify-content:flex-start">
     <div style="width:64px;height:64px;border-radius:20px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center"><svg width="46" height="46" viewBox="0 0 100 100" role="img" aria-label="WakalaOnline"><path d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46" fill="none" stroke="#A6D33C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h1 style="margin:14px 0 0;font-family:Sora,sans-serif;font-size:36px;font-weight:700;line-height:1.1;letter-spacing:-.03em">Tuma pesa<br>nyumbani,<br><span style="color:var(--lime)">kwa sekunde.</span></h1>
-    <p style="margin:0;font-size:16px;line-height:1.55;color:var(--on-brand-mut)">Rate nzuri, risiti papo hapo, na unafuatilia kila order mpaka ifike Tanzania.</p>
+    <p style="margin:0;font-size:16px;line-height:1.55;color:var(--on-brand-mut)">Rate nzuri, risiti papo hapo, na unafuatilia kila oda mpaka ifike Tanzania.</p>
     <div id="loginRate" class="live" style="align-self:flex-start;display:none"><i></i><span></span></div>
   </div>
   <div style="background:var(--ground);border-radius:28px 28px 0 0;margin-top:-24px;position:relative;padding:28px 22px calc(26px + var(--safe-b));color:var(--ink);display:flex;flex-direction:column;gap:16px">
@@ -455,7 +455,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     </div>
     <a class="btn ghost" id="aHelp" target="_blank" rel="noopener">Wasiliana nasi WhatsApp</a>
     <button class="btn ghost" id="aOut" style="color:var(--bad)">Toka (Logout)</button>
-    <div class="mut" style="font-size:12px;text-align:center">WakalaOnline · Transactions made easy to Tanzania</div>
+    <div class="mut" style="font-size:12px;text-align:center">WakalaOnline · Tuma pesa Tanzania kwa urahisi</div>
   </div>
   <nav class="tabs" data-tab="acct"></nav>
 </section>
@@ -465,7 +465,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 <!-- ============ IMEFANIKIWA ============ -->
 <div id="ok" role="dialog" aria-modal="true" aria-labelledby="okT">
   <div class="okc"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
-  <h2 id="okT" style="margin:18px 0 0;font-family:Sora,sans-serif;font-size:24px;font-weight:700">Order imepokelewa!</h2>
+  <h2 id="okT" style="margin:18px 0 0;font-family:Sora,sans-serif;font-size:24px;font-weight:700">Oda imepokelewa!</h2>
   <div class="num" id="okAmt" style="font-size:30px;font-weight:700;color:var(--brand-2)"></div>
   <div class="mut" id="okTxt" style="font-size:15px;line-height:1.5;max-width:320px"></div>
   <div class="card" style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:360px;margin-top:6px"><span class="mut" style="font-weight:700">Ref</span><span class="num" id="okRef" style="font-weight:700"></span></div>
@@ -477,8 +477,8 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 <div id="cf" role="dialog" aria-modal="true" aria-labelledby="cfT">
   <div class="cfs">
     <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px"></div>
-    <h2 id="cfT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">Hakiki order yako</h2>
-    <div class="mut" style="font-size:14px;margin-top:-6px">Angalia kila kitu kabla ya kutuma. Order haitatumwa mpaka ubonyeze "Ndiyo, tuma".</div>
+    <h2 id="cfT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">Hakiki oda yako</h2>
+    <div class="mut" style="font-size:14px;margin-top:-6px">Angalia kila kitu kabla ya kutuma. Oda haitatumwa mpaka ubonyeze "Ndiyo, tuma".</div>
     <div style="background:var(--lime-soft);border-radius:18px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:10px">
       <div style="display:flex;flex-direction:column;gap:2px"><span class="mut" style="font-size:12px;font-weight:700">Unatuma</span><span class="num" id="cfAmt" style="font-size:20px;font-weight:700"></span></div>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
@@ -565,7 +565,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     <div class="mut" id="upTxt" style="font-size:14px;line-height:1.55;max-width:340px"></div>
     <div class="card" id="upNotes" style="width:100%;text-align:left;font-size:14px;display:none"></div>
     <button class="btn" id="upGo" style="width:100%">Pakua update</button>
-    <div class="mut" style="font-size:12px;line-height:1.5;max-width:340px">Faili likishapakuliwa, lifungue kisha bonyeza <b>Install / Sakinisha</b>. Simu ikiuliza, ruhusu "Install unknown apps" kwa browser. Hesabu na order zako zinabaki vile vile.</div>
+    <div class="mut" style="font-size:12px;line-height:1.5;max-width:340px">Faili likishapakuliwa, lifungue kisha bonyeza <b>Install / Sakinisha</b>. Simu ikiuliza, ruhusu "Install unknown apps" kwa kivinjari. Hesabu na oda zako zinabaki vile vile.</div>
     <button class="btn ghost" id="upLater" style="width:100%">Baadaye</button>
   </div>
 </div>
