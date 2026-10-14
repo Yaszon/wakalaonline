@@ -843,7 +843,7 @@
       pdfHead(doc, W, 'Risiti ya malipo · Tanzania', 'Ref ' + o.ref);
       doc.setTextColor(15, 42, 28); doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text(tzs(o.tzs) + ' TZS', 12, 46);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(91, 107, 98);
-      var rows = [['Mpokeaji', o.rn || '-'], [o.net || 'Mtandao / benki', o.rp || ''], ['Umetuma', omr(o.omr) + ' OMR · rate ' + tzs(o.rate)], ['Ref', o.ref], ['Imelipwa', when(o.paidAt || o.at)], ['Hali', 'IMELIPWA']];
+      var rows = [['Mpokeaji', o.rn || '-'], [o.net || 'Mtandao / benki', o.rp || ''], ['Umetuma', omr(o.omr) + ' OMR · rate ' + tzs(o.rate)], ['Ref', o.ref], ['Imefika', when(o.paidAt || o.at)], ['Hali', 'IMELIPWA']];
       rows.forEach(function (r, k) { var y = 56 + k * 7; doc.setTextColor(91, 107, 98); doc.text(String(r[0]), 12, y); doc.setTextColor(15, 42, 28); doc.text(String(r[1]), W - 12, y, { align: 'right' }); });
       var list = RCR[o.ref] || [url];
       return Promise.all(list.map(loadImg)).then(function (ims) {
@@ -861,7 +861,7 @@
       });
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
-  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imelipwa', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa' };
+  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa' };
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Kipindi chote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
@@ -887,7 +887,7 @@
         headStyles: { fillColor: [31, 122, 50], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [244, 246, 242] },
         columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' } },
-        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 6) { var v = d.cell.raw; d.cell.styles.textColor = v === 'Imelipwa' ? [23, 96, 42] : (v === 'Haijaonekana' || v === 'Imeghairiwa' || v === 'Imesitishwa') ? [180, 35, 24] : [138, 90, 11]; } }
+        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 6) { var v = d.cell.raw; d.cell.styles.textColor = v === 'Imefika' ? [23, 96, 42] : (v === 'Haijaonekana' || v === 'Imeghairiwa' || v === 'Imesitishwa') ? [180, 35, 24] : [138, 90, 11]; } }
       });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
