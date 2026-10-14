@@ -509,7 +509,8 @@
         + '<div class="lbl">Risiti hii ni ya nini?</div>'
         + open.map(function (o) { return '<button class="opt" data-sh-ref="' + esc(o.ref) + '" style="justify-content:space-between"><span><b>📎 Ambatisha kwenye oda ' + esc(o.ref) + '</b><br><span class="mut" style="font-size:12px">' + omr(o.omr) + ' OMR → ' + esc(o.rn || o.net || '') + (o.proof ? ' · tayari ina risiti (itabadilishwa)' : ' · inasubiri risiti') + '</span></span><span>›</span></button>'; }).join('')
         + '<button class="opt" data-sh="send" style="justify-content:space-between"><span><b>➕ Tuma pesa mpya kwa risiti hii</b><br><span class="mut" style="font-size:12px">Oda mpya — risiti inaambatishwa yenyewe</span></span><span>›</span></button>'
-        + (S.me && S.me.bal < -0.005 ? '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>💳 Lipa deni kwa risiti hii</b><br><span class="mut" style="font-size:12px">Deni ' + omr(-S.me.bal) + ' OMR</span></span><span>›</span></button>' : '')
+        + (S.me && S.me.bal < -0.005 ? '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>💳 Lipa deni kwa risiti hii</b><br><span class="mut" style="font-size:12px">Deni ' + omr(-S.me.bal) + ' OMR</span></span><span>›</span></button>'
+          : '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>🏦 Weka kama amana — nitatuma mpokeaji baadaye</b><br><span class="mut" style="font-size:12px">Pesa inakaa kwenye salio lako; ukituma mpokeaji unalipa kwa salio bila risiti</span></span><span>›</span></button>')
         + '</div>';
       var dlg = $('sh'); if (!dlg) { dlg = document.createElement('div'); dlg.id = 'sh'; dlg.setAttribute('role', 'dialog'); dlg.style.cssText = 'position:fixed;inset:0;z-index:54;background:rgba(6,14,10,.55);display:flex;align-items:flex-end;justify-content:center'; document.body.appendChild(dlg); }
       dlg.innerHTML = h; dlg.style.display = 'flex';
@@ -521,7 +522,7 @@
           S.orders = S.orders.map(function (x) { return x.ref === ref ? j.order : x; }); LS.set('yzw_orders', S.orders); close(); haptic(); toast('✓ Risiti imeambatishwa kwenye ' + ref); openTrack(ref); })
           .catch(function (e) { busy(b, false); toast(e.message); }); }; });
       var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
-      var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(); PD.proof = d; setProofUi('pd', d); };
+      var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(true); PD.proof = d; setProofUi('pd', d); };
     }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
   }
   function b64File(b64, mime, name) { var bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new File([u], name || 'risiti', { type: mime || 'image/jpeg' }); }
@@ -1141,11 +1142,11 @@
     var P = pendPays(), ps = P.reduce(function (a, p) { return a + p.omr; }, 0);
     $('hDebtPend').style.display = P.length ? 'inline-flex' : 'none'; $('hDebtPend').textContent = '⏳ ' + omr(ps) + ' OMR inahakikiwa';
   }
-  function openPay() {
-    var o = owe(), am = amana();
-    if (!o && !(S.me && S.me.canAmana)) return toast('Kuweka amana kunahitaji ruhusa ya WakalaOnline — wasiliana nasi WhatsApp');
+  function openPay(viaShare) {
+    var o = owe(), am = amana(); PD.src = viaShare ? 'share' : '';
+    if (!o && !viaShare && !(S.me && S.me.canAmana)) return toast('Kuweka amana kunahitaji ruhusa ya WakalaOnline — wasiliana nasi WhatsApp');
     var P = pendPays(), ps = Math.round(P.reduce(function (a, p) { return a + p.omr; }, 0) * 1000) / 1000, left = Math.max(0, Math.round((o - ps) * 1000) / 1000);
-    $('pdT').textContent = o ? '💳 Lipa deni' : '➕ Weka amana';
+    $('pdT').textContent = o ? '💳 Lipa deni' : viaShare ? '🏦 Weka kama amana' : '➕ Weka amana';
     $('pdOweL').textContent = o ? 'Deni lako' : 'Salio lako (amana)'; $('pdOwe').textContent = omr(o || am) + ' OMR';
     $('pdOweBox').style.background = o ? 'var(--bad-soft)' : 'var(--ok-soft)'; $('pdOweL').style.color = $('pdOwe').style.color = o ? 'var(--bad)' : 'var(--ok-ink)';
     $('pdPendBox').innerHTML = P.length ? '<div class="card" style="font-size:13px;display:flex;flex-direction:column;gap:4px"><b>⏳ Malipo yanayohakikiwa</b>' + P.map(function (p) { return '<span class="mut">' + omr(p.omr) + ' OMR · ' + esc(when(p.at)) + '</span>'; }).join('') + '<span class="mut">Deni litapungua yakithibitishwa.</span></div>' : '';
@@ -1179,10 +1180,10 @@
     if (!PD.proof) { err.textContent = 'Pakia picha ya risiti ya malipo yako'; return; }
     if (!PD.ck) PD.ck = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
-    api('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck }).then(function (j) {
+    api('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck, src: PD.src || '' }).then(function (j) {
       busy(btn, false); if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
       setMe(j); PD.proof = ''; PD.ck = ''; $('pdProof').value = ''; $('pdProofImg').style.display = 'none'; $('pdProofTxt').textContent = 'Pakia picha ya risiti';
-      $('pd').classList.remove('on'); haptic(); toast('✓ Malipo ya ' + omr(a) + ' OMR yametumwa — utapata taarifa yakithibitishwa');
+      $('pd').classList.remove('on'); haptic(); toast(PD.src === 'share' && !owe() ? '✓ Amana ya ' + omr(a) + ' OMR imetumwa — ikithibitishwa, tuma mpokeaji ulipe kwa salio' : '✓ Malipo ya ' + omr(a) + ' OMR yametumwa — utapata taarifa yakithibitishwa'); PD.src = '';
       var on = document.querySelector('.scr.on'); if (on && on.id === 's-home') drawHome(); if (on && on.id === 's-hist') drawHist();
     }).catch(function (e) { busy(btn, false); err.textContent = e.message; });
   };
