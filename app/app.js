@@ -493,7 +493,72 @@
       S.proof = d; $('sProofImg').src = d; $('sProofImg').style.display = 'block'; $('sProofTxt').textContent = '✓ Risiti imewekwa · badilisha';
     }).catch(function () { S.proof = ''; $('sProofTxt').textContent = 'Picha haikufunguka — jaribu nyingine'; });
   };
+  /* ---------- risiti iliyoshirikiwa kutoka kwenye picha/PDF za mteja (Android "Share" / Web Share Target) ---------- */
+  function setProofUi(which, d) {
+    var m = { s: ['sProofImg', 'sProofTxt'], b: ['bProofImg', 'bProofTxt'], pd: ['pdProofImg', 'pdProofTxt'] }[which];
+    $(m[0]).src = d; $(m[0]).style.display = 'block'; $(m[1]).textContent = '✓ Risiti imewekwa · badilisha';
+  }
+  function sharedIn(file) {
+    if (!S.wt) { toast('Ingia kwanza, kisha shiriki risiti tena'); return; }
+    toast('Inaandaa risiti…');
+    shrink(file, 1600, 0.82).then(function (d) {
+      var open = S.orders.filter(function (o) { return o.st === 'new'; }).slice(0, 6);
+      var h = '<div class="cfs" style="gap:12px"><div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>'
+        + '<div class="row" style="justify-content:space-between"><h2 style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">🧾 Risiti imepokelewa</h2><button class="iconbtn" id="shClose" aria-label="Funga">✕</button></div>'
+        + '<img src="' + d + '" alt="Risiti" style="width:100%;max-height:220px;object-fit:contain;border-radius:14px;background:#f3f5f4">'
+        + '<div class="lbl">Risiti hii ni ya nini?</div>'
+        + open.map(function (o) { return '<button class="opt" data-sh-ref="' + esc(o.ref) + '" style="justify-content:space-between"><span><b>📎 Ambatisha kwenye oda ' + esc(o.ref) + '</b><br><span class="mut" style="font-size:12px">' + omr(o.omr) + ' OMR → ' + esc(o.rn || o.net || '') + (o.proof ? ' · tayari ina risiti (itabadilishwa)' : ' · inasubiri risiti') + '</span></span><span>›</span></button>'; }).join('')
+        + '<button class="opt" data-sh="send" style="justify-content:space-between"><span><b>➕ Tuma pesa mpya kwa risiti hii</b><br><span class="mut" style="font-size:12px">Oda mpya — risiti inaambatishwa yenyewe</span></span><span>›</span></button>'
+        + (S.me && S.me.bal < -0.005 ? '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>💳 Lipa deni kwa risiti hii</b><br><span class="mut" style="font-size:12px">Deni ' + omr(-S.me.bal) + ' OMR</span></span><span>›</span></button>' : '')
+        + '</div>';
+      var dlg = $('sh'); if (!dlg) { dlg = document.createElement('div'); dlg.id = 'sh'; dlg.setAttribute('role', 'dialog'); dlg.style.cssText = 'position:fixed;inset:0;z-index:54;background:rgba(6,14,10,.55);display:flex;align-items:flex-end;justify-content:center'; document.body.appendChild(dlg); }
+      dlg.innerHTML = h; dlg.style.display = 'flex';
+      var close = function () { dlg.style.display = 'none'; };
+      $('shClose').onclick = close; dlg.onclick = function (e) { if (e.target === dlg) close(); };
+      dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () {
+        var ref = b.getAttribute('data-sh-ref'); busy(b, true, 'Inapakia…');
+        api('w_proofadd', { ref: ref, img: d }).then(function (j) { busy(b, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+          S.orders = S.orders.map(function (x) { return x.ref === ref ? j.order : x; }); LS.set('yzw_orders', S.orders); close(); haptic(); toast('✓ Risiti imeambatishwa kwenye ' + ref); openTrack(ref); })
+          .catch(function (e) { busy(b, false); toast(e.message); }); }; });
+      var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
+      var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(); PD.proof = d; setProofUi('pd', d); };
+    }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
+  }
+  function b64File(b64, mime, name) { var bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new File([u], name || 'risiti', { type: mime || 'image/jpeg' }); }
+  function shareCheck() {   // APK: plugin ShareIn (Android ACTION_SEND)
+    var P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ShareIn; if (!P || !P.check) return;
+    P.check().then(function (r) { if (r && r.has && r.data) sharedIn(b64File(r.data, r.mime, r.name)); }).catch(function () {});
+  }
+  window.addEventListener('yzShareIn', shareCheck);
+  if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function (ev) {   // PWA: Web Share Target (sw.js)
+    var m = ev.data || {}; if (m.type === 'yzShare' && m.file) sharedIn(m.file);
+  });
+  setTimeout(shareCheck, 800);
+  /* PDF (risiti ya benki) → picha ya ukurasa wa kwanza, ili ipite njia ile ile ya risiti ya picha */
+  function pdfLib() {   // lib/pdf.min.js (pdf.js, UMD) inapakiwa ikihitajika tu
+    if (window.pdfjsLib && window.pdfjsLib.getDocument) return Promise.resolve(window.pdfjsLib);
+    return new Promise(function (ok, no) {
+      var sc = document.createElement('script'); sc.src = 'lib/pdf.min.js';
+      sc.onload = function () { var m = window.pdfjsLib; if (!m) return no(new Error('pdfjs')); m.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js'; ok(m); };
+      sc.onerror = function () { no(new Error('pdfjs')); }; document.head.appendChild(sc); });
+  }
+  function pdfToImage(file, max, q) {
+    return pdfLib().then(function (L) { return new Promise(function (ok, no) {
+      var rd = new FileReader();
+      rd.onload = function () {
+        L.getDocument({ data: new Uint8Array(rd.result) }).promise.then(function (pdf) { return pdf.getPage(1); }).then(function (pg) {
+          var v0 = pg.getViewport({ scale: 1 }), sc = Math.min(3, max / Math.max(v0.width, v0.height)), vp = pg.getViewport({ scale: sc });
+          var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+          var cx = c.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+          return pg.render({ canvasContext: cx, viewport: vp }).promise.then(function () { ok(c.toDataURL('image/jpeg', q)); });
+        }).catch(no);
+      };
+      rd.onerror = no; rd.readAsArrayBuffer(file);
+    }); });
+  }
+  function isPdf(file) { return /pdf/i.test(file.type || '') || /\.pdf$/i.test(file.name || ''); }
   function shrink(file, max, q) {
+    if (isPdf(file)) return pdfToImage(file, max, q);
     return new Promise(function (ok, no) {
       var rd = new FileReader();
       rd.onload = function () {
