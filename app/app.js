@@ -617,8 +617,14 @@
         + '<div class="num" style="font-size:18px;font-weight:700">' + esc(o.note || '—') + '</div>'
         + '<div style="font-size:14px">Uliandika: <b>' + esc(o.rn) + '</b></div>'
         + '<div style="font-size:14px;font-weight:700">Pesa bado HAIJATUMWA. Tafadhali thibitisha:</div></div>'
-        + '<a class="btn" target="_blank" rel="noopener" href="' + wa('NDIYO — Ref ' + o.ref + ': jina ' + (o.note || '') + ' ni sahihi, endeleeni kutuma.') + '">Ndiyo, ni mtu sahihi — tumeni</a>'
-        + '<a class="btn ghost" target="_blank" rel="noopener" href="' + wa('HAPANA — Ref ' + o.ref + ': si mtu sahihi. Namba na jina sahihi ni: ') + '">Hapana — nitatuma namba sahihi</a>';
+        + '<button class="btn" id="tHoldYes">✅ Ndiyo, ni mtu sahihi — tumeni</button>'
+        + '<button class="btn ghost" id="tHoldNo">✏️ Hapana — nitatoa namba sahihi</button>'
+        + '<div id="tHoldForm" class="card" style="display:none;flex-direction:column;gap:10px">'
+        + '<label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina kamili la mpokeaji<input id="tHrn" class="field" autocomplete="off" autocapitalize="characters" placeholder="mf. AMINA JUMA"></label>'
+        + '<label class="lbl" style="display:flex;flex-direction:column;gap:6px">Namba ya simu / akaunti<input id="tHrp" class="field" inputmode="tel" autocomplete="off" placeholder="07… / akaunti ya benki"></label>'
+        + '<div style="font-size:12.5px;color:var(--mut)">Hakikisha namba na jina ni sahihi — pesa itatumwa kwa mpokeaji huyu.</div>'
+        + '<button class="btn dark" id="tHoldSend">Tuma kwa mpokeaji huyu</button></div>'
+        + '<a class="btn ghost" target="_blank" rel="noopener" style="font-size:13px" href="' + wa('Ref ' + o.ref + ': naomba msaada kuhusu jina la mpokeaji.') + '">Au tuandikie WhatsApp</a>';
     } else if (bad) {
       h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">' + esc(o.label) + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '')
         + '<div style="margin-top:8px;font-size:14px">Tafadhali wasiliana nasi kwenye WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b>.</div></div>'
@@ -647,6 +653,19 @@
     }
     $('tBody').innerHTML = h;
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
+    var hy = $('tHoldYes'), hn = $('tHoldNo'), hs = $('tHoldSend');
+    var holdReply = function (btn, body, okMsg) {
+      busy(btn, true, 'Inatuma…');
+      api('w_holdreply', body).then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+        haptic(); S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast(okMsg); })
+        .catch(function (e) { busy(btn, false); toast(e.message); });
+    };
+    if (hy) hy.onclick = function () { if (!confirm('Thibitisha: ' + (o.note || '') + ' ndiye mpokeaji sahihi? Pesa itatumwa kwake sasa.')) return; holdReply(this, { ref: o.ref, ok: true }, '✅ Asante — wakala anatuma sasa'); };
+    if (hn) hn.onclick = function () { var f = $('tHoldForm'); f.style.display = f.style.display === 'none' ? 'flex' : 'none'; if (f.style.display === 'flex') $('tHrn').focus(); };
+    if (hs) hs.onclick = function () { var rn = $('tHrn').value.trim(), rp = $('tHrp').value.replace(/[\s-]/g, '');
+      if (rn.length < 2) return toast('Andika jina kamili la mpokeaji'); if (rp.length < 9) return toast('Namba/akaunti si sahihi');
+      if (!confirm('Tuma TZS ' + tzs(o.tzs) + ' kwa ' + rn.toUpperCase() + ' · ' + rp + '?')) return;
+      holdReply(this, { ref: o.ref, ok: false, rn: rn, rp: rp }, '✏️ Mpokeaji amebadilishwa — wakala anatuma sasa'); };
     var cb = $('tCancel');
     if (cb) cb.onclick = function () {
       if (!confirm('Ghairi oda ' + o.ref + ' ya ' + omr(o.omr) + ' OMR kwa ' + o.rn + '?')) return;
