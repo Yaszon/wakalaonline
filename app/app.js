@@ -233,7 +233,7 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imelipwa'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
 
@@ -599,7 +599,7 @@
     var steps = [
       ['Oda imepokelewa', when(o.at), 1],
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
-      [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika Tanzania', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
+      [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika kwa mnufaika', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
     ];
     var bad = o.st === 'no' || o.st === 'stop';
     var h = '<div style="background:var(--brand);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
@@ -875,7 +875,7 @@
         + (PK.mode === 'multi' ? '<span class="ck">' + (on ? svg('check', 14, '#fff', 3) : '') + '</span>' : '<span class="avs" style="background:var(--lime-soft)">' + esc(initials(r.rn)) + '</span>')
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.rn) + '</span>'
         + '<span class="mut" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.net || '') + ' · ' + esc(r.rp) + '</span>'
-        + '<span style="font-size:12px;font-weight:700;color:var(--ok-ink)">' + (had ? 'tayari kwenye orodha' : (r.n ? 'mara ' + r.n : 'mpya') + (r.t ? ' · mwisho ' + ago(r.t) : '')) + '</span></span>'
+        + '<span style="font-size:12px;font-weight:700;color:var(--ok-ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap">' + (had ? 'tayari kwenye orodha' : (r.n ? 'mara ' + r.n : 'mpya') + (r.t ? ' · mwisho ' + ago(r.t) : '')) + (r.ls && !had ? ' ' + pill({ st: r.ls }) : '') + '</span></span>'
         + '<button type="button" class="star' + (r.fav ? ' on' : '') + '" data-star="' + esc(k) + '" aria-label="' + (r.fav ? 'Ondoa kipendwa' : 'Weka kipendwa') + ' ' + esc(r.rn) + '">⭐</button></div>';
     }).join('') : '<div class="empty">Hakuna anayelingana na "' + esc(q) + '"</div>';
     var n = Object.keys(PK.sel).length;
