@@ -502,7 +502,14 @@
     if (!S.wt) { toast('Ingia kwanza, kisha shiriki risiti tena'); return; }
     toast('Inaandaa risiti…');
     shrink(file, 1600, 0.82).then(function (d) {
-      var open = S.orders.filter(function (o) { return o.st === 'new'; }).slice(0, 6);
+      var open = S.orders.filter(function (o) { return o.st === 'new'; }).slice(0, 6), need = open.filter(function (o) { return !o.proof; });
+      var attach = function (ref, btn, done) {
+        if (btn) busy(btn, true, 'Inapakia…');
+        return api('w_proofadd', { ref: ref, img: d }).then(function (j) { if (btn) busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+          S.orders = S.orders.map(function (x) { return x.ref === ref ? j.order : x; }); LS.set('yzw_orders', S.orders); if (done) done(); haptic(); toast('✓ Risiti imeambatishwa kwenye oda ' + ref); openTrack(ref); })
+          .catch(function (e) { if (btn) busy(btn, false); toast(e.message); });
+      };
+      if (need.length === 1 && open.length === 1) return attach(need[0].ref);   // oda moja tu inasubiri risiti → moja kwa moja, bila kuuliza
       var h = '<div class="cfs" style="gap:12px"><div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>'
         + '<div class="row" style="justify-content:space-between"><h2 style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">🧾 Risiti imepokelewa</h2><button class="iconbtn" id="shClose" aria-label="Funga">✕</button></div>'
         + '<img src="' + d + '" alt="Risiti" style="width:100%;max-height:220px;object-fit:contain;border-radius:14px;background:#f3f5f4">'
@@ -516,11 +523,7 @@
       dlg.innerHTML = h; dlg.style.display = 'flex';
       var close = function () { dlg.style.display = 'none'; };
       $('shClose').onclick = close; dlg.onclick = function (e) { if (e.target === dlg) close(); };
-      dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () {
-        var ref = b.getAttribute('data-sh-ref'); busy(b, true, 'Inapakia…');
-        api('w_proofadd', { ref: ref, img: d }).then(function (j) { busy(b, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
-          S.orders = S.orders.map(function (x) { return x.ref === ref ? j.order : x; }); LS.set('yzw_orders', S.orders); close(); haptic(); toast('✓ Risiti imeambatishwa kwenye ' + ref); openTrack(ref); })
-          .catch(function (e) { busy(b, false); toast(e.message); }); }; });
+      dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () { attach(b.getAttribute('data-sh-ref'), b, close); }; });
       var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
       var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(true); PD.proof = d; setProofUi('pd', d); };
     }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
@@ -726,13 +729,20 @@
       } else if (o.st === 'paid') {
         h += '<div class="card mut" style="font-size:14px">Pesa imetumwa. Risiti itaonekana hapa wakala akiipakia.</div>';
       } else {
-        if (o.st === 'new') h += '<button class="btn ghost" id="tCancel" style="color:var(--bad)">Ghairi oda hii</button>';
+        if (o.st === 'new') h += '<label class="btn' + (o.proof ? ' ghost' : '') + '" style="position:relative;cursor:pointer">' + (o.proof ? '📎 Badilisha risiti' : '📎 Pakia risiti ya malipo (picha / PDF)') + '<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>'
+          + '<button class="btn ghost" id="tCancel" style="color:var(--bad)">Ghairi oda hii</button>';
         h += '<div class="card mut" style="font-size:14px">Ukurasa huu unajisasisha wenyewe. Pesa ikifika, risiti itaonekana hapa na pia utatumiwa kwenye WhatsApp.</div>';
       }
     }
     /* tuma tena kwa mpokeaji huyu huyu (jina, namba, mtandao vinajaa; kiasi kile kile kinapendekezwa) */
     if (o.rn && o.st !== 'cancel') h += '<button class="btn dark" id="tAgain" style="margin-top:4px">↻ Mtumie tena ' + esc(firstName(o.rn)) + (o.kind === 'bill' ? ' · ' + esc(o.net || 'bili') : '') + '</button>';
     $('tBody').innerHTML = h;
+    var tp = $('tProof'); if (tp) tp.onchange = function () {
+      var f = this.files && this.files[0]; if (!f) return; toast('Inaandaa risiti…');
+      shrink(f, 1600, 0.82).then(function (d) { return api('w_proofadd', { ref: o.ref, img: d }); }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana');
+        S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); haptic(); toast('✓ Risiti imeambatishwa kwenye oda ' + o.ref); drawTrack(); })
+        .catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
+    };
     var ag = $('tAgain'); if (ag) ag.onclick = function () {
       var recs = (S.me && S.me.recipients) || [], m = String(o.rp || '').replace(/\s/g, ''), a = m.indexOf('•') >= 0 ? m.split('•')[0] : m, z = m.slice(-3);
       var r = recs.filter(function (x) { var p = String(x.rp || '').replace(/\s/g, ''); return (m.indexOf('•') < 0 ? p === m : (p.indexOf(a) === 0 && p.slice(-3) === z)) && (!o.rn || String(x.rn).toLowerCase() === String(o.rn).toLowerCase() || true); })[0]
