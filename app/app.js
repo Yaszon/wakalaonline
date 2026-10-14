@@ -377,13 +377,26 @@
   }
   $('rPhone').addEventListener('input', function () { netUi(false); });
   /* benki inatambuliwa kutoka mpangilio wa namba ya akaunti (sheria zile zile za bot ya WhatsApp) */
+  /* Benki kwa umbo la akaunti — kutoka akaunti halisi zilizochapishwa (TRA Ilala, TBS, DStv, Zuku):
+       CRDB 13: 015… / 01J… (USD 02J…) · NMB 10–11: 20… · NBC 12: 011…/012…/022… · Stanbic 12: 14… au 13: 912… · Exim 10: 08… · Ecobank 16: 0020…
+       08… (tarakimu 10) inaweza kuwa PBZ au Exim → haitambuliwi, mteja anachagua. */
+  var BANK_FMT = {
+    CRDB: { re: /^0[12][5J]\d{10}$/, h: 'tarakimu 13, inaanza 015 au 01J' },
+    NMB: { re: /^20\d{8,9}$/, h: 'tarakimu 10–11, inaanza 20' },
+    NBC: { re: /^0[12]\d{10}$/, h: 'tarakimu 12, inaanza 011, 012 au 022' },
+    STANBIC: { re: /^(14\d{10}|912\d{10})$/, h: 'tarakimu 12 (14…) au 13 (912…)' },
+    EXIM: { re: /^08\d{8}$/, h: 'tarakimu 10, inaanza 08' },
+    PBZ: { re: /^08\d{8}$/, h: 'tarakimu 10, inaanza 08' },
+    ECOBANK: { re: /^0020\d{12}$/, h: 'tarakimu 16, inaanza 0020' }
+  };
   function bankFor(acct) {
     var a = String(acct || '').toUpperCase().replace(/[\s-]/g, '');
-    if (/^01[5J][0-9A-Z]{10}$/.test(a) || /^015\d{7}$/.test(a)) return 'CRDB';
-    if (/^[23]\d{10}$/.test(a) || /^20\d{8}$/.test(a)) return 'NMB';
-    if (/^0\d{11}$/.test(a)) return 'NBC';
-    if (/^14\d{10}$/.test(a)) return 'STANBIC';
-    return '';
+    if (BANK_FMT.CRDB.re.test(a)) return 'CRDB';
+    if (BANK_FMT.NMB.re.test(a)) return 'NMB';
+    if (BANK_FMT.NBC.re.test(a)) return 'NBC';
+    if (BANK_FMT.STANBIC.re.test(a)) return 'STANBIC';
+    if (BANK_FMT.ECOBANK.re.test(a)) return 'ECOBANK';
+    return '';   // 08… (PBZ/Exim) na nyingine: mteja anachagua
   }
   function bankUi(force) {
     var a = $('rAcc').value.replace(/[\s-]/g, ''), b = bankFor(a), tag = $('rBankTag'), box = $('rBankSel');
@@ -398,10 +411,18 @@
       $('rBankChg').onclick = function () { bankUi(true); };
     } else {
       $('rBank').value = ''; tag.style.display = 'none'; box.style.display = 'flex';
-      $('rBankMsg').textContent = 'Hatukuweza kutambua benki ya akaunti hii — chagua';
+      $('rBankMsg').textContent = /^08\d{8}$/.test(a) ? 'Akaunti hii ni ya PBZ au Exim? — chagua' : 'Hatukuweza kutambua benki ya akaunti hii — chagua';
     }
   }
-  $('rAcc').addEventListener('input', function () { bankUi(false); });
+  $('rAcc').addEventListener('input', function () { bankUi(false); bankWarn(); });
+  $('rBank').addEventListener('change', bankWarn);
+  /* benki imechaguliwa lakini akaunti haina umbo la benki hiyo → onyo la manjano (haizuii) */
+  function bankWarn() {
+    var a = $('rAcc').value.toUpperCase().replace(/[\s-]/g, ''), b = $('rBank').value, F = BANK_FMT[b], el = $('rAccHint');
+    if (!el) return false;
+    if (F && a.length >= 6 && !F.re.test(a)) { el.textContent = '⚠️ Akaunti za ' + b + ' kwa kawaida: ' + F.h + '. Angalia tena.'; el.style.color = 'var(--warn)'; el.style.display = ''; return true; }
+    el.textContent = F ? b + ': ' + F.h : ''; el.style.color = ''; el.style.display = F ? '' : 'none'; return false;
+  }
   function drawBalOpt() {
     var av = balAvail(), on = av > 0.0005; $('sBalOpt').style.display = on ? 'flex' : 'none';
     if (!on) S.useBal = false; $('sUseBal').checked = !!S.useBal;
@@ -507,6 +528,7 @@
       if (String(body.rn).trim().length < 3) { err.textContent = 'Weka jina kamili la mpokeaji'; return; }
       if (!body.rp) { err.textContent = S.kind === 'mobile' ? 'Weka namba ya simu ya mpokeaji' : 'Weka namba ya akaunti'; return; }
       if (!body.net) { if (S.kind === 'mobile') { netUi(true); err.textContent = 'Chagua mtandao wa mpokeaji'; } else { bankUi(true); err.textContent = 'Chagua benki ya mpokeaji'; } return; }
+      if (S.kind === 'bank') { var BF = BANK_FMT[body.net], ba = String(body.rp).toUpperCase().replace(/[\s-]/g, ''); if (BF && !BF.re.test(ba)) body.warn = 'Akaunti za ' + body.net + ' kwa kawaida: ' + BF.h + '.'; }
     }
     if (S.useBal) {
       if (balAvail() + 0.0005 < o) { err.textContent = 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa order hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.'; return; }
