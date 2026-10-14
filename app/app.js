@@ -41,7 +41,7 @@
     var el = $('yzLoad'); if (el) return el;
     el = document.createElement('div'); el.id = 'yzLoad';
     el.innerHTML = '<div class="yzl-box"><div class="yzl-ring"><svg viewBox="0 0 120 120" class="yzl-svg"><circle class="yzl-bg" cx="60" cy="60" r="54"/><circle class="yzl-arc" cx="60" cy="60" r="54" id="yzlArc"/></svg>'
-      + '<svg viewBox="0 0 100 100" class="yzl-mark"><path id="yzlPath" d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46" fill="none" stroke="#A6D33C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + '<svg viewBox="0 0 100 100" class="yzl-mark"><path class="yzl-w" d="M12 28 L30 78 L50 44 L70 78" fill="none" stroke="#A6D33C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path id="yzlPath" class="yzl-arrow" d="M70 78 L88 28 M70 28 L88 28 L88 46" fill="none" stroke="#A6D33C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       + '<div class="yzl-pct" id="yzlPct">0%</div></div><div class="yzl-lbl" id="yzlLbl"></div><div class="yzl-sub" id="yzlSub"></div><div class="yzl-bits" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>';
     document.body.appendChild(el); return el;
   }
@@ -72,7 +72,7 @@
     return d.getDate() + ' ' + M[d.getMonth()] + ' · ' + hm;
   }
   function toast(m) { var t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('on'); }, 2800); }
-  var WSPIN = '<svg class="wspin" viewBox="0 0 100 100" aria-hidden="true"><circle class="ws-ring" cx="50" cy="50" r="44"/><path class="ws-w" d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46"/></svg>';
+  var WSPIN = '<svg class="wspin" viewBox="0 0 100 100" aria-hidden="true"><circle class="ws-ring" cx="50" cy="50" r="44"/><path class="ws-w" d="M12 28 L30 78 L50 44 L70 78"/><path class="ws-a" d="M70 78 L88 28 M70 28 L88 28 L88 46"/></svg>';
   function busy(btn, on, label) {
     if (on) { btn._l = btn.innerHTML; btn.disabled = true; btn.innerHTML = WSPIN + (label || 'Subiri…'); }
     else { btn.disabled = false; if (btn._l) btn.innerHTML = btn._l; }

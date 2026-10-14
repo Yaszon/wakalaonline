@@ -137,7 +137,10 @@ nav.tabs button.on{color:var(--ok-ink);background:var(--lime-soft);font-weight:8
 .wspin{width:22px;height:22px;flex:none;vertical-align:middle;overflow:visible}
 .wspin.lg{width:34px;height:34px}
 .wspin .ws-ring{fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-dasharray:70 206;opacity:.55;transform-origin:50% 50%;animation:wsRot 1s linear infinite}
-.wspin .ws-w{fill:none;stroke:#A6D33C;stroke-width:13;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:420;stroke-dashoffset:420;animation:yzlDraw 1.4s ease-in-out infinite}
+.wspin .ws-w{fill:none;stroke:#A6D33C;stroke-width:13;stroke-linecap:round;stroke-linejoin:round;opacity:.45}
+.wspin .ws-a{fill:none;stroke:#A6D33C;stroke-width:13;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:110;stroke-dashoffset:110;animation:wsArrow .55s cubic-bezier(.2,.8,.3,1) infinite;filter:drop-shadow(0 0 3px rgba(166,211,60,.9))}
+/* mshale wa W: unapaa kwa kasi — unajichora kutoka chini kwenda juu, unamulika, unarudia */
+@keyframes wsArrow{0%{stroke-dashoffset:110;opacity:.2}60%{stroke-dashoffset:0;opacity:1}85%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:.2}}
 .btn .wspin .ws-ring{stroke:currentColor}
 @keyframes wsRot{to{transform:rotate(360deg)}}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -224,9 +227,9 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 #yzLoad.wait .yzl-arc{stroke-dasharray:60 279.3;animation:yzlSpin 1s linear infinite;transition:none}
 @keyframes yzlSpin{to{stroke-dashoffset:-339.3}}
 .yzl-mark{position:absolute;left:50%;top:50%;width:62px;height:62px;transform:translate(-50%,-62%)}
-#yzlPath{stroke-dasharray:420;stroke-dashoffset:420;animation:yzlDraw 1.6s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(166,211,60,.8))}
-@keyframes yzlDraw{0%{stroke-dashoffset:420;opacity:.35}55%{stroke-dashoffset:0;opacity:1}85%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:.35}}
-#yzLoad.done #yzlPath{animation:none;stroke-dashoffset:0;opacity:1}
+.yzl-w{opacity:.45}
+#yzlPath{stroke-dasharray:110;stroke-dashoffset:110;animation:wsArrow .55s cubic-bezier(.2,.8,.3,1) infinite;filter:drop-shadow(0 0 6px rgba(166,211,60,.9))}
+#yzLoad.done #yzlPath,#yzLoad.done .yzl-w{animation:none;stroke-dashoffset:0;opacity:1}
 .yzl-pct{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-family:Sora,sans-serif;font-size:18px;font-weight:700;letter-spacing:.02em;color:#A6D33C;font-variant-numeric:tabular-nums}
 .yzl-lbl{font-family:Sora,sans-serif;font-size:16px;font-weight:600;text-align:center}
 .yzl-sub{font-size:12.5px;color:rgba(255,255,255,.65);text-align:center;min-height:16px;font-variant-numeric:tabular-nums}
@@ -235,7 +238,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 .yzl-bits i:nth-child(2){animation-delay:.15s}.yzl-bits i:nth-child(3){animation-delay:.3s}.yzl-bits i:nth-child(4){animation-delay:.45s}.yzl-bits i:nth-child(5){animation-delay:.6s}.yzl-bits i:nth-child(6){animation-delay:.75s}
 @keyframes yzlBit{0%,100%{opacity:.15}50%{opacity:.9}}
 #yzLoad.done .yzl-box{border-color:rgba(166,211,60,.7)}
-@media (prefers-reduced-motion:reduce){#yzlPath,.yzl-bits i,#yzLoad.wait .yzl-arc{animation:none}}
+@media (prefers-reduced-motion:reduce){#yzlPath,.yzl-bits i,#yzLoad.wait .yzl-arc,.wspin .ws-a{animation:none;stroke-dashoffset:0;opacity:1}}
 </style>
 </head>
 <body>
@@ -275,7 +278,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 <!-- ============ NYUMBANI ============ -->
 <section class="scr" id="s-home">
   <div class="pad" id="homePad">
-    <div class="ptr" id="ptr"><svg class="wspin lg" viewBox="0 0 100 100" aria-hidden="true"><circle class="ws-ring" cx="50" cy="50" r="44"/><path class="ws-w" d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46"/></svg></div>
+    <div class="ptr" id="ptr"><svg class="wspin lg" viewBox="0 0 100 100" aria-hidden="true"><circle class="ws-ring" cx="50" cy="50" r="44"/><path class="ws-w" d="M12 28 L30 78 L50 44 L70 78"/><path class="ws-a" d="M70 78 L88 28 M70 28 L88 28 L88 46"/></svg></div>
     <div class="top" style="justify-content:space-between">
       <div class="row" style="min-width:0;gap:12px">
         <div id="hAv" style="width:46px;height:46px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;font-weight:700;font-size:18px;flex:none">Y</div>
