@@ -738,7 +738,7 @@
       var r = recs.filter(function (x) { var p = String(x.rp || '').replace(/\s/g, ''); return (m.indexOf('•') < 0 ? p === m : (p.indexOf(a) === 0 && p.slice(-3) === z)) && (!o.rn || String(x.rn).toLowerCase() === String(o.rn).toLowerCase() || true); })[0]
         || recs.filter(function (x) { return String(x.rn || '').toLowerCase() === String(o.rn || '').toLowerCase(); })[0];
       if (!r) { if (o.kind === 'bill') r = { rn: o.rn, rp: o.rp, net: o.net }; else return toast('Mpokeaji huyu hayupo kwenye kitabu chako — mtafute kwenye Tuma'); }
-      openSend(r, o.omr || '');
+      openSend(r); $('sOmr').value = ''; sCalc(); setTimeout(function () { $('sOmr').focus(); }, 300);   // kiasi anaandika upya
     };
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
     var gr = $('tGoRef'); if (gr) gr.onclick = function () { openTrack(gr.getAttribute('data-ref')); };
