@@ -233,7 +233,7 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
 
@@ -667,12 +667,16 @@
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
       [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika kwa mnufaika', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
     ];
-    var bad = o.st === 'no' || o.st === 'stop';
+    var bad = o.st === 'no' || o.st === 'stop' || o.st === 'lost';
     var h = '<div style="background:var(--brand);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
       + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut)">' + (o.kind === 'bill' ? ((BL[o.net] || {}).ic || '🧾') + ' ' + esc(o.net) + ' · ' + esc(o.rp) : 'Kwa ' + esc(o.rn || 'mpokeaji') + (o.net ? ' · ' + esc(o.net) : '')) + '</span>' + pill(o) + '</div>'
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
       + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 zawadi TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
-    if (o.st === 'cancel') {
+    if (o.st === 'returned') {
+      h += '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55"><b>↩️ Pesa imerudi.</b> Muamala huu ulisitishwa na OMR <b>' + omr(o.back || o.omr) + '</b> zimerudi kwenye salio lako' + (o.stAt ? ' (' + when(o.stAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu: ' + esc(o.note) + '</div>' : '')
+        + '<div style="margin-top:8px">Unaweza kuzitumia kwenye oda yako ijayo (lipa kwa salio, bila risiti), au tuandikie tukurudishie.</div></div>'
+        + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, oda ' + o.ref + ' pesa imerudi — naomba mnirudishie OMR ' + omr(o.back || o.omr) + '.') + '">Naomba mnirudishie — WhatsApp</a>';
+    } else if (o.st === 'cancel') {
       h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b> Haitashughulikiwa. Kama ulishalipa OMR, wasiliana nasi WhatsApp tukurudishie.</div>'
         + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, nimeghairi oda ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
     } else if (o.st === 'hold') {
@@ -692,7 +696,7 @@
         + '<button class="btn dark" id="tHoldSend">Tuma kwa mpokeaji huyu</button></div>'
         + '<a class="btn ghost" target="_blank" rel="noopener" style="font-size:13px" href="' + wa('Ref ' + o.ref + ': naomba msaada kuhusu jina la mpokeaji.') + '">Au tuandikie WhatsApp</a>';
     } else if (bad) {
-      h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">' + esc(o.label) + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '')
+      h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">' + esc(o.label) + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + (o.st === 'stop' ? '<div style="margin-top:6px;font-size:14px">Pesa haijatumwa kwa mpokeaji. Ikirudi, itaingia kwenye salio lako na tutakujulisha.</div>' : '')
         + '<div style="margin-top:8px;font-size:14px">Tafadhali wasiliana nasi kwenye WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b>.</div></div>'
         + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu oda ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
     } else {
