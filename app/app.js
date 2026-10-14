@@ -233,7 +233,7 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
 
@@ -672,7 +672,12 @@
       + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut)">' + (o.kind === 'bill' ? ((BL[o.net] || {}).ic || '🧾') + ' ' + esc(o.net) + ' · ' + esc(o.rp) : 'Kwa ' + esc(o.rn || 'mpokeaji') + (o.net ? ' · ' + esc(o.net) : '')) + '</span>' + pill(o) + '</div>'
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
       + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 zawadi TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
-    if (o.st === 'returned') {
+    if (o.st === 'refunded') {
+      h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↩️ Refunded.</b> Muamala huu ulisitishwa, pesa ikarudi, na OMR <b>' + omr(o.rfOmr || o.back || o.omr) + '</b> zimerudishwa kwako' + (o.rfAt ? ' (' + when(o.rfAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>';
+    } else if (o.st === 'used') {
+      h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↪️ Imetumika kwenye muamala mwingine.</b> Muamala huu ulisitishwa, pesa ikarudi kwenye salio lako, na umeitumia kwenye oda ' + (o.rfRef ? '<b>' + esc(o.rfRef) + '</b>' : 'nyingine') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>'
+        + (o.rfRef ? '<button class="btn ghost" id="tGoRef" data-ref="' + esc(o.rfRef) + '">Fungua oda ' + esc(o.rfRef) + '</button>' : '');
+    } else if (o.st === 'returned') {
       h += '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55"><b>↩️ Pesa imerudi.</b> Muamala huu ulisitishwa na OMR <b>' + omr(o.back || o.omr) + '</b> zimerudi kwenye salio lako' + (o.stAt ? ' (' + when(o.stAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu: ' + esc(o.note) + '</div>' : '')
         + '<div style="margin-top:8px">Unaweza kuzitumia kwenye oda yako ijayo (lipa kwa salio, bila risiti), au tuandikie tukurudishie.</div></div>'
         + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, oda ' + o.ref + ' pesa imerudi — naomba mnirudishie OMR ' + omr(o.back || o.omr) + '.') + '">Naomba mnirudishie — WhatsApp</a>';
@@ -723,6 +728,7 @@
     }
     $('tBody').innerHTML = h;
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
+    var gr = $('tGoRef'); if (gr) gr.onclick = function () { openTrack(gr.getAttribute('data-ref')); };
     var hy = $('tHoldYes'), hn = $('tHoldNo'), hs = $('tHoldSend');
     var holdReply = function (btn, body, okMsg) {
       busy(btn, true, 'Inatuma…');
