@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="sw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F6F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1A12" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<title>WakalaOnline</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="WakalaOnline">
+<script src="server.js"></script>
+<script src="push.js"></script>
+<script src="version.js"></script>
+<style>
+@font-face{font-family:Manrope;src:url(fonts/manrope.woff2) format('woff2');font-weight:200 800;font-display:swap}
+@font-face{font-family:Sora;src:url(fonts/sora-600.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Sora;src:url(fonts/sora-700.woff2) format('woff2');font-weight:700;font-display:swap}
+:root{
+  --brand:#1F7A32; --brand-deep:#155C25; --brand-2:#2A8E41; --lime:#A6D33C; --lime-soft:#EEF6DC; --on-lime:#12351C;
+  --ink:#0F2A1C; --mut:#5B6B62; --ground:#F4F6F2; --card:#FFFFFF; --card-2:#F7F8F5; --line:#E3E8E0;
+  --on-brand:#FFFFFF; --on-brand-mut:#DCEFE2;
+  --ok:#1F7A32; --ok-soft:#E5F3E9; --ok-ink:#17602A; --warn-soft:#FFF1D6; --warn:#8A5A0B; --bad:#B42318; --bad-soft:#FDECEA;
+  --shadow:0 1px 2px rgba(16,42,28,.06),0 8px 24px rgba(16,42,28,.06);
+  --shadow-lg:0 12px 40px rgba(16,42,28,.16);
+  --r:20px; --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root{
+  --brand:#1E7A33; --brand-deep:#11461E; --brand-2:#2B8A40; --lime:#B5E04F; --lime-soft:#1D3122; --on-lime:#0E2615;
+  --ink:#EAF3EC; --mut:#9DB0A4; --ground:#0B1A12; --card:#12241A; --card-2:#172C20; --line:#22382B;
+  --ok-soft:#173A22; --ok-ink:#8FD9A3; --warn-soft:#3A2D12; --warn:#F2C46B; --bad:#FF8A80; --bad-soft:#3A1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); --shadow-lg:0 12px 40px rgba(0,0,0,.5);
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--ground);color:var(--ink);font-family:Manrope,system-ui,sans-serif;font-size:16px;-webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit;font-size:16px;color:inherit}
+input,select{background:none}
+.num{font-family:Sora,Manrope,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+#app{max-width:480px;margin:0 auto;min-height:100vh}
+.scr{display:none;flex-direction:column;min-height:100vh}
+.scr.on{display:flex;animation:enter .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pad{padding:calc(16px + var(--safe-t)) 18px 120px;display:flex;flex-direction:column;gap:18px;flex:1}
+.top{display:flex;align-items:center;gap:12px;min-height:48px}
+.top h1{margin:0;font-family:Sora,sans-serif;font-size:21px;font-weight:600;letter-spacing:-.02em}
+.iconbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;color:var(--ink);transition:transform .12s}
+.iconbtn:active{transform:scale(.94)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.lbl{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.01em}
+.sec{display:flex;align-items:center;justify-content:space-between}
+.sec h2{margin:0;font-size:15px;font-weight:800}
+.btn{height:56px;border-radius:16px;border:none;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;width:100%;text-decoration:none;transition:transform .12s,filter .12s;box-shadow:0 6px 18px rgba(130,180,40,.28)}
+.btn:active{transform:scale(.98);filter:brightness(.96)}
+.btn:disabled{opacity:.55}
+.btn.dark{background:var(--brand);color:var(--on-brand);box-shadow:0 6px 18px rgba(31,122,50,.28)}
+.btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink);font-weight:700;box-shadow:none}
+.field{height:54px;border-radius:14px;background:var(--card-2);border:1.5px solid transparent;padding:0 14px;width:100%;font-weight:600;outline:none;color:var(--ink);transition:border-color .15s,background .15s}
+.field:focus{border-color:var(--brand);background:var(--card)}
+.field::placeholder{color:var(--mut);opacity:.7}
+.err{color:var(--bad);font-size:14px;font-weight:700;background:var(--bad-soft);border-radius:12px;padding:10px 12px}
+.err:empty{display:none}
+.mut{color:var(--mut)}
+.row{display:flex;align-items:center;gap:10px}
+.pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:20px;white-space:nowrap}
+.p-new{background:var(--warn-soft);color:var(--warn)} .p-ok{background:var(--lime-soft);color:var(--ok-ink)}
+.p-paid{background:var(--ok-soft);color:var(--ok-ink)} .p-no,.p-stop{background:var(--bad-soft);color:var(--bad)}
+
+/* nav ya chini inayoelea */
+nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--safe-b));width:calc(100% - 28px);max-width:452px;height:68px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:6px;z-index:20}
+nav.tabs button{background:none;border:none;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-size:11px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
+nav.tabs button.on{color:var(--ok-ink);background:var(--lime-soft);font-weight:800}
+
+/* kadi kuu */
+.hero{position:relative;overflow:hidden;background:var(--brand);border-radius:28px;padding:22px 20px 20px;color:var(--on-brand);display:flex;flex-direction:column;gap:14px;box-shadow:0 14px 34px rgba(31,122,50,.32)}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.hero::before{width:240px;height:240px;right:-80px;top:-110px;background:rgba(255,255,255,.08)}
+.hero::after{width:180px;height:180px;right:30px;bottom:-120px;background:rgba(166,211,60,.16)}
+.hero>*{position:relative}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;background:rgba(255,255,255,.14);padding:5px 10px;border-radius:20px}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 0 rgba(166,211,60,.7);animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(166,211,60,0)}100%{box-shadow:0 0 0 0 rgba(166,211,60,0)}}
+.big{font-size:44px;font-weight:700;color:var(--lime);line-height:1}
+.qa{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.qa button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-size:12px;font-weight:700;padding:0}
+.qa span.ic{width:56px;height:56px;border-radius:18px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:transform .12s}
+.qa button:active span.ic{transform:scale(.92)}
+.svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.svc button{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:var(--ink);font:inherit;min-width:0;transition:transform .12s}
+.svc button:active{transform:scale(.96)}
+.svc .si{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.svc b{font-size:13px;font-weight:800;line-height:1.2;text-align:center}
+.svc small{font-size:11px;color:var(--mut);font-weight:600;text-align:center;line-height:1.25}
+.qa button.main span.ic{background:var(--lime);border-color:transparent;color:var(--on-lime)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;height:38px;padding:0 16px;border-radius:19px;border:1px solid var(--line);background:var(--card-2);font-weight:700;font-size:14px;cursor:pointer;color:var(--ink)}
+.chips button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.calc{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end}
+.calc .box{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:var(--mut);min-width:0}
+.calc input,.calc .out{font-family:Sora,sans-serif;font-size:21px;font-weight:600;border:none;border-radius:14px;padding:12px;width:100%;outline:none;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.calc input{background:var(--card-2)} .calc .out{background:var(--lime-soft)}
+.swap{width:36px;height:36px;border-radius:12px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.recs{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.recs::-webkit-scrollbar{display:none}
+.rec{flex:none;width:76px;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:var(--ink);padding:0}
+.rec .av{width:58px;height:58px;border-radius:50%;background:var(--lime-soft);color:var(--ok-ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;font-family:Sora,sans-serif;border:2px solid var(--card);box-shadow:var(--shadow)}
+.rec .av.add{background:var(--card);border:1.5px dashed var(--mut);box-shadow:none;color:var(--mut)}
+.rec span:last-child{font-size:12px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);text-align:left;cursor:pointer;width:100%;color:var(--ink);transition:border-color .15s}
+.opt.on{border-color:var(--brand);background:var(--lime-soft)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--card-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{height:42px;border:none;border-radius:11px;background:transparent;font-weight:700;cursor:pointer;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.amt{font-family:Sora,sans-serif;font-size:44px;font-weight:700;border:none;background:transparent;width:100%;outline:none;text-align:center;color:var(--ink);padding:0}
+.amt::placeholder{color:var(--line)}
+.steps{display:flex;flex-direction:column}
+.st{display:flex;gap:14px}
+.st .dot{width:28px;height:28px;border-radius:50%;background:var(--card-2);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.st.done .dot{background:var(--ok);border-color:var(--ok)}
+.st.now .dot{border-color:var(--brand);animation:pulse2 1.6s infinite}
+@keyframes pulse2{50%{box-shadow:0 0 0 6px rgba(31,122,50,.15)}}
+.st .bar{width:2px;flex:1;min-height:28px;background:var(--line);margin:2px auto}
+.st.done .bar{background:var(--ok)}
+.list .li{display:flex;align-items:center;gap:12px;padding:14px;border:none;border-bottom:1px solid var(--line);background:none;width:100%;text-align:left;cursor:pointer;color:var(--ink)}
+.list>*:last-child{border-bottom:none}
+.avs{width:42px;height:42px;border-radius:50%;background:var(--lime-soft);color:var(--ok-ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:none}
+.toast{position:fixed;left:50%;top:calc(14px + var(--safe-t));transform:translate(-50%,-20px);background:var(--ink);color:var(--ground);padding:12px 18px;border-radius:14px;font-size:14px;font-weight:700;max-width:90%;z-index:60;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;box-shadow:var(--shadow-lg)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.otp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.otp input{height:58px;text-align:center;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-family:Sora,sans-serif;font-size:24px;font-weight:600;min-width:0;outline:none;color:var(--ink)}
+.otp input:focus{border:2px solid var(--brand)}
+.spin{width:18px;height:18px;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,.28),rgba(255,255,255,.12));background-size:200% 100%;animation:sk 1.2s infinite;border-radius:10px;color:transparent!important;min-width:120px;display:inline-block}
+@keyframes sk{to{background-position:-200% 0}}
+.payrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.payrow:last-child{border-bottom:none}
+.cpy{flex:none;height:40px;padding:0 14px;border-radius:12px;border:1.5px solid var(--brand);background:transparent;color:var(--brand-2);font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.cpy.done{background:var(--brand);color:#fff}
+pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;font-weight:600}
+.empty{padding:32px 16px;text-align:center;color:var(--mut);font-size:14px;line-height:1.6}
+.cta{position:sticky;bottom:0;margin:0 -18px -120px;padding:12px 18px calc(14px + var(--safe-b));background:linear-gradient(to top,var(--ground) 70%,transparent)}
+.ptr{height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--mut);transition:height .2s}
+/* skrini ya mafanikio */
+#ok{position:fixed;inset:0;z-index:50;background:var(--ground);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:14px}
+#ok.on{display:flex;animation:enter .3s ease}
+#cf{position:fixed;inset:0;z-index:52;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#cf.on{display:flex}
+#rf{position:fixed;inset:0;z-index:52;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#rf.on{display:flex}
+#up{position:fixed;inset:0;z-index:60;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#up.on{display:flex}
+#nw{position:fixed;inset:0;z-index:60;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#nw.on{display:flex}
+#upBar{display:none;align-items:center;gap:10px;background:var(--brand);color:#fff;border-radius:16px;padding:12px 14px;border:none;width:100%;text-align:left;cursor:pointer;font-weight:700}
+#pk{position:fixed;inset:0;z-index:53;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#pk.on{display:flex}
+#pd{position:fixed;inset:0;z-index:53;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center}
+#pd.on{display:flex}
+.pki{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--card);border:1.5px solid var(--line);cursor:pointer;text-align:left;width:100%}
+.pki.on{border-color:var(--brand);background:var(--ok-soft)}
+.pki .ck{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;color:#fff}
+.pki.on .ck{background:var(--brand);border-color:var(--brand)}
+.pki .star{width:40px;height:40px;border:none;background:none;font-size:22px;cursor:pointer;flex:none;color:#C9B26A;filter:grayscale(1);opacity:.45}
+.pki .star.on{filter:none;opacity:1}
+.refc{display:flex;align-items:center;gap:14px;text-align:left;cursor:pointer;border:none;width:100%;background:linear-gradient(135deg,#FFE9A8,#FFD76A);color:#3b2a00;box-shadow:0 6px 18px rgba(200,150,20,.22)}
+.refc .gift{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
+.codebox{border:2px dashed var(--brand);border-radius:18px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card)}
+.bills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bills button{min-height:74px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:12px;cursor:pointer;color:var(--ink);padding:6px;text-align:center}
+.bills button span{font-size:22px}
+.bills button.on{border-color:var(--brand);background:var(--ok-soft)}
+.tokbox{background:var(--card);border:2px dashed var(--brand);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.brow{display:flex;flex-direction:column;gap:8px;padding:12px}
+.brow .bh{display:flex;align-items:center;gap:8px}
+.brow .bn{width:26px;height:26px;border-radius:50%;background:var(--lime-soft);color:var(--ok-ink);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.brow input,.brow select{height:46px;border-radius:12px;background:var(--card-2);border:1.5px solid transparent;padding:0 12px;width:100%;min-width:0;font-weight:600;outline:none;color:var(--ink)}
+.brow input:focus,.brow select:focus{border-color:var(--brand);background:var(--card)}
+.brow .two{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:8px}
+.brow .x{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--bad);font-size:18px;cursor:pointer;flex:none}
+.brow .tag{font-size:12px;font-weight:700;color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+.brow.bad{border-color:var(--bad)}
+.refst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.refst div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px;text-align:center}
+.refst b{font-family:Sora,sans-serif;font-size:18px}
+.refst span{font-size:11px;font-weight:700;color:var(--mut)}
+.cfs{width:100%;max-width:480px;max-height:92vh;overflow:auto;background:var(--ground);border-radius:26px 26px 0 0;padding:12px 20px calc(20px + var(--safe-b));display:flex;flex-direction:column;gap:14px;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+#rv{position:fixed;inset:0;z-index:55;background:rgba(6,14,10,.94);display:none;flex-direction:column}
+#rv.on{display:flex;animation:enter .25s ease}
+.okc{width:104px;height:104px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 14px var(--ok-soft);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.okc path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .25s forwards}
+@keyframes pop{from{transform:scale(.5);opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.okc path{stroke-dashoffset:0}}
+/* ---- muonekano wa kidijitali (Okt 2026): gridi badala ya miduara, njia ya pesa Muscat → Tanzania ---- */
+.hero{background:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/22px 22px,radial-gradient(130% 120% at 100% 0%,var(--brand-2) 0%,var(--brand) 55%,var(--brand-deep) 100%)}
+.hero::before{width:220px;height:220px;right:-90px;top:-120px;background:rgba(166,211,60,.14);filter:blur(2px)}
+.hero::after{display:none}
+.hroute{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:11.5px;font-weight:800;color:var(--on-brand-mut);margin-top:2px}
+.hroute i{height:0;border-top:1.6px dashed rgba(166,211,60,.7);position:relative}
+.hroute i::before,.hroute i::after{content:"";position:absolute;top:-4.6px;width:7.5px;height:7.5px;border-radius:50%;background:var(--lime)}
+.hroute i::before{left:-2px} .hroute i::after{right:-2px}
+.svc .si svg{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============ INGIA ============ -->
+<section class="scr" id="s-login" style="background:var(--brand);color:var(--on-brand)">
+  <div class="hero" style="flex:1;border-radius:0;box-shadow:none;padding:calc(52px + var(--safe-t)) 26px 28px;gap:16px;justify-content:flex-start">
+    <div style="width:64px;height:64px;border-radius:20px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center"><svg width="46" height="46" viewBox="0 0 100 100" role="img" aria-label="WakalaOnline"><path d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46" fill="none" stroke="#A6D33C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h1 style="margin:14px 0 0;font-family:Sora,sans-serif;font-size:36px;font-weight:700;line-height:1.1;letter-spacing:-.03em">Tuma pesa<br>nyumbani,<br><span style="color:var(--lime)">kwa sekunde.</span></h1>
+    <p style="margin:0;font-size:16px;line-height:1.55;color:var(--on-brand-mut)">Rate nzuri, risiti papo hapo, na unafuatilia kila order mpaka ifike Tanzania.</p>
+    <div id="loginRate" class="live" style="align-self:flex-start;display:none"><i></i><span></span></div>
+  </div>
+  <div style="background:var(--ground);border-radius:28px 28px 0 0;margin-top:-24px;position:relative;padding:28px 22px calc(26px + var(--safe-b));color:var(--ink);display:flex;flex-direction:column;gap:16px">
+    <div id="lg1" style="display:flex;flex-direction:column;gap:14px">
+      <div><div style="font-family:Sora,sans-serif;font-size:20px;font-weight:600">Ingia au jisajili</div><div class="mut" style="font-size:14px;margin-top:4px">Tutakutumia code kwenye WhatsApp yako.</div></div>
+      <div class="row" style="gap:8px">
+        <select id="lgCc" class="field" style="width:124px;flex:none;padding:0 8px;background:var(--card);border-color:var(--line)" aria-label="Nchi">
+          <option value="968">🇴🇲 +968</option><option value="971">🇦🇪 +971</option><option value="966">🇸🇦 +966</option>
+          <option value="974">🇶🇦 +974</option><option value="973">🇧🇭 +973</option><option value="965">🇰🇼 +965</option><option value="255">🇹🇿 +255</option>
+        </select>
+        <input id="lgPhone" class="field num" inputmode="tel" autocomplete="tel" placeholder="9123 4567" aria-label="Namba ya WhatsApp" style="min-width:0;font-size:18px;background:var(--card);border-color:var(--line)">
+      </div>
+      <div class="err" id="lgErr1"></div>
+      <button class="btn" id="lgSend">Tuma code kwa WhatsApp</button>
+    </div>
+    <div id="lg2" style="display:none;flex-direction:column;gap:14px">
+      <div><div style="font-family:Sora,sans-serif;font-size:20px;font-weight:600">Weka code</div><div class="mut" style="font-size:14px;margin-top:4px">Imetumwa WhatsApp kwa <b id="lgTo" style="color:var(--ink)"></b></div></div>
+      <div class="otp" id="otp"></div>
+      <div class="err" id="lgErr2"></div>
+      <div style="font-size:14px" class="mut">Hukupata? <button id="lgResend" style="background:none;border:none;padding:0;font-weight:800;color:var(--brand-2);cursor:pointer"></button> · <button id="lgBack" style="background:none;border:none;padding:0;font-weight:700;color:var(--mut);cursor:pointer">Badilisha namba</button></div>
+      <button class="btn" id="lgGo">Ingia</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NYUMBANI ============ -->
+<section class="scr" id="s-home">
+  <div class="pad" id="homePad">
+    <div class="ptr" id="ptr"><span class="spin" aria-hidden="true"></span></div>
+    <div class="top" style="justify-content:space-between">
+      <div class="row" style="min-width:0;gap:12px">
+        <div id="hAv" style="width:46px;height:46px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;font-weight:700;font-size:18px;flex:none">Y</div>
+        <div style="display:flex;flex-direction:column;min-width:0">
+          <span class="mut" style="font-size:13px;font-weight:600" id="hGreet">Habari,</span>
+          <span id="hName" style="font-family:Sora,sans-serif;font-size:19px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Karibu</span>
+        </div>
+      </div>
+      <button class="iconbtn" id="hRefresh" aria-label="Sasisha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    </div>
+
+    <button id="upBar"><span style="font-size:20px" aria-hidden="true">🚀</span><span style="flex:1">Toleo jipya la app lipo — bonyeza kupakua</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <div class="hero">
+      <div class="row" style="justify-content:space-between"><span class="row" style="gap:6px"><span class="live"><i></i>Rate ya sasa</span><span id="hVip" style="display:none;align-items:center;gap:4px;background:#ffd76a;color:#3b2a00;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800">⭐ Rate yako maalum</span></span><span style="font-size:12px;color:var(--on-brand-mut);font-weight:600" id="hRateAt"></span></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:var(--on-brand-mut);font-weight:600">1 OMR =</span>
+        <div class="row" style="align-items:baseline;gap:8px"><span class="big num" id="hRate"><span class="skel">&nbsp;</span></span><span style="font-weight:800;font-size:16px">TZS</span></div>
+      </div>
+      <div id="hBig" style="display:none;background:rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--on-brand-mut);font-weight:600"></div>
+      <div class="hroute" aria-hidden="true"><span>Muscat · OMR</span><i></i><span>Tanzania · TZS</span></div>
+    </div>
+
+    <div class="qa">
+      <button class="main" id="hSend"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></span>Tuma</button>
+      <button id="hBalBtn"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/><path d="M6 15h4"/></svg></span>Salio</button>
+      <button id="qaHist"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></span>Historia</button>
+      <button id="qaHelp"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg></span>Msaada</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-size:14px;font-weight:800">Unatuma kwenda wapi?</span>
+      <div class="svc">
+        <button id="svMob"><span class="si" style="background:var(--lime-soft);color:var(--ok-ink)" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span><b>Namba ya simu</b><small>M-Pesa · Mixx · Airtel · Halo</small></button>
+        <button id="svBank"><span class="si" style="background:rgba(59,130,246,.14);color:#1D4ED8" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18L12 4z"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/></svg></span><b>Benki</b><small>CRDB · NMB · NBC · PBZ…</small></button>
+        <button id="svBill"><span class="si" style="background:rgba(245,158,11,.16);color:#B45309" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/></svg></span><b>LUKU / Bili</b><small>Umeme · Maji · TV · Vocha</small></button>
+      </div>
+    </div>
+
+    <div id="hNews" class="card" style="display:none;flex-direction:column;gap:6px;border-color:#BFD7FF;background:#EEF5FF;color:var(--ink)">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px"><span style="font-size:12px;font-weight:800;color:#1D4ED8">📣 Tangazo</span><span class="row" style="gap:6px"><button id="hNewsAll" class="mut" style="font-size:12px;font-weight:700;background:none;border:0;color:#1D4ED8;cursor:pointer"></button><button id="hNewsX" aria-label="Funga tangazo" style="background:none;border:0;font-size:18px;line-height:1;color:var(--mut);cursor:pointer">×</button></span></div>
+      <div id="hNewsT" style="font-weight:800;font-size:15px"></div>
+      <div id="hNewsB" style="font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere"></div>
+      <div id="hNewsAt" class="mut" style="font-size:11px;font-weight:600"></div>
+    </div>
+
+    <div id="hDebt" class="card" style="display:none;border-color:#F3C4BE;background:var(--bad-soft);flex-direction:column;gap:10px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:800;color:var(--bad)" id="hDebtL">Deni lako</span><span class="num" id="hDebtAmt" style="font-size:24px;font-weight:700;color:var(--bad)"></span><span class="mut" id="hDebtSub" style="font-size:12px;font-weight:600;display:none"></span></span><span id="hDebtPend" class="pill p-new" style="display:none"></span></div>
+      <button class="btn dark" id="hDebtBtn">💳 Lipa deni</button>
+    </div>
+    <div id="hActive" style="display:flex;flex-direction:column;gap:10px"></div>
+
+    <button class="card refc" id="hRef" style="display:none"><span class="gift" aria-hidden="true">🎁</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px" id="hRefT">Mlete rafiki, mfaidike wote</b><span style="font-size:13px;font-weight:600" id="hRefS"></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:14px">
+      <div class="sec"><h2>Kikokotoo</h2><span class="mut" style="font-size:12px;font-weight:700" id="cRateTxt"></span></div>
+      <div class="calc">
+        <label class="box">Unatuma · OMR<input id="cOmr" inputmode="decimal" value="50"></label>
+        <div class="swap" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
+        <div class="box">Wanapokea · TZS<div class="out" id="cTzs">—</div></div>
+      </div>
+      <div class="chips" id="cChips"><button data-amt="20">20</button><button data-amt="50" class="on">50</button><button data-amt="100">100</button><button data-amt="200">200</button><button data-amt="500">500</button></div>
+    </div>
+
+    <div id="hRecWrap" style="display:none;flex-direction:column;gap:12px">
+      <div class="sec"><h2>Tuma tena kwa</h2></div>
+      <div class="recs" id="hRec"></div>
+    </div>
+  </div>
+  <nav class="tabs" data-tab="home"></nav>
+</section>
+
+<!-- ============ TUMA ============ -->
+<section class="scr" id="s-send">
+  <div class="pad">
+    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1>Tuma pesa</h1></div>
+    <button class="opt" id="sBulk" style="background:var(--lime-soft);border-color:transparent"><span class="avs" aria-hidden="true" style="background:var(--card)">👥</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;text-align:left"><b style="font-size:15px">Tuma kwa wengi kwa mara moja</b><span class="mut" style="font-size:12px;font-weight:600">Orodha ya wapokeaji · malipo moja · risiti moja</span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:12px;align-items:center;padding:22px 16px">
+      <div class="seg" id="amtSeg" role="tablist" style="width:210px"><button id="amtO" class="on" role="tab">Kwa OMR</button><button id="amtT" role="tab">Kwa TZS</button></div>
+      <label class="lbl" for="sOmr" id="sOmrL">Unatuma (OMR)</label>
+      <input id="sOmr" class="amt" inputmode="decimal" placeholder="0">
+      <div class="chips" id="sChips" style="justify-content:center;max-width:100%"><button data-amt="20">20</button><button data-amt="50">50</button><button data-amt="100">100</button><button data-amt="200">200</button><button data-amt="500">500</button></div>
+      <div style="width:100%;background:var(--lime-soft);border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-size:13px;font-weight:800;color:var(--ok-ink)" id="sTzsL">Mpokeaji atapata</span>
+        <span class="num" id="sTzs" style="font-size:22px;font-weight:700">0 TZS</span>
+      </div>
+      <div id="sBonus" style="display:none;width:100%;text-align:center;font-size:13px;font-weight:800;color:#8a5a00;background:#FFF1C9;border-radius:12px;padding:8px"></div>
+      <div class="row mut" style="justify-content:space-between;font-size:12px;font-weight:600;width:100%"><span id="sRateTxt">Rate: —</span><span id="sLim"></span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2>Mpokeaji</h2></div>
+      <div id="sSaved" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="opt" id="sAllBtn" style="display:none"><span class="avs" aria-hidden="true">📒</span><span style="flex:1;font-weight:800;text-align:left" id="sAllTxt">Wapokeaji wote</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+      <button class="opt" id="sNewBtn" style="border-style:dashed"><span class="avs" aria-hidden="true">+</span><span style="font-weight:800">Mpokeaji mpya</span></button>
+      <div id="sNew" class="card" style="display:none;flex-direction:column;gap:12px">
+        <div class="seg" role="tablist" style="grid-template-columns:1fr 1fr 1fr"><button id="kMob" class="on" role="tab">Pesa ya simu</button><button id="kBank" role="tab">Benki</button><button id="kBill" role="tab">LUKU / Bili</button></div>
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina kamili la mpokeaji<input id="rName" class="field" autocomplete="off" placeholder="mf. ASHA MOHAMED ALI"></label>
+        <div id="rMobBox" style="display:flex;flex-direction:column;gap:12px">
+          <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Namba ya simu (Tanzania)<input id="rPhone" class="field num" inputmode="tel" placeholder="0754 123 456"></label>
+          <div id="rNetTag" style="display:none"></div>
+          <label id="rNetBox" class="lbl" style="display:none;flex-direction:column;gap:6px"><span id="rNetMsg">Mtandao</span><select id="rNet" class="field"></select></label>
+        </div>
+        <div id="rBillBox" style="display:none;flex-direction:column;gap:12px">
+          <div class="lbl">Unalipa nini?</div>
+          <div class="bills" id="rBillers"></div>
+          <div id="rBillForm" style="display:none;flex-direction:column;gap:12px">
+            <label class="lbl" style="display:flex;flex-direction:column;gap:6px"><span id="rBillAccL">Namba</span><input id="rBillAcc" class="field num" autocomplete="off" autocapitalize="characters" inputmode="numeric"><span class="mut" id="rBillHint" style="font-size:12px;font-weight:600"></span></label>
+            <label id="rBillRefBox" class="lbl" style="display:none;flex-direction:column;gap:6px"><span id="rBillRefL">Kumbukumbu</span><input id="rBillRef" class="field num" autocomplete="off" autocapitalize="characters"></label>
+            <label class="lbl" style="display:flex;flex-direction:column;gap:6px"><span id="rBillNameL">Jina (hiari)</span><input id="rBillName" class="field" autocomplete="off" placeholder="mf. jina kwenye mita / akaunti"></label>
+          </div>
+        </div>
+        <div id="rBankBox" style="display:none;flex-direction:column;gap:12px">
+          <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Namba ya akaunti<input id="rAcc" class="field num" autocomplete="off" autocapitalize="characters" placeholder="mf. 0152000ABC00"></label>
+          <div id="rBankTag" style="display:none"></div>
+          <label id="rBankSel" class="lbl" style="display:none;flex-direction:column;gap:6px"><span id="rBankMsg">Benki</span><select id="rBank" class="field"></select></label>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2>Malipo</h2><span class="mut" style="font-size:12px;font-weight:700" id="sPayHint">Lipa OMR, kisha pakia risiti</span></div>
+      <label class="opt" id="sBalOpt" style="display:none;cursor:pointer;background:var(--ok-soft);border-color:transparent"><input type="checkbox" id="sUseBal" style="width:22px;height:22px;accent-color:var(--brand);flex:none"><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">💰 Lipa kwa salio langu</b><span class="mut" style="font-size:12px;font-weight:600" id="sBalTxt"></span></span></label>
+      <div class="card" id="sPay" style="padding:6px 14px"></div>
+      <label class="opt" style="border-style:dashed;justify-content:center;min-height:68px;cursor:pointer;position:relative" id="sProofLbl">
+        <input type="file" accept="image/*" id="sProof" style="position:absolute;opacity:0;width:1px;height:1px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <span id="sProofTxt" style="font-weight:800">Pakia picha ya risiti</span>
+      </label>
+      <img id="sProofImg" alt="Picha ya risiti uliyochagua" style="display:none;max-height:170px;border-radius:16px;object-fit:contain;background:var(--card-2)">
+    </div>
+    <div class="err" id="sErr"></div>
+    <div class="cta"><button class="btn" id="sGo">Endelea — hakiki order</button></div>
+  </div>
+</section>
+
+<!-- ============ TUMA KWA WENGI ============ -->
+<section class="scr" id="s-bulk">
+  <div class="pad">
+    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1>Tuma kwa wengi</h1></div>
+
+    <button class="opt" id="bBook" style="display:none;background:var(--lime-soft);border-color:transparent"><span class="avs" aria-hidden="true" style="background:var(--card)">📒</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;text-align:left"><b style="font-size:15px">Chagua kutoka kitabu cha wapokeaji</b><span class="mut" style="font-size:12px;font-weight:600" id="bBookN"></span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2>Wapokeaji <span class="mut" id="bCount" style="font-weight:700"></span></h2><button class="cpy" type="button" id="bAdd">+ Ongeza</button></div>
+      <div id="bRows" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <div class="card" style="background:var(--brand);color:#fff;border-color:transparent;display:flex;flex-direction:column;gap:6px">
+      <div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut);font-weight:700">Jumla unalipa</span><span style="font-size:13px;color:var(--on-brand-mut);font-weight:700">Wanapokea jumla</span></div>
+      <div class="row" style="justify-content:space-between"><b class="num" id="bTotO" style="font-size:22px">0 OMR</b><b class="num" id="bTotT" style="font-size:22px;color:var(--lime)">0 TZS</b></div>
+      <div id="bBonus" style="display:none;font-size:12px;font-weight:700;color:#FFE9A8"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2>Malipo</h2><span class="mut" style="font-size:12px;font-weight:700">Lipa jumla, kisha pakia risiti moja</span></div>
+      <div class="card" id="bPay" style="padding:6px 14px"></div>
+      <label class="opt" style="border-style:dashed;justify-content:center;min-height:68px;cursor:pointer;position:relative">
+        <input type="file" accept="image/*" id="bProof" style="position:absolute;opacity:0;width:1px;height:1px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <span id="bProofTxt" style="font-weight:800">Pakia picha ya risiti</span>
+      </label>
+      <img id="bProofImg" alt="Picha ya risiti uliyochagua" style="display:none;max-height:170px;border-radius:16px;object-fit:contain;background:var(--card-2)">
+    </div>
+    <div class="err" id="bErr"></div>
+    <div class="cta"><button class="btn" id="bGo">Endelea — hakiki</button></div>
+  </div>
+</section>
+
+<!-- ============ FUATILIA ============ -->
+<section class="scr" id="s-track">
+  <div class="pad">
+    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 id="tTitle">Order</h1></div>
+    <div id="tBody" style="display:flex;flex-direction:column;gap:16px"></div>
+  </div>
+</section>
+
+<!-- ============ HISTORIA ============ -->
+<section class="scr" id="s-hist">
+  <div class="pad">
+    <div class="top"><h1 style="font-size:26px">Historia</h1></div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <div class="hero" style="padding:16px;border-radius:22px;gap:6px"><span style="font-size:12px;color:var(--on-brand-mut);font-weight:700">Umetuma mwezi huu</span><span class="num" id="hiMonth" style="font-size:22px;font-weight:700;color:var(--lime)">—</span></div>
+      <div class="card" id="hiBalCard" style="padding:16px;display:flex;flex-direction:column;gap:6px;border-radius:22px"><span class="mut" style="font-size:12px;font-weight:700" id="hiBalLbl">Salio lako</span><span class="num" id="hiBal" style="font-size:22px;font-weight:700">—</span><button class="cpy" type="button" id="hiPay" style="display:none;align-self:flex-start;border-color:var(--bad);color:var(--bad)">💳 Lipa deni</button></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2>Taarifa ya miamala (PDF)</h2></div>
+      <div class="chips"><button data-st="this">Mwezi huu</button><button data-st="last">Mwezi uliopita</button><button data-st="all">Zote</button></div>
+    </div>
+    <div class="chips" id="hiFilt"><button data-f="all">Zote</button><button data-f="open">Zinaendelea</button><button data-f="paid">Zimekamilika</button></div>
+    <div class="card list" style="padding:0;overflow:hidden" id="hiList"></div>
+  </div>
+  <nav class="tabs" data-tab="hist"></nav>
+</section>
+
+<!-- ============ AKAUNTI ============ -->
+<section class="scr" id="s-acct">
+  <div class="pad">
+    <div class="top"><h1 style="font-size:26px">Akaunti</h1></div>
+    <div class="card row" style="gap:14px">
+      <div id="aAv" style="width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;font-weight:700;font-size:22px;flex:none">Y</div>
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span id="aNameTop" style="font-weight:800;font-size:17px"></span><span class="num mut" id="aPhone" style="font-size:14px;font-weight:600"></span></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina lako<input id="aName" class="field" autocomplete="name"></label>
+      <div class="mut" style="font-size:13px" id="aNameNote"></div>
+      <button class="btn dark" id="aSave">Hifadhi jina</button>
+    </div>
+    <a class="btn ghost" id="aHelp" target="_blank" rel="noopener">Wasiliana nasi WhatsApp</a>
+    <button class="btn ghost" id="aOut" style="color:var(--bad)">Toka (Logout)</button>
+    <div class="mut" style="font-size:12px;text-align:center">WakalaOnline · Transactions made easy to Tanzania</div>
+  </div>
+  <nav class="tabs" data-tab="acct"></nav>
+</section>
+
+</div>
+
+<!-- ============ IMEFANIKIWA ============ -->
+<div id="ok" role="dialog" aria-modal="true" aria-labelledby="okT">
+  <div class="okc"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+  <h2 id="okT" style="margin:18px 0 0;font-family:Sora,sans-serif;font-size:24px;font-weight:700">Order imepokelewa!</h2>
+  <div class="num" id="okAmt" style="font-size:30px;font-weight:700;color:var(--brand-2)"></div>
+  <div class="mut" id="okTxt" style="font-size:15px;line-height:1.5;max-width:320px"></div>
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:360px;margin-top:6px"><span class="mut" style="font-weight:700">Ref</span><span class="num" id="okRef" style="font-weight:700"></span></div>
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;margin-top:8px">
+    <button class="btn" id="okTrack">Fuatilia order</button>
+    <button class="btn ghost" id="okHome">Rudi nyumbani</button>
+  </div>
+</div>
+<div id="cf" role="dialog" aria-modal="true" aria-labelledby="cfT">
+  <div class="cfs">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px"></div>
+    <h2 id="cfT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">Hakiki order yako</h2>
+    <div class="mut" style="font-size:14px;margin-top:-6px">Angalia kila kitu kabla ya kutuma. Order haitatumwa mpaka ubonyeze "Ndiyo, tuma".</div>
+    <div style="background:var(--lime-soft);border-radius:18px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:2px"><span class="mut" style="font-size:12px;font-weight:700">Unatuma</span><span class="num" id="cfAmt" style="font-size:20px;font-weight:700"></span></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+      <div style="display:flex;flex-direction:column;gap:2px;text-align:right"><span class="mut" style="font-size:12px;font-weight:700">Watapokea</span><span class="num" id="cfTzs" style="font-size:20px;font-weight:700;color:var(--ok-ink)"></span></div>
+    </div>
+    <div id="cfRows"></div>
+    <div class="row" style="gap:12px"><img id="cfImg" alt="Risiti yako" style="width:64px;height:64px;object-fit:cover;border-radius:12px;background:var(--card-2)"><span class="mut" style="font-size:13px;font-weight:600">Risiti ya malipo yako ya OMR imeambatishwa</span></div>
+    <div class="err" id="cfErr"></div>
+    <button class="btn" id="cfGo">Ndiyo, tuma order</button>
+    <button class="btn ghost" id="cfNo">Rudi nirekebishe</button>
+  </div>
+</div>
+<div id="pd" role="dialog" aria-modal="true" aria-labelledby="pdT">
+  <div class="cfs">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>
+    <div class="row" style="justify-content:space-between"><h2 id="pdT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">💳 Lipa deni</h2><button class="iconbtn" id="pdClose" aria-label="Funga"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="pdOweBox" style="background:var(--bad-soft);border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:800" id="pdOweL">Deni lako</span><b class="num" id="pdOwe" style="font-size:20px"></b></div>
+    <div id="pdPendBox"></div>
+    <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Unalipa kiasi gani? (OMR)<input id="pdAmt" class="field num" inputmode="decimal" style="font-size:20px"></label>
+    <div class="chips" id="pdChips"></div>
+    <div id="pdHint" style="display:none;font-size:13px;font-weight:700;color:var(--ok-ink);background:var(--ok-soft);border-radius:12px;padding:10px 12px"></div>
+    <div class="lbl">Lipa kwenye akaunti hii, kisha pakia risiti</div>
+    <div class="card" id="pdPay" style="padding:6px 14px"></div>
+    <label class="opt" style="border-style:dashed;justify-content:center;min-height:64px;cursor:pointer;position:relative">
+      <input type="file" accept="image/*" id="pdProof" style="position:absolute;opacity:0;width:1px;height:1px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+      <span id="pdProofTxt" style="font-weight:800">Pakia picha ya risiti</span>
+    </label>
+    <img id="pdProofImg" alt="Risiti uliyochagua" style="display:none;max-height:150px;border-radius:14px;object-fit:contain;background:var(--card-2)">
+    <div class="err" id="pdErr"></div>
+    <button class="btn" id="pdGo">Tuma malipo</button>
+  </div>
+</div>
+<div id="pk" role="dialog" aria-modal="true" aria-labelledby="pkT">
+  <div class="cfs" style="height:88vh;gap:12px">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>
+    <div class="row" style="justify-content:space-between"><h2 id="pkT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">Kitabu cha wapokeaji</h2><button class="iconbtn" id="pkClose" aria-label="Funga"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div style="position:relative"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:14px;top:18px;color:var(--mut)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="pkQ" class="field" placeholder="Tafuta jina au namba" autocomplete="off" style="padding-left:42px"></div>
+    <div class="mut" id="pkHint" style="font-size:12px;font-weight:600;margin-top:-4px"></div>
+    <div id="pkList" style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:0 -4px;padding:0 4px"></div>
+    <button class="btn" id="pkAdd" style="display:none">Ongeza</button>
+  </div>
+</div>
+<div id="rf" role="dialog" aria-modal="true" aria-labelledby="rfT">
+  <div class="cfs">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px"></div>
+    <div style="text-align:center;font-size:44px;line-height:1" aria-hidden="true">🎁</div>
+    <h2 id="rfT" style="margin:0;text-align:center;font-family:Sora,sans-serif;font-size:21px;font-weight:600">Mlete rafiki, mfaidike wote</h2>
+    <div class="mut" id="rfHow" style="font-size:14px;line-height:1.55;text-align:center;margin-top:-4px"></div>
+    <div id="rfBonus"></div>
+    <div id="rfEnter" style="display:none;flex-direction:column;gap:10px" class="card">
+      <b style="font-size:15px">Una code ya rafiki?</b>
+      <div class="mut" style="font-size:13px;margin-top:-4px" id="rfEnterTxt"></div>
+      <div class="row"><input id="rfCode" class="field" placeholder="mf. YZ1A2B3C" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.06em"><button class="btn dark" id="rfJoin" style="width:auto;padding:0 18px;flex:none">Weka</button></div>
+      <div class="err" id="rfErr"></div>
+    </div>
+    <div class="lbl">Code yako</div>
+    <div class="codebox"><span class="num" id="rfMine" style="font-size:24px;font-weight:700;letter-spacing:.08em"></span><button class="cpy" type="button" id="rfCopy">Nakili</button></div>
+    <button class="btn" id="rfWa"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Mtumie rafiki kwa WhatsApp</button>
+    <button class="btn ghost" id="rfShare">Shiriki kwa njia nyingine</button>
+    <div class="refst"><div><b id="rfJ">0</b><span>Wamejiunga</span></div><div><b id="rfW">0</b><span>Wanasubiri</span></div><div><b id="rfE">0</b><span>TZS ulizopata</span></div></div>
+    <div class="mut" style="font-size:12px;line-height:1.5" id="rfRules"></div>
+    <button class="btn ghost" id="rfClose">Funga</button>
+  </div>
+</div>
+<div id="rv" role="dialog" aria-modal="true" aria-label="Risiti">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:calc(12px + var(--safe-t)) 16px 12px"><b style="color:#fff;font-size:16px">Risiti</b><button class="iconbtn" id="rvClose" aria-label="Funga" style="background:rgba(255,255,255,.12);border-color:transparent;color:#fff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div style="flex:1;overflow:auto;padding:0 12px;display:flex;align-items:flex-start;justify-content:center"><img id="rvImg" style="max-width:100%;border-radius:14px"></div>
+  <div style="padding:12px 16px calc(16px + var(--safe-b))"><button class="btn" id="rvShare">Shiriki risiti (picha)</button></div>
+</div>
+<div id="nw" role="dialog" aria-modal="true" aria-labelledby="nwT">
+  <div class="cfs">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px"></div>
+    <h2 id="nwT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">📣 Matangazo</h2>
+    <div id="nwList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="btn ghost" id="nwClose" style="width:100%">Funga</button>
+  </div>
+</div>
+<div id="up" role="dialog" aria-modal="true" aria-labelledby="upT">
+  <div class="cfs" style="align-items:center;text-align:center">
+    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 6px"></div>
+    <div style="width:72px;height:72px;border-radius:22px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:36px" aria-hidden="true">🚀</div>
+    <h2 id="upT" style="margin:0;font-family:Sora,sans-serif;font-size:21px;font-weight:600">Toleo jipya la WakalaOnline</h2>
+    <div class="mut" id="upTxt" style="font-size:14px;line-height:1.55;max-width:340px"></div>
+    <div class="card" id="upNotes" style="width:100%;text-align:left;font-size:14px;display:none"></div>
+    <button class="btn" id="upGo" style="width:100%">Pakua update</button>
+    <div class="mut" style="font-size:12px;line-height:1.5;max-width:340px">Faili likishapakuliwa, lifungue kisha bonyeza <b>Install / Sakinisha</b>. Simu ikiuliza, ruhusu "Install unknown apps" kwa browser. Hesabu na order zako zinabaki vile vile.</div>
+    <button class="btn ghost" id="upLater" style="width:100%">Baadaye</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
+<script>if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
+</body>
+</html>
