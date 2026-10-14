@@ -678,9 +678,13 @@
       h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↪️ Imetumika kwenye muamala mwingine.</b> Muamala huu ulisitishwa, pesa ikarudi kwenye salio lako, na umeitumia kwenye oda ' + (o.rfRef ? '<b>' + esc(o.rfRef) + '</b>' : 'nyingine') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>'
         + (o.rfRef ? '<button class="btn ghost" id="tGoRef" data-ref="' + esc(o.rfRef) + '">Fungua oda ' + esc(o.rfRef) + '</button>' : '');
     } else if (o.st === 'returned') {
-      h += '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55"><b>↩️ Pesa imerudi.</b> Muamala huu ulisitishwa na OMR <b>' + omr(o.back || o.omr) + '</b> zimerudi kwenye salio lako' + (o.stAt ? ' (' + when(o.stAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu: ' + esc(o.note) + '</div>' : '')
-        + '<div style="margin-top:8px">Unaweza kuzitumia kwenye oda yako ijayo (lipa kwa salio, bila risiti), au tuandikie tukurudishie.</div></div>'
-        + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, oda ' + o.ref + ' pesa imerudi — naomba mnirudishie OMR ' + omr(o.back || o.omr) + '.') + '">Naomba mnirudishie — WhatsApp</a>';
+      var amt = omr(o.back || o.omr);
+      h += '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55"><b>↩️ Pesa imerudi.</b> Muamala huu ulisitishwa na OMR <b>' + amt + '</b> zimerudi kwenye salio lako' + (o.stAt ? ' (' + when(o.stAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu: ' + esc(o.note) + '</div>' : '') + '</div>';
+      if (o.req === 'refund') h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>🙋 Umeomba refund.</b> Tunakurudishia OMR ' + amt + ' — utapata taarifa ikikamilika.</div>';
+      else if (o.req === 'bal') h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>💰 Zimebaki kwenye salio lako.</b> Ukituma mpokeaji ujao, chagua "Lipa kwa salio langu" — bila risiti.</div><button class="btn ghost" id="tRetRefund">Nimebadili — naomba refund</button>';
+      else h += '<div class="lbl">Unataka tufanye nini na OMR ' + amt + '?</div>'
+        + '<button class="btn" id="tRetBal">💰 Zibaki kwenye salio langu</button>'
+        + '<button class="btn ghost" id="tRetRefund">↩ Naomba mnirudishie (refund)</button>';
     } else if (o.st === 'cancel') {
       h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b> Haitashughulikiwa. Kama ulishalipa OMR, wasiliana nasi WhatsApp tukurudishie.</div>'
         + '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, nimeghairi oda ' + o.ref) + '">Wasiliana nasi WhatsApp</a>';
@@ -729,6 +733,14 @@
     $('tBody').innerHTML = h;
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
     var gr = $('tGoRef'); if (gr) gr.onclick = function () { openTrack(gr.getAttribute('data-ref')); };
+    var retPick = function (btn, choice) {
+      if (choice === 'refund' && !confirm('Tukurudishie OMR ' + omr(o.back || o.omr) + ' badala ya kuzitumia kwenye oda ijayo?')) return;
+      busy(btn, true, 'Inatuma…');
+      api('w_retchoice', { ref: o.ref, choice: choice }).then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
+        S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); haptic(); toast(choice === 'refund' ? '✓ Ombi la refund limetumwa' : '✓ Zimebaki kwenye salio lako'); })
+        .catch(function (e) { busy(btn, false); toast(e.message); });
+    };
+    var rb = $('tRetBal'), rr = $('tRetRefund'); if (rb) rb.onclick = function () { retPick(this, 'bal'); }; if (rr) rr.onclick = function () { retPick(this, 'refund'); };
     var hy = $('tHoldYes'), hn = $('tHoldNo'), hs = $('tHoldSend');
     var holdReply = function (btn, body, okMsg) {
       busy(btn, true, 'Inatuma…');
