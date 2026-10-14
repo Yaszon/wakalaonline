@@ -177,7 +177,7 @@
   function drawHome() {
     var me = S.me || {}, i = info();
     var h = new Date().getHours();
-    $('hGreet').textContent = h < 12 ? 'Habari za asubuhi' : h < 16 ? 'Habari za mchana' : 'Habari za jioni';
+    $('hGreet').textContent = h < 5 ? 'Habari za usiku' : h < 12 ? 'Habari za asubuhi' : h < 16 ? 'Habari za mchana' : h < 20 ? 'Habari za jioni' : 'Habari za usiku';   // saa ya simu ya mteja
     $('hName').textContent = me.name ? firstName(me.name) : 'Karibu WakalaOnline';
     $('hAv').textContent = initials(me.name || 'W');
     if (i && i.rate) $('hRate').textContent = tzs(rateFor(0));
