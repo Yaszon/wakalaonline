@@ -287,21 +287,32 @@
   $('sAllBtn').onclick = function () { openBook('one', function (r) { S.rec = r; drawSaved(S.me.recipients || [], false); if (isBill(r.net)) setAmt(true); sCalc(); haptic(); }); };
   $('sNewBtn').onclick = function () { S.rec = null; drawSaved((S.me && S.me.recipients) || [], true); sCalc(); $('rName').focus(); };
   /* LUKU na bili: wakala analipa; LUKU/ZECO token inarudi kwenye app */
+  /* Bili: maelezo kwa mteja + umbo la namba (chk). Umbo likikosekana mteja anaonywa tu, haizuiwi — mamlaka hubadilisha miundo.
+     Vyanzo: mwongozo wa GePG (control number 99XXXXXXXXXX, tarehe ya kuisha), tovuti za DStv/Zuku/StarTimes, mamlaka za maji (BUWASA, KUWASA). */
   var BL = {
-    'LUKU TANESCO': { ic: '⚡', t: 'LUKU (TANESCO)', f: 'Namba ya mita', h: 'Kwa kawaida tarakimu 11. Token itaonekana hapa kwenye app wakala akilipa.', n: 'Jina kwenye mita (hiari)' },
-    'TUKUZA': { ic: '⚡', t: 'TUKUZA (Umeme Zanzibar)', f: 'Namba ya mita (TUKUZA)', h: 'Token itaonekana hapa kwenye app wakala akilipa.', n: 'Jina kwenye mita (hiari)' },
-    'Serikali (GePG)': { ic: '🏛', t: 'Serikali Bara (GePG)', f: 'Control number (GePG)', h: 'Kwa kawaida tarakimu 12 — TRA, ada za shule/vyuo, ardhi, vibali n.k.', n: 'Ni malipo ya nini? (hiari)' },
-    'ZanMalipo': { ic: '🏛', t: 'Serikali Zanzibar (ZanMalipo)', f: 'Control number (ZanMalipo)', h: 'ZRA, ada za vyuo, vibali, faini na huduma nyingine za Serikali ya Zanzibar.', n: 'Ni malipo ya nini? (hiari)' },
-    'Maji DAWASA': { ic: '💧', t: 'Maji DAWASA', f: 'Namba ya akaunti ya maji', n: 'Jina kwenye akaunti (hiari)' },
-    'Maji ZAWA': { ic: '💧', t: 'Maji ZAWA', f: 'Namba ya akaunti ya maji', n: 'Jina kwenye akaunti (hiari)' },
-    'Maji (mamlaka nyingine)': { ic: '💧', t: 'Maji mengine', f: 'Namba ya kampuni (business number)', r: 'Namba ya akaunti ya maji', n: 'Mamlaka ya maji ya wapi? (mf. MORUWASA)' },
-    'DStv': { ic: '📺', t: 'DStv', f: 'Namba ya smartcard / IUC', n: 'Jina kwenye akaunti (hiari)' },
-    'Azam TV': { ic: '📺', t: 'Azam TV', f: 'Namba ya smartcard', n: 'Jina kwenye akaunti (hiari)' },
+    'LUKU TANESCO': { ic: '⚡', t: 'LUKU (TANESCO)', f: 'Namba ya mita', h: 'Tarakimu 11, iko kwenye mita au risiti ya LUKU ya zamani. Token ya tarakimu 20 itaonekana hapa kwenye app wakala akilipa.', n: 'Jina kwenye mita (hiari)',
+      chk: { re: /^\d{11}$/, msg: 'Namba ya mita ya LUKU kwa kawaida ina tarakimu 11. Hakikisha umeiandika yote.' } },
+    'TUKUZA': { ic: '⚡', t: 'TUKUZA (Umeme Zanzibar)', f: 'Namba ya mita (TUKUZA)', h: 'Namba ya mita ya ZECO, iko kwenye mita. Token itaonekana hapa kwenye app wakala akilipa.', n: 'Jina kwenye mita (hiari)',
+      chk: { re: /^\d{9,14}$/, msg: 'Namba ya mita inatakiwa iwe tarakimu tu.' } },
+    'Serikali (GePG)': { ic: '🏛', t: 'Serikali Bara (GePG)', f: 'Control number (GePG)', h: 'Tarakimu 12 zinazoanza na 99 — TRA, ada za shule/vyuo, ardhi, vibali, maji (mamlaka nyingi) n.k. Bili ina TAREHE YA KUISHA: hakikisha bado haijapita.', n: 'Ni malipo ya nini? (hiari)',
+      chk: { re: /^99\d{10}$/, msg: 'Control number za GePG kwa kawaida zina tarakimu 12 na zinaanza na 99. Angalia bili yako tena.' } },
+    'ZanMalipo': { ic: '🏛', t: 'Serikali Zanzibar (ZanMalipo)', f: 'Control number (ZanMalipo)', h: 'ZRB, ada za vyuo, vibali, faini na huduma nyingine za Serikali ya Zanzibar. Control number ina muda wake — ilipe kabla haijaisha.', n: 'Ni malipo ya nini? (hiari)',
+      chk: { re: /^\d{8,16}$/, msg: 'Control number inatakiwa iwe tarakimu tu.' } },
+    'Maji DAWASA': { ic: '💧', t: 'Maji DAWASA', f: 'Namba ya akaunti ya maji', h: 'Iko kwenye bili ya maji. Kama bili ina control number inayoanza na 99, chagua "Serikali Bara (GePG)".', n: 'Jina kwenye akaunti (hiari)' },
+    'Maji ZAWA': { ic: '💧', t: 'Maji ZAWA', f: 'Namba ya akaunti ya maji', h: 'Iko kwenye bili ya maji ya ZAWA.', n: 'Jina kwenye akaunti (hiari)' },
+    'Maji (mamlaka nyingine)': { ic: '💧', t: 'Maji mengine', f: 'Namba ya kampuni (business number)', r: 'Namba ya akaunti ya maji', h: 'Mamlaka nyingi za maji Bara (mf. BUWASA, KUWASA, MORUWASA) sasa zinatoa control number ya GePG inayoanza na 99 — bili yako ikiwa nayo, chagua "Serikali Bara (GePG)" badala yake.', n: 'Mamlaka ya maji ya wapi? (mf. MORUWASA)' },
+    'DStv': { ic: '📺', t: 'DStv', f: 'Namba ya smartcard / IUC', h: 'Tarakimu 10, iko chini ya king\'amuzi au kwenye skrini (Menu → Settings). Mfuko utalipwa kwa kiasi hiki.', n: 'Jina kwenye akaunti (hiari)',
+      chk: { re: /^\d{10,12}$/, msg: 'Smartcard ya DStv kwa kawaida ina tarakimu 10.' } },
+    'Azam TV': { ic: '📺', t: 'Azam TV', f: 'Namba ya smartcard', h: 'Iko kwenye kadi ya king\'amuzi (Azam Max / Azam TV).', n: 'Jina kwenye akaunti (hiari)',
+      chk: { re: /^\d{8,16}$/, msg: 'Smartcard inatakiwa iwe tarakimu tu.' } },
     'ZCTV': { ic: '📺', t: 'ZCTV', f: 'Namba ya king\'amuzi / smartcard', n: 'Jina kwenye akaunti (hiari)' },
-    'StarTimes': { ic: '📺', t: 'StarTimes', f: 'Namba ya smartcard', n: 'Jina kwenye akaunti (hiari)' },
-    'Zuku': { ic: '📺', t: 'Zuku', f: 'Namba ya akaunti', n: 'Jina kwenye akaunti (hiari)' },
-    'Vocha': { ic: '📲', t: 'Vocha (salio la simu)', f: 'Namba ya simu ya Tanzania', h: 'Wakala atanunua vocha / muda wa maongezi kwa namba hii — Vodacom, Mixx, Airtel, Halotel au TTCL.', n: 'Jina (hiari)' },
-    'Bili nyingine': { ic: '🧾', t: 'Nyingine', f: 'Namba ya kampuni / Lipa Namba', r: 'Namba ya kumbukumbu (reference)', n: 'Unamlipa nani? (mf. jina la shule)' }
+    'StarTimes': { ic: '📺', t: 'StarTimes', f: 'Namba ya smartcard', h: 'Iko kwenye kadi ndani ya king\'amuzi au Menu → Smartcard.', n: 'Jina kwenye akaunti (hiari)',
+      chk: { re: /^\d{9,12}$/, msg: 'Smartcard ya StarTimes kwa kawaida ina tarakimu 10–11.' } },
+    'Zuku': { ic: '📺', t: 'Zuku', f: 'Namba ya akaunti', h: 'Namba ya akaunti ya Zuku (bila kuandika "ZUKU" mbele). Iko kwenye bili au SMS ya Zuku.', n: 'Jina kwenye akaunti (hiari)',
+      chk: { re: /^(?:ZUKU)?\d{5,12}$/i, msg: 'Akaunti ya Zuku kwa kawaida ni tarakimu tu, bila herufi.' } },
+    'Vocha': { ic: '📲', t: 'Vocha (salio la simu)', f: 'Namba ya simu ya Tanzania', h: 'Wakala atanunua vocha / muda wa maongezi kwa namba hii — Vodacom, Mixx, Airtel, Halotel au TTCL.', n: 'Jina (hiari)',
+      chk: { re: /^0[67]\d{8}$/, msg: 'Namba ya simu ya Tanzania ina tarakimu 10 na inaanza na 06 au 07.' } },
+    'Bili nyingine': { ic: '🧾', t: 'Nyingine', f: 'Namba ya kampuni / Lipa Namba', r: 'Namba ya kumbukumbu (reference)', h: 'Kama bili ina control number inayoanza na 99, chagua "Serikali Bara (GePG)".', n: 'Unamlipa nani? (mf. jina la shule)' }
   };
   BL['Umeme ZECO'] = BL['TUKUZA'];   // wapokeaji waliohifadhiwa kwa jina la zamani
   function isBill(net) { return !!BL[net]; }
@@ -314,6 +325,13 @@
     $('rBillAcc').setAttribute('inputmode', S.biller === 'Vocha' ? 'tel' : /Maji|Bili|Zuku/.test(S.biller) ? 'text' : 'numeric');
   }
   $('rBillers').onclick = function (e) { var b = e.target.closest('[data-bl]'); if (!b) return; S.biller = b.getAttribute('data-bl'); drawBillers(); haptic(); $('rBillAcc').focus(); };
+  /* namba ikionekana si ya umbo la kawaida: onyo la manjano chini ya kisanduku (mteja anaweza kuendelea — mamlaka hubadilisha miundo) */
+  function billWarn() {
+    var b = BL[S.biller], v = $('rBillAcc').value.replace(/\s+/g, '').toUpperCase(), el = $('rBillHint');
+    if (b && b.chk && v.length >= 4 && !b.chk.re.test(v)) { el.textContent = '⚠️ ' + b.chk.msg; el.style.color = 'var(--warn)'; return true; }
+    el.textContent = (b && b.h) || ''; el.style.color = ''; return false;
+  }
+  $('rBillAcc').addEventListener('input', billWarn);
   function setKind(k) {
     S.kind = k; $('kMob').classList.toggle('on', k === 'mobile'); $('kBank').classList.toggle('on', k === 'bank'); $('kBill').classList.toggle('on', k === 'bill');
     $('rMobBox').style.display = k === 'mobile' ? 'flex' : 'none'; $('rBankBox').style.display = k === 'bank' ? 'flex' : 'none'; $('rBillBox').style.display = k === 'bill' ? 'flex' : 'none';
@@ -480,6 +498,7 @@
       var B0 = BL[S.biller]; if (!B0) { err.textContent = 'Chagua unacholipa (LUKU, maji, TV…)'; return; }
       body.kind = 'bill'; body.net = S.biller; body.rp = $('rBillAcc').value.replace(/\s+/g, '').toUpperCase(); body.rn = $('rBillName').value.trim(); body.bref = $('rBillRef').value.trim();
       if (body.rp.length < 3) { err.textContent = 'Weka ' + B0.f.toLowerCase(); $('rBillAcc').focus(); return; }
+      if (B0.chk && !B0.chk.re.test(body.rp)) body.warn = B0.chk.msg;   // haizuii — inaonyeshwa kwenye muhtasari wa kuhakiki
       if (B0.r && body.bref.length < 2) { err.textContent = 'Weka ' + B0.r.toLowerCase(); $('rBillRef').focus(); return; }
     }
     else {
@@ -512,6 +531,7 @@
       : [['Mpokeaji', String(body.rn || '').toUpperCase()], [body.kind === 'bank' ? 'Benki' : 'Mtandao', net], [body.kind === 'bank' ? 'Akaunti' : 'Namba', body.rp], ['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(bn ? [['🎁 Bonus ya rafiki', '+ ' + tzs(bn) + ' TZS']] : [])
       .map(function (x) { return '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">' + esc(x[0]) + '</span><b class="num" style="text-align:right">' + esc(x[1]) + '</b></div>'; }).join('');
     if (body.useBal) $('cfRows').innerHTML += '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">Malipo</span><b style="color:var(--ok-ink)">💰 Kutoka salio lako</b></div>';
+    if (body.warn) $('cfRows').innerHTML += '<div style="padding:10px 12px;margin-top:8px;border-radius:10px;background:var(--warn-soft,#FBF1DC);color:var(--warn);font-size:13px;font-weight:600">⚠️ ' + esc(body.warn) + ' Ukiendelea na namba isiyo sahihi, malipo yanaweza kwenda kwa mtu mwingine.</div>';
     $('cfImg').src = body.img || ''; $('cfImg').parentNode.style.display = body.useBal ? 'none' : 'flex';
     var cf = $('cf'); cf.classList.add('on'); $('cfErr').textContent = '';
     $('cfNo').onclick = function () { cf.classList.remove('on'); };
@@ -521,7 +541,8 @@
     var err = $('cfErr'); err.textContent = '';
     if (btn.disabled) return;
     busy(btn, true, 'Inatuma order…');
-    api('w_order', body).then(function (j) {
+    var send = Object.assign({}, body); delete send.warn;   // onyo ni la skrini tu
+    api('w_order', send).then(function (j) {
       busy(btn, false);
       if (!j.ok && j.error === 'twin') {
         if (confirm(j.msg + '\n\nBonyeza OK kutuma order nyingine tena.')) { body.again = 1; return submit(body, btn); }
