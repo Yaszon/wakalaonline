@@ -18,14 +18,13 @@
     if (!url) return Promise.reject(new Error('Seva haijawekwa kwenye app'));
     var payload = Object.assign({ action: action }, body || {}); if (S.wt) payload.wt = S.wt;
     var parse = function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Seva haikujibu vizuri. Jaribu tena'); } if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); } return j; };
-    if (opts && opts.progress) return new Promise(function (ok, no) {   // kutuma data nzito (risiti): asilimia halisi ya upakiaji
-      var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-      x.upload.onprogress = function (ev) { if (ev.lengthComputable) opts.progress(ev.loaded / ev.total); };
-      x.upload.onload = function () { opts.progress(1); };   // data zote zimefika — sasa seva inathibitisha
-      x.onload = function () { try { ok(parse(x.responseText)); } catch (e) { no(e); } };
-      x.onerror = function () { no(new Error('Hakuna mtandao. Angalia intaneti yako')); };
-      x.send(JSON.stringify(payload));
-    });
+    if (opts && opts.progress) {   // asilimia inakadiriwa (Apps Script haikubali preflight ya XHR upload); seva ikijibu → 100%
+      var data = JSON.stringify(payload), est = 600 + data.length / 120, t0 = Date.now();
+      var id = setInterval(function () { opts.progress(Math.min(0.92, (Date.now() - t0) / est)); }, 80);
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: data, redirect: 'follow' })
+        .then(function (r) { clearInterval(id); opts.progress(1); return r.text(); }, function () { clearInterval(id); throw new Error('Hakuna mtandao. Angalia intaneti yako'); })
+        .then(parse);
+    }
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' })
       .then(function (r) { return r.text(); })
       .then(function (t) {
