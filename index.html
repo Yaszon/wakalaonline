@@ -389,11 +389,16 @@
   $('yr').textContent = new Date().getFullYear();
 
   function rateFor(omr) { if (!info) return 0; return (info.rateBig && info.bigMin && omr >= info.bigMin) ? info.rateBig : info.rate; }
+  /* ada ya kutuma OMR→TZS (TZS, inakatwa kwenye TZS) — kutoka Daftari → Kanuni */
+  function feeFor(o) { var F = info && info.fees && info.fees.sell; if (!F || F.on !== true || !(o > 0)) return 0;
+    var T = (F.t || []).filter(function (x) { return Number(x.fee) > 0; }).sort(function (a, b) { return (Number(a.to) || Infinity) - (Number(b.to) || Infinity); });
+    for (var k = 0; k < T.length; k++) if (!(Number(T[k].to) > 0) || o <= Number(T[k].to) + 1e-9) return Math.round(Number(T[k].fee));
+    return T.length ? Math.round(Number(T[T.length - 1].fee)) : 0; }
   function omrNow() { var v = parseFloat(String($('omr').value).replace(/,/g, '')); return isFinite(v) && v > 0 ? v : 0; }
   function calc() {
-    var o = omrNow(), r = rateFor(o), tz = o && r ? Math.round(o * r) : 0;
+    var o = omrNow(), r = rateFor(o), fe = feeFor(o), tz = o && r ? Math.max(0, Math.round(o * r) - fe) : 0;
     $('tzs').textContent = tz ? nf.format(tz) + ' TZS' : '—';
-    if (info) $('cnote').textContent = r ? 'Rate: 1 OMR = ' + nf.format(r) + ' TZS' + (info.rateBig && info.bigMin && o < info.bigMin ? ' · kuanzia ' + nf.format(info.bigMin) + ' OMR: ' + nf.format(info.rateBig) : '') : 'Weka kiasi cha OMR';
+    if (info) $('cnote').textContent = r ? 'Rate: 1 OMR = ' + nf.format(r) + ' TZS' + (fe ? ' · ada ya kutuma TZS ' + nf.format(fe) + ' imekatwa' : '') + (info.rateBig && info.bigMin && o < info.bigMin ? ' · kuanzia ' + nf.format(info.bigMin) + ' OMR: ' + nf.format(info.rateBig) : '') : 'Weka kiasi cha OMR';
     $('calcGo').href = 'app/';
     var chips = $('chips').querySelectorAll('button');
     for (var i = 0; i < chips.length; i++) chips[i].setAttribute('aria-pressed', String(Number(chips[i].getAttribute('data-v')) === o));
