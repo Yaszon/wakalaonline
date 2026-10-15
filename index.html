@@ -420,6 +420,7 @@
       .then(function (r) { return r.json(); })
       .then(function (j) { done = true; showRate(j && j.ok ? j : null);
         try { if (j && j.ok && j.revOn && j.rateRev) { $('destRev').hidden = false; $('revRate').textContent = Number(j.rateRev).toLocaleString('en-US'); } } catch (e) {}   // Nunua Rial: inaonekana tu mmiliki akiiwasha
+      })
       .catch(function () { done = true; showRate(null); });
   } catch (e) { done = true; showRate(null); }
 
