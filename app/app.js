@@ -594,14 +594,18 @@
   }
   function drawPayInto(id, txt) { var keep = $('sPay').innerHTML; drawPay(txt); $(id).innerHTML = $('sPay').innerHTML; $('sPay').innerHTML = keep; }
   function drawPay(txt) {
+    /* kila mstari wenye namba/code unapata "Nakili": "TIGO 2: 776438 – RASHID", "NMB: 22910097289 – ALI", "CRDB: O152000ASTV00 – ALI", "Bank Muscat 0311…" */
     var lines = String(txt).split(/\n+/).map(function (x) { return x.replace(/\*/g, '').trim(); }).filter(Boolean), rows = [];
+    var strip = function (t) { return t.replace(/^[\s\u{1F300}-\u{1FAFF}\u2600-\u27BF\uFE0F📲💳🏦📌•·\-–:]+|[\s:–\-]+$/gu, '').trim(); };
     lines.forEach(function (ln) {
-      var m = ln.match(/(\+?\d[\d\s-]{6,}\d)/);
-      if (m) {
-        var num = m[1].replace(/[\s-]/g, ''), label = ln.replace(m[1], '').replace(/[:()]+/g, ' ').replace(/\s+/g, ' ').trim();
-        var kind = num.length >= 12 ? 'Namba ya akaunti' : 'Namba ya simu';
-        rows.push('<div class="payrow"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="mut" style="font-size:12px;font-weight:700">' + esc(label || kind) + '</span><span class="num" style="font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(num) + '</span></div>'
-          + '<button class="cpy" type="button" data-cp="' + esc(num) + '" aria-label="Nakili ' + esc(num) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>Nakili</button></div>');
+      var code = '', label = '', who = '';
+      var m = ln.match(/^(.*?)[:：]\s*([A-Z0-9][A-Z0-9 \-]{3,})\s*(?:[–\-—]\s*(.+))?$/i);   // LABEL: CODE – JINA
+      if (m && /\d{4,}|[A-Z]{1,3}\d{4,}/i.test(m[2].replace(/[\s-]/g, ''))) { label = strip(m[1]); code = m[2].replace(/[\s-]/g, '').toUpperCase(); who = (m[3] || '').trim(); }
+      else { var n = ln.match(/(\+?\d[\d\s-]{4,}\d)/); if (n) { code = n[1].replace(/[\s-]/g, ''); label = strip(ln.replace(n[1], '')); } }
+      if (code) {
+        var kind = code.length >= 12 ? 'Namba ya akaunti' : code.length <= 7 ? 'Lipa namba / code' : 'Namba ya simu';
+        rows.push('<div class="payrow"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="mut" style="font-size:12px;font-weight:700">' + esc(label || kind) + (who ? ' – ' + esc(who) : '') + '</span><span class="num" style="font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(code) + '</span></div>'
+          + '<button class="cpy" type="button" data-cp="' + esc(code) + '" aria-label="Nakili ' + esc(code) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Nakili</button></div>');
       } else rows.push('<div class="payrow" style="padding:8px 0"><span style="font-weight:700;font-size:15px">' + esc(ln) + '</span></div>');
     });
     $('sPay').innerHTML = rows.join('') || '<div class="payrow mut">—</div>';
