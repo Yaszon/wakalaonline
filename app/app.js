@@ -1064,7 +1064,7 @@
       });
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
-  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa' };
+  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine' };
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Kipindi chote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
@@ -1074,23 +1074,23 @@
       var L = S.orders.filter(function (o) { return o.at >= from && o.at < to; }).sort(function (a, b) { return a.at - b.at; });
       if (!L.length) throw new Error('Hakuna miamala kwenye ' + label);
       var J = PDF(), doc = new J({ unit: 'mm', format: 'a4' }), W = 210, H = 297, me = S.me || {};
-      var done = L.filter(function (o) { return o.st === 'paid' || o.st === 'ok'; }), so = 0, st = 0;
-      done.forEach(function (o) { so += Number(o.omr) || 0; st += Number(o.tzs) || 0; });
+      var done = L.filter(function (o) { return o.st === 'paid' || o.st === 'ok'; }), so = 0, st = 0, rv = L.filter(function (o) { return o.st === 'rdone'; }), ro = 0, rt = 0;
+      done.forEach(function (o) { so += Number(o.omr) || 0; st += Number(o.tzs) || 0; }); rv.forEach(function (o) { ro += Number(o.omr) || 0; rt += Number(o.tzs) || 0; });
       pdfHead(doc, W, 'Taarifa ya miamala', label);
       doc.setTextColor(15, 42, 28); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(me.name || 'Mteja wa WakalaOnline', 12, 42);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(91, 107, 98);
       doc.text('+' + (me.phone || '') + '   ·   Imetolewa ' + new Date().toLocaleDateString('en-GB'), 12, 48);
       var box = function (x, t, v) { doc.setFillColor(238, 246, 220); doc.roundedRect(x, 54, 58, 20, 3, 3, 'F'); doc.setFontSize(8.5); doc.setTextColor(63, 90, 18); doc.text(t, x + 4, 61); doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(15, 42, 28); doc.text(v, x + 4, 69); doc.setFont('helvetica', 'normal'); };
-      box(12, 'Miamala iliyokamilika', String(done.length)); box(76, 'Jumla OMR', omr(so)); box(140, 'Jumla TZS', tzs(st));
+      box(12, 'Umetuma Tanzania', done.length + ' · ' + omr(so) + ' OMR'); box(76, 'TZS zilizotumwa', tzs(st)); box(140, rv.length ? 'Nunua Rial: OMR ulizopokea' : 'Jumla TZS', rv.length ? omr(ro) + ' (TZS ' + tzs(rt) + ')' : tzs(st));
       doc.autoTable({
         startY: 82, margin: { left: 12, right: 12, bottom: 16 },
-        head: [['Tarehe', 'Ref', 'Mpokeaji', 'Mtandao', 'OMR', 'TZS', 'Hali']],
-        body: L.map(function (o) { return [new Date(o.at).toLocaleDateString('en-GB'), o.ref, o.rn || '', o.net || '', omr(o.omr), tzs(o.tzs), LBL[o.st] || o.st]; }),
+        head: [['Tarehe', 'Ref', 'Aina', 'Mpokeaji', 'Mtandao', 'OMR', 'TZS', 'Hali']],
+        body: L.map(function (o) { return [new Date(o.at).toLocaleDateString('en-GB'), o.ref, o.dir === 'to' ? 'Nunua Rial (TZS→OMR)' : (o.kind === 'bill' ? 'Bili' : 'Tuma TZS'), o.rn || '', o.net || '', omr(o.omr), tzs(o.tzs), LBL[o.st] || o.st]; }),
         styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2, textColor: [15, 42, 28] },
         headStyles: { fillColor: [31, 122, 50], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [244, 246, 242] },
         columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' } },
-        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 6) { var v = d.cell.raw; d.cell.styles.textColor = v === 'Imefika' ? [23, 96, 42] : (v === 'Haijaonekana' || v === 'Imeghairiwa' || v === 'Imesitishwa') ? [180, 35, 24] : [138, 90, 11]; } }
+        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 7) { var v = d.cell.raw; d.cell.styles.textColor = v === 'Imefika' ? [23, 96, 42] : (v === 'Haijaonekana' || v === 'Imeghairiwa' || v === 'Imesitishwa') ? [180, 35, 24] : [138, 90, 11]; } }
       });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
@@ -1112,6 +1112,10 @@
     document.querySelectorAll('#hiFilt button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-f') === S.filt); });
     var L = S.orders.filter(function (o) { return S.filt === 'all' || (S.filt === 'open' ? (o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part' || o.st === 'rchk' || o.st === 'rpay' || o.st === 'rno') : (o.st === 'paid' || o.st === 'rdone')); });
     $('hiList').innerHTML = L.length ? L.map(function (o) {
+      if (o.dir === 'to') return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs" style="background:#E3EAF7;color:#1B2E52">🇴🇲</span>'
+        + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nunua Rial · ' + esc(o.rn || '') + '</span>'
+        + '<span class="mut" style="font-size:12px">' + esc(o.ref) + ' · ' + esc(when(o.at)) + ' · umelipa TZS ' + tzs(o.tzs) + (o.net ? ' · ' + esc(o.net) : '') + '</span></span>'
+        + '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="num" style="font-weight:700;font-size:14px;color:#1B2E52">+' + omr(o.omr) + ' OMR</span>' + pill(o) + '</span></button>';
       return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs">' + esc(initials(o.rn)) + '</span>'
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Mpokeaji') + '</span>'
         + '<span class="mut" style="font-size:12px">' + esc(o.ref) + ' · ' + esc(when(o.at)) + (o.net ? ' · ' + esc(o.net) : '') + '</span></span>'
