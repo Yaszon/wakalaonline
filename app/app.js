@@ -230,6 +230,7 @@
     var h = new Date().getHours();
     $('hGreet').textContent = h < 5 ? 'Habari za usiku' : h < 12 ? 'Habari za asubuhi' : h < 16 ? 'Habari za mchana' : h < 20 ? 'Habari za jioni' : 'Habari za usiku';   // saa ya simu ya mteja
     $('hName').textContent = me.name ? firstName(me.name) : 'Karibu WakalaOnline';
+    var hr = $('hRev'); if (hr) { hr.style.display = i && i.revOn && i.rateRev ? 'flex' : 'none'; if (i && i.rateRev) $('hRevRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; }
     $('hAv').textContent = initials(me.name || 'W');
     if (i && i.rate) $('hRate').textContent = tzs(rateFor(0));
     $('hVip').style.display = i && i.vip && i.vip > i.rate ? 'inline-flex' : 'none';
@@ -244,7 +245,7 @@
     drawRefCard(); drawDebt(); drawNews();
     var sb = Math.abs(Number(me.bal) || 0) > 0.0005 || !!me.canAmana; $('hBalBtn').style.display = sb ? '' : 'none';
     $('hBalBtn').parentNode.style.gridTemplateColumns = sb ? '' : 'repeat(3,minmax(0,1fr))';
-    var act = S.orders.filter(function (o) { return o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part'; }).slice(0, 3);
+    var act = S.orders.filter(function (o) { return o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part' || o.st === 'rchk' || o.st === 'rpay' || o.st === 'rno'; }).slice(0, 3);
     $('hActive').innerHTML = act.map(function (o) {
       return '<button class="card" data-ref="' + esc(o.ref) + '" style="width:100%;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:12px;color:var(--ink)">'
         + '<div class="row" style="justify-content:space-between"><span class="row" style="gap:10px;min-width:0"><span class="avs">' + esc(initials(o.rn)) + '</span><span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Order') + '</span><span class="mut" style="font-size:12px;font-weight:600">Oda inayoendelea · ' + esc(o.ref) + '</span></span></span>' + pill(o) + '</div>'
@@ -284,9 +285,55 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], rchk: ['p-new', 'Wakala anahakiki'], rno: ['p-no', 'TZS hazijaonekana'], rpay: ['p-ok', 'Tunalipa OMR'], rdone: ['p-paid', 'OMR zimelipwa'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
+
+  /* ---------- Nunua Rial (TZS → OMR) ---------- */
+  var RV = { proof: '', ck: '' };
+  function openRev() {
+    var i = info() || {}; if (!i.revOn || !i.rateRev) return toast('Huduma ya Nunua Rial haipatikani kwa sasa');
+    $('rvRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; $('rvMin').textContent = 'Kiasi cha chini: OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * i.rateRev) + ')';
+    drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; rvCalc(); RV.ck = '';
+    S.stack.push('rev'); show('rev', false);
+  }
+  function rvCalc() {
+    var i = info() || {}, v = Number(String($('rvTzs').value).replace(/,/g, '')) || 0, r = Number(i.rateRev) || 0;
+    try { var vi = $('rvTzs'); vi.style.width = Math.max(3, String(vi.value || '').length + 0.6) + 'ch'; } catch (e) {}
+    $('rvOmr').textContent = (r && v ? (Math.round(v / r * 1000) / 1000).toFixed(3) : '0') + ' OMR';
+    document.querySelectorAll('#rvChips button').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-tz')) === v); });
+  }
+  $('rvTzs').addEventListener('input', rvCalc);
+  $('rvChips').onclick = function (e) { var b = e.target.closest('[data-tz]'); if (!b) return; $('rvTzs').value = b.getAttribute('data-tz'); rvCalc(); haptic(); };
+  $('hRev').onclick = function () { haptic(); openRev(); };
+  $('rvPay').onclick = function (e) { $('sPay').onclick.call(this, e); };
+  $('rvProof').onchange = function () {
+    var f = this.files && this.files[0]; if (!f) return; $('rvProofTxt').textContent = 'Inaandaa risiti…';
+    shrink(f, 1600, 0.82).then(function (d) { RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; })
+      .catch(function () { RV.proof = ''; $('rvProofTxt').textContent = 'Faili halikufunguka — jaribu lingine'; });
+  };
+  $('rvGo').onclick = function () {
+    var btn = this, i = info() || {}, err = $('rvErr'), v = Math.round(Number(String($('rvTzs').value).replace(/,/g, '')) || 0), r = Number(i.rateRev) || 0; err.textContent = '';
+    if (!(v > 0)) { err.textContent = 'Weka kiasi cha TZS unacholipa'; $('rvTzs').focus(); return; }
+    if (r && v / r < (i.revMin || 5)) { err.textContent = 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r) + ')'; return; }
+    var rn = $('rvName').value.trim(), rp = $('rvAcc').value.replace(/[\s-]/g, '');
+    if (rn.length < 3) { err.textContent = 'Weka jina kamili la anayepokea OMR'; $('rvName').focus(); return; }
+    if (rp.length < 8) { err.textContent = 'Weka namba ya simu ya Oman au akaunti ya benki'; $('rvAcc').focus(); return; }
+    if (!RV.proof) { err.textContent = 'Pakia risiti ya malipo ya TZS kwanza'; return; }
+    if (!confirm('Unalipa TZS ' + tzs(v) + ' → unapokea OMR ' + (Math.round(v / r * 1000) / 1000).toFixed(3) + ' kwa ' + rn.toUpperCase() + ' (' + rp + ').\nUmeshalipa TZS kwa namba za wakala?')) return;
+    if (!RV.ck) RV.ck = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    busy(btn, true, 'Inatuma…');
+    var body = { tzs: v, rate: r, rn: rn, rp: rp, net: $('rvNet').value.trim(), img: RV.proof, ck: RV.ck };
+    var go = function () { return apiLoad('w_revorder', body, 'Inatuma oda ya Nunua Rial…', '✓ Oda imepokelewa').then(function (j) {
+      busy(btn, false);
+      if (!j.ok && j.error === 'twin') { if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return go(); } return; }
+      if (!j.ok && j.error === 'rate') { setMe(Object.assign({}, S.me, { info: Object.assign({}, info(), { rateRev: j.rate }) })); $('rvRate').textContent = 'rate 1 OMR = ' + tzs(j.rate) + ' TZS'; rvCalc(); err.textContent = j.msg; return; }
+      if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
+      setMe(j); RV.proof = ''; RV.ck = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS'; $('rvTzs').value = ''; rvCalc();
+      loadOrders().then(function () { haptic(); toast('✓ Oda imepokelewa — wakala anahakiki TZS'); if (j.order) openTrack(j.order.ref); else show('hist'); });
+    }).catch(function (e) { busy(btn, false); err.textContent = e.message; }); };
+    go();
+  };
 
   /* ---------- tuma ---------- */
   function fillSelect(sel, list, ph) { sel.innerHTML = '<option value="">' + ph + '</option>' + list.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join(''); }
@@ -713,10 +760,38 @@
 
   /* ---------- fuatilia ---------- */
   function openTrack(ref) { S.cur = ref; S.stack.push('track'); show('track', false); }
+  function drawRevTrack(o) {
+    var rchk = o.st === 'rchk', rno = o.st === 'rno', rpay = o.st === 'rpay', rdone = o.st === 'rdone';
+    var steps = [['Oda imepokelewa · risiti ya TZS imepakiwa', when(o.at), 1], ['Wakala amethibitisha TZS zimeingia', rpay || rdone ? 'Imethibitishwa' : rno ? 'Hazijaonekana' : 'Wakala anaangalia akaunti zake', 2], ['OMR zimelipwa Oman', rdone ? when(o.paidAt) : 'Bado', 3]];
+    var h = '<div class="rev-card" style="border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
+      + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;opacity:.85">🇴🇲 Nunua Rial · kwa ' + esc(o.rn || '') + (o.net ? ' · ' + esc(o.net) : '') + '</span>' + pill(o) + '</div>'
+      + '<div class="num" style="font-size:28px;font-weight:700;color:#FFD166">' + omr(o.omr) + ' OMR</div>'
+      + '<div style="font-size:13px;opacity:.85">Umelipa TZS ' + tzs(o.tzs) + ' · Rate ' + tzs(o.rate) + ' · ' + esc(o.rp || '') + '</div></div>';
+    if (o.st === 'cancel') h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b></div>';
+    else if (rno) h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">TZS hazijaonekana kwa wakala</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Wakala: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Hakikisha ulilipa kwa namba sahihi, kisha pakia risiti sahihi — wakala atahakiki tena.</div></div>'
+      + '<label class="btn" style="position:relative;cursor:pointer">📎 Pakia risiti sahihi ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
+    else if (rdone) h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>🎉 OMR ' + omr(o.omr) + ' zimelipwa</b> kwa ' + esc(o.rn || '') + (o.paidAt ? ' · ' + when(o.paidAt) : '') + '.</div>' + (o.receipt ? '<div id="tRc" class="card" style="padding:8px;cursor:pointer"><div class="mut" style="font-size:12px;font-weight:700;padding:4px 6px">Risiti ya malipo ya OMR</div></div>' : '');
+    else if (rpay) h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>✅ TZS zimeingia.</b> Tunakulipa OMR ' + omr(o.omr) + ' sasa — utapata risiti hapa na kwenye WhatsApp.</div>';
+    else h += '<div class="card mut" style="font-size:14px;line-height:1.55">⏳ Wakala wetu Tanzania anaangalia kama TZS ' + tzs(o.tzs) + ' zimeingia. Ikithibitishwa, tunakulipa OMR Oman.</div>'
+      + '<label class="btn ghost" style="position:relative;cursor:pointer">📎 Badilisha risiti ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
+    h += '<div class="card steps" style="padding:16px 16px 6px">' + steps.map(function (s2, k) {
+      var done = o.step >= s2[2], now = !done && o.step === s2[2] - 1;
+      return '<div class="st' + (done ? ' done' : '') + (now ? ' now' : '') + '"><div style="display:flex;flex-direction:column;align-items:center"><span class="dot">' + (done ? svg('check', 14, '#fff', 3) : '') + '</span>' + (k < 2 ? '<span class="bar"></span>' : '') + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 ' + (k < 2 ? '8' : '10') + 'px"><span style="font-weight:800;font-size:15px;' + (done ? '' : 'color:var(--mut)') + '">' + esc(s2[0]) + '</span><span class="mut" style="font-size:13px">' + esc(s2[1]) + '</span></div></div>'; }).join('') + '</div>';
+    $('tBody').innerHTML = h;
+    var tp = $('tProof'); if (tp) tp.onchange = function () {
+      var f = this.files && this.files[0]; if (!f) return; toast('Inaandaa risiti…');
+      shrink(f, 1600, 0.82).then(function (d) { return apiLoad('w_proofadd', { ref: o.ref, img: d }, 'Inaambatisha risiti…', '✓ Risiti imeambatishwa'); }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana');
+        S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); haptic(); drawTrack(); })
+        .catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
+    };
+    if (o.receipt) receiptImg(o).then(function (url) { var b = $('tRc'); if (!b || S.cur !== o.ref) return; b.innerHTML += '<img src="' + url + '" alt="Risiti" style="width:100%;border-radius:14px;display:block">'; b.onclick = function () { viewReceipt(o, url); }; }).catch(function () {});
+  }
   function drawTrack() {
     var o = S.orders.filter(function (x) { return x.ref === S.cur; })[0];
     $('tTitle').textContent = 'Oda ' + (S.cur || '');
     if (!o) { $('tBody').innerHTML = '<div class="empty">Oda haipatikani</div>'; return; }
+    if (o.dir === 'to') return drawRevTrack(o);
     var steps = [
       ['Oda imepokelewa', when(o.at), 1],
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
@@ -1000,7 +1075,7 @@
     $('hiBal').textContent = omr(Math.abs(b)) + ' OMR';
     $('hiBal').style.color = b < 0 ? 'var(--bad)' : '';
     document.querySelectorAll('#hiFilt button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-f') === S.filt); });
-    var L = S.orders.filter(function (o) { return S.filt === 'all' || (S.filt === 'open' ? (o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part') : o.st === 'paid'); });
+    var L = S.orders.filter(function (o) { return S.filt === 'all' || (S.filt === 'open' ? (o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part' || o.st === 'rchk' || o.st === 'rpay' || o.st === 'rno') : (o.st === 'paid' || o.st === 'rdone')); });
     $('hiList').innerHTML = L.length ? L.map(function (o) {
       return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs">' + esc(initials(o.rn)) + '</span>'
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Mpokeaji') + '</span>'

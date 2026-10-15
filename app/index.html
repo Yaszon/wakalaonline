@@ -241,30 +241,42 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 @media (prefers-reduced-motion:reduce){#yzlPath,.yzl-bits i,#yzLoad.wait .yzl-arc,.wspin .ws-a{animation:none;stroke-dashoffset:0;opacity:1}}
 /* ---- Tuma: mwonekano wa kidigitali ---- */
 .step{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:800;margin-right:8px;vertical-align:middle;box-shadow:0 2px 6px rgba(31,122,50,.3)}
-#s-send .amt-card{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 100% 0%,#2E9A45 0%,#1F7A32 45%,#0E3D20 100%);border:1px solid rgba(166,211,60,.3);color:#fff;box-shadow:0 14px 34px rgba(14,61,32,.35)}
-#s-send .amt-card::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 85%)}
-#s-send .amt-card>*{position:relative}
-#s-send .amt-head{width:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.85)}
-#s-send .amt-head .step{background:var(--lime);color:#0E3D20;box-shadow:none}
-#s-send .amt-head .seg{margin-left:auto;width:140px;background:rgba(0,0,0,.28);padding:3px}
-#s-send .amt-head .seg button{height:32px;color:rgba(255,255,255,.7);font-size:13px}
-#s-send .amt-head .seg button.on{background:var(--lime);color:#0E3D20;box-shadow:none}
-#s-send .amt-card .lbl{color:rgba(255,255,255,.7);font-size:12.5px}
-#s-send .amt-wrap{display:flex;align-items:baseline;justify-content:center;gap:8px;width:100%}
-#s-send .amt{color:var(--lime);font-size:52px;letter-spacing:-.03em;width:2ch;max-width:70%;min-width:2ch;text-shadow:0 0 18px rgba(166,211,60,.35);caret-color:var(--lime)}
-#s-send .amt::placeholder{color:rgba(166,211,60,.35)}
-#s-send .amt-unit{font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:rgba(255,255,255,.8)}
-#s-send .amt-card .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px;backdrop-filter:blur(4px)}
-#s-send .amt-card .chips button.on{background:var(--lime);border-color:var(--lime);color:#0E3D20}
-#s-send .amt-card .tzs-row{width:100%;background:rgba(166,211,60,.14);border:1px solid rgba(166,211,60,.35);border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-#s-send .amt-card .tzs-row #sTzsL{color:rgba(255,255,255,.85)!important}
-#s-send .amt-card .tzs-row #sTzs{color:var(--lime);text-shadow:0 0 12px rgba(166,211,60,.35)}
-#s-send .amt-card .row.mut{color:rgba(255,255,255,.6)!important}
-#s-send #sProofLbl{border:1.5px dashed rgba(31,122,50,.45);background:linear-gradient(180deg,var(--card),var(--card-2));gap:12px;justify-content:flex-start}
-#s-send .drop-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--lime-soft);color:var(--brand);flex:none}
-#s-send .cta-go{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#B5E04F,#8CC63F);color:#0E3D20;box-shadow:0 10px 26px rgba(140,198,63,.4);font-weight:800;letter-spacing:.01em}
-#s-send .cta-go:active{transform:translateY(1px)}
+#s-send .amt-card,#s-rev .amt-card{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 100% 0%,#2E9A45 0%,#1F7A32 45%,#0E3D20 100%);border:1px solid rgba(166,211,60,.3);color:#fff;box-shadow:0 14px 34px rgba(14,61,32,.35)}
+#s-send .amt-card,#s-rev .amt-card::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 85%)}
+#s-send .amt-card,#s-rev .amt-card>*{position:relative}
+#s-send .amt-head,#s-rev .amt-head{width:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.85)}
+#s-send .amt-head,#s-rev .amt-head .step{background:var(--lime);color:#0E3D20;box-shadow:none}
+#s-send .amt-head,#s-rev .amt-head .seg{margin-left:auto;width:140px;background:rgba(0,0,0,.28);padding:3px}
+#s-send .amt-head,#s-rev .amt-head .seg button{height:32px;color:rgba(255,255,255,.7);font-size:13px}
+#s-send .amt-head,#s-rev .amt-head .seg button.on{background:var(--lime);color:#0E3D20;box-shadow:none}
+#s-send .amt-card,#s-rev .amt-card .lbl{color:rgba(255,255,255,.7);font-size:12.5px}
+#s-send .amt-wrap,#s-rev .amt-wrap{display:flex;align-items:baseline;justify-content:center;gap:8px;width:100%}
+#s-send .amt,#s-rev .amt{color:var(--lime);font-size:52px;letter-spacing:-.03em;width:2ch;max-width:70%;min-width:2ch;text-shadow:0 0 18px rgba(166,211,60,.35);caret-color:var(--lime)}
+#s-send .amt::placeholder,#s-rev .amt::placeholder{color:rgba(166,211,60,.35)}
+#s-send .amt-unit,#s-rev .amt-unit{font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:rgba(255,255,255,.8)}
+#s-send .amt-card,#s-rev .amt-card .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px;backdrop-filter:blur(4px)}
+#s-send .amt-card,#s-rev .amt-card .chips button.on{background:var(--lime);border-color:var(--lime);color:#0E3D20}
+#s-send .amt-card,#s-rev .amt-card .tzs-row{width:100%;background:rgba(166,211,60,.14);border:1px solid rgba(166,211,60,.35);border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#s-send .amt-card,#s-rev .amt-card .tzs-row #sTzsL{color:rgba(255,255,255,.85)!important}
+#s-send .amt-card,#s-rev .amt-card .tzs-row #sTzs{color:var(--lime);text-shadow:0 0 12px rgba(166,211,60,.35)}
+#s-send .amt-card,#s-rev .amt-card .row.mut{color:rgba(255,255,255,.6)!important}
+#s-send #sProofLbl,#s-rev #rvProofLbl{border:1.5px dashed rgba(31,122,50,.45);background:linear-gradient(180deg,var(--card),var(--card-2));gap:12px;justify-content:flex-start}
+#s-send .drop-ic,#s-rev .drop-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--lime-soft);color:var(--brand);flex:none}
+#s-send .cta-go,#s-rev .cta-go{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#B5E04F,#8CC63F);color:#0E3D20;box-shadow:0 10px 26px rgba(140,198,63,.4);font-weight:800;letter-spacing:.01em}
+#s-send .cta-go:active,#s-rev .cta-go:active{transform:translateY(1px)}
 #s-send .opt.on,#s-send .opt[aria-pressed="true"]{box-shadow:0 0 0 3px rgba(166,211,60,.25)}
+.rev-card{background:radial-gradient(120% 90% at 0% 0%,#C8102E 0%,#8E0E22 55%,#3B0A12 100%);color:#fff;border:1px solid rgba(255,255,255,.18);box-shadow:0 14px 34px rgba(142,14,34,.3)}
+#s-rev .amt-card.rev{background:radial-gradient(120% 90% at 100% 0%,#B5102A 0%,#7A0D1F 45%,#2E0810 100%);border-color:rgba(255,200,120,.3)}
+#s-rev .amt-card.rev .amt,#s-rev .amt-card.rev .tzs-row #sTzs,#s-rev .amt-card.rev #rvOmr{color:#FFD166;text-shadow:0 0 16px rgba(255,209,102,.35)}
+#s-rev .amt-card.rev .amt::placeholder{color:rgba(255,209,102,.35)}
+#s-rev .amt-card.rev .tzs-row{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)} #s-rev .amt-card.rev .tzs-row span:first-child{color:rgba(255,255,255,.85)!important}
+#s-rev .amt-card.rev .amt-head .step{background:#FFD166;color:#3B0A12}
+#s-rev .amt-card.rev .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px} #s-rev .amt-card.rev .chips button.on{background:#FFD166;border-color:#FFD166;color:#3B0A12}
+#s-rev .amt-card.rev .lbl,#s-rev .amt-card.rev .row.mut{color:rgba(255,255,255,.7)!important}
+#s-rev .amt-card.rev .amt-unit{color:rgba(255,255,255,.85)}
+#s-rev .amt-card.rev .amt-wrap .amt{min-width:3ch}
+#s-rev .cta-go{background:linear-gradient(135deg,#FFD166,#F4A300);color:#3B0A12;box-shadow:0 10px 26px rgba(244,163,0,.35)}
+#s-rev .step{background:#8E0E22}
 </style>
 </head>
 <body>
@@ -342,6 +354,12 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
         <button id="svBill"><span class="si" style="background:rgba(245,158,11,.16);color:#B45309" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/></svg></span><b>LUKU / Bili</b><small>Umeme · Maji · TV · Vocha</small></button>
       </div>
     </div>
+
+    <button id="hRev" class="card rev-card" style="display:none;align-items:center;gap:14px;text-align:left;cursor:pointer;width:100%">
+      <span class="si" aria-hidden="true" style="width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.14);font-size:24px">🇴🇲</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:3px"><b style="font-size:16px">Nunua Rial — TZS → OMR</b><span style="font-size:12.5px;opacity:.85">Lipa TZS Tanzania, pokea OMR Oman · <span id="hRevRate">rate —</span></span></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
 
     <div id="hNews" class="card" style="display:none;flex-direction:column;gap:6px;border-color:#BFD7FF;background:#EEF5FF;color:var(--ink)">
       <div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px"><span style="font-size:12px;font-weight:800;color:#1D4ED8">📣 Tangazo</span><span class="row" style="gap:6px"><button id="hNewsAll" class="mut" style="font-size:12px;font-weight:700;background:none;border:0;color:#1D4ED8;cursor:pointer"></button><button id="hNewsX" aria-label="Funga tangazo" style="background:none;border:0;font-size:18px;line-height:1;color:var(--mut);cursor:pointer">×</button></span></div>
@@ -438,6 +456,41 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     </div>
     <div class="err" id="sErr"></div>
     <div class="cta"><button class="btn cta-go" id="sGo"><span>Endelea — hakiki oda</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
+  </div>
+</section>
+
+<!-- ============ NUNUA RIAL (TZS → OMR) ============ -->
+<section class="scr" id="s-rev">
+  <div class="pad">
+    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1>Nunua Rial</h1></div>
+    <div class="card amt-card rev" style="display:flex;flex-direction:column;gap:12px;align-items:center;padding:20px 16px 16px">
+      <div class="amt-head"><span class="step">1</span><span>Unalipa TZS</span><span class="mut" style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.75)" id="rvRate">rate —</span></div>
+      <label class="lbl" for="rvTzs">Kiasi cha TZS unacholipa</label>
+      <div class="amt-wrap"><input id="rvTzs" class="amt" inputmode="numeric" placeholder="0"><span class="amt-unit">TZS</span></div>
+      <div class="chips" style="justify-content:center;max-width:100%;flex-wrap:wrap" id="rvChips"><button data-tz="50000">50,000</button><button data-tz="100000">100,000</button><button data-tz="200000">200,000</button><button data-tz="500000">500,000</button><button data-tz="1000000">1M</button></div>
+      <div class="tzs-row"><span style="font-size:13px;font-weight:800" id="rvOmrL">Utapokea Oman</span><span class="num" id="rvOmr" style="font-size:22px;font-weight:700">0 OMR</span></div>
+      <div class="row mut" style="justify-content:space-between;font-size:12px;font-weight:600;width:100%"><span id="rvMin"></span><span>Oda zinahakikiwa na wakala</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2><span class="step">2</span>Anayepokea OMR (Oman)</h2></div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px">
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina kamili<input id="rvName" class="field" autocomplete="off" autocapitalize="characters" placeholder="mf. YASSIR ISSA SALUM"></label>
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Namba ya simu ya Oman au akaunti ya benki<input id="rvAcc" class="field num" autocomplete="off" autocapitalize="characters" placeholder="9XXXXXXX au akaunti ya benki"></label>
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Benki / mtandao (hiari)<input id="rvNet" class="field" autocomplete="off" placeholder="mf. Bank Muscat, NBO, Sohar, eFloos"></label>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="sec"><h2><span class="step">3</span>Lipa TZS kwa namba hizi</h2><span class="mut" style="font-size:12px;font-weight:700">za wakala wetu Tanzania</span></div>
+      <div class="card" id="rvPay" style="padding:6px 14px"></div>
+      <label class="opt" style="border-style:dashed;justify-content:flex-start;min-height:68px;cursor:pointer;position:relative" id="rvProofLbl">
+        <input type="file" accept="image/*,application/pdf" id="rvProof" style="position:absolute;opacity:0;width:1px;height:1px">
+        <span class="drop-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0 4 4m-4-4-4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span style="display:flex;flex-direction:column;gap:2px;text-align:left"><span id="rvProofTxt" style="font-weight:800">Pakia risiti ya malipo ya TZS</span><span class="mut" style="font-size:12px;font-weight:600">Picha ya skrini ya M-Pesa/Mixx/benki au PDF</span></span>
+      </label>
+      <img id="rvProofImg" alt="Risiti uliyochagua" style="display:none;max-height:170px;border-radius:16px;object-fit:contain;background:var(--card-2)">
+    </div>
+    <div class="err" id="rvErr"></div>
+    <div class="cta"><button class="btn cta-go" id="rvGo"><span>Tuma — wakala ahakiki</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
   </div>
 </section>
 
