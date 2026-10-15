@@ -654,7 +654,7 @@
       if (balAvail() + 0.0005 < o) { err.textContent = 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa oda hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.'; return; }
       body.useBal = 1;
     } else {
-      if (!S.proof) { err.textContent = 'Pakia picha ya risiti ya malipo yako ya OMR kwanza'; return; }
+      if (!S.proof) { err.textContent = 'Pakia risiti ya malipo yako ya OMR kwanza'; return; }
       body.img = S.proof;
     }
     if (!S.ck) S.ck = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -692,7 +692,7 @@
       }
       if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; if (j.error === 'bal') loadMe().then(drawBalOpt); if (j.error === 'rate') Promise.all([loadInfo(), loadMe()]).then(function () { sCalc(); $('cf').classList.remove('on'); $('sErr').textContent = j.msg; }); return; }
       $('cf').classList.remove('on'); S.ck = ''; S.useBal = false;
-      S.proof = ''; $('sProof').value = ''; $('sProofImg').style.display = 'none'; $('sProofTxt').textContent = 'Pakia picha ya risiti'; $('sOmr').value = '';
+      S.proof = ''; $('sProof').value = ''; $('sProofImg').style.display = 'none'; $('sProofTxt').textContent = 'Pakia risiti ya malipo'; $('sOmr').value = '';
       ['rName', 'rPhone', 'rAcc', 'rBillAcc', 'rBillRef', 'rBillName'].forEach(function (id) { $(id).value = ''; });
       if (!j.dup) { S.orders.unshift(j.order); LS.set('yzw_orders', S.orders); }
       S.stack = ['home']; showOk(j.order);
@@ -1174,7 +1174,7 @@
       if (x.kind === 'mobile' && o * r > (i.maxMob || 5000000)) return bBad(k, n + 'kwa pesa ya simu, kiasi cha juu ni ' + tzs(i.maxMob || 5000000) + ' TZS (≈ ' + omr(Math.floor((i.maxMob || 5000000) / r)) + ' OMR)');
       items.push({ rn: String(x.rn).trim(), rp: x.kind === 'mobile' ? bMob(x.rp) : String(x.rp).replace(/[\s-]/g, '').toUpperCase(), net: x.net, kind: x.kind, omr: o, rate: r });
     }
-    if (!B.proof) { $('bErr').textContent = 'Pakia picha ya risiti ya malipo ya jumla kwanza'; return; }
+    if (!B.proof) { $('bErr').textContent = 'Pakia risiti ya malipo ya jumla kwanza'; return; }
     if (!B.ck) B.ck = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     bReview({ items: items, img: B.proof, ck: B.ck });
   };
@@ -1203,7 +1203,7 @@
         err.textContent = j.msg || 'Imeshindikana'; return;
       }
       $('cf').classList.remove('on'); $('cfT').textContent = 'Hakiki oda yako';
-      B.rows = []; B.proof = ''; B.ck = ''; bSave(); $('bProof').value = ''; $('bProofImg').style.display = 'none'; $('bProofTxt').textContent = 'Pakia picha ya risiti';
+      B.rows = []; B.proof = ''; B.ck = ''; bSave(); $('bProof').value = ''; $('bProofImg').style.display = 'none'; $('bProofTxt').textContent = 'Pakia risiti ya malipo';
       if (!j.dup) { S.orders = (j.orders || []).slice().reverse().concat(S.orders); LS.set('yzw_orders', S.orders); }
       var tot = (j.orders || []).reduce(function (a, o) { return a + (o.tzs || 0); }, 0);
       S.stack = ['home'];
@@ -1269,12 +1269,12 @@
   $('pdGo').onclick = function () {
     var btn = this, a = Math.round((Number(String($('pdAmt').value).replace(/,/g, '')) || 0) * 1000) / 1000, err = $('pdErr'); err.textContent = '';
     if (!(a >= 0.5)) { err.textContent = 'Weka kiasi unacholipa'; return; }
-    if (!PD.proof) { err.textContent = 'Pakia picha ya risiti ya malipo yako'; return; }
+    if (!PD.proof) { err.textContent = 'Pakia risiti ya malipo yako'; return; }
     if (!PD.ck) PD.ck = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
     apiLoad('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck, src: PD.src || '' }, 'Inatuma malipo…', '✓ Malipo yamepokelewa').then(function (j) {
       busy(btn, false); if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
-      setMe(j); PD.proof = ''; PD.ck = ''; $('pdProof').value = ''; $('pdProofImg').style.display = 'none'; $('pdProofTxt').textContent = 'Pakia picha ya risiti';
+      setMe(j); PD.proof = ''; PD.ck = ''; $('pdProof').value = ''; $('pdProofImg').style.display = 'none'; $('pdProofTxt').textContent = 'Pakia risiti ya malipo';
       $('pd').classList.remove('on'); haptic(); toast(PD.src === 'share' && !owe() ? '✓ Amana ya ' + omr(a) + ' OMR imetumwa — ikithibitishwa, tuma mpokeaji ulipe kwa salio' : '✓ Malipo ya ' + omr(a) + ' OMR yametumwa — utapata taarifa yakithibitishwa'); PD.src = '';
       var on = document.querySelector('.scr.on'); if (on && on.id === 's-home') drawHome(); if (on && on.id === 's-hist') drawHist();
     }).catch(function (e) { busy(btn, false); err.textContent = e.message; });
