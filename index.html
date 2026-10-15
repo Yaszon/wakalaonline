@@ -118,6 +118,8 @@
   .d.mob .ic { background: var(--soft); color: var(--brand); }
   .d.bank .ic { background: #E3ECFB; color: #1E4FA3; }
   .d.bill .ic { background: var(--warn-soft); color: var(--warn); }
+.d.rev { border-color: rgba(200,16,46,.35); background: linear-gradient(180deg, rgba(200,16,46,.06), transparent); }
+.d.rev .ic { background: rgba(200,16,46,.12); }
   .d ul { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
   .d li { background: var(--ground); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: .9rem; font-weight: 500; }
   .band.alt .d { background: var(--ground); }
@@ -270,6 +272,13 @@
         <p style="color:var(--mut)">Lipa moja kwa moja kutoka Oman, na token au uthibitisho unakuja kwako.</p>
         <ul><li>LUKU (TANESCO)</li><li>TUKUZA</li><li>GePG</li><li>ZanMalipo</li><li>Maji</li><li>DStv</li><li>Azam TV</li><li>Vocha</li></ul>
       </div>
+      <div class="d rev" id="destRev" hidden>
+        <span class="ic" aria-hidden="true" style="font-size:22px">🇴🇲</span>
+        <h3>Nunua Rial (TZS → OMR)</h3>
+        <p style="color:var(--mut)">Uko Tanzania? Lipa TZS kwa namba za wakala wetu, pakia risiti kwenye app — wakala anahakiki, na OMR zinakufikia Oman.</p>
+        <ul><li>Rate: 1 OMR = <b id="revRate">—</b> TZS</li><li>Simu ya Oman au benki</li><li>Risiti kwenye app na WhatsApp</li></ul>
+        <a class="btn" href="app/" style="margin-top:10px;display:inline-flex">Nunua Rial kwenye app →</a>
+      </div>
     </div>
   </div>
 </section>
@@ -409,7 +418,8 @@
   try {
     fetch(SERVER, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'w_info' }), redirect: 'follow' })
       .then(function (r) { return r.json(); })
-      .then(function (j) { done = true; showRate(j && j.ok ? j : null); })
+      .then(function (j) { done = true; showRate(j && j.ok ? j : null);
+        try { if (j && j.ok && j.revOn && j.rateRev) { $('destRev').hidden = false; $('revRate').textContent = Number(j.rateRev).toLocaleString('en-US'); } } catch (e) {}   // Nunua Rial: inaonekana tu mmiliki akiiwasha
       .catch(function () { done = true; showRate(null); });
   } catch (e) { done = true; showRate(null); }
 
