@@ -239,6 +239,32 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 @keyframes yzlBit{0%,100%{opacity:.15}50%{opacity:.9}}
 #yzLoad.done .yzl-box{border-color:rgba(166,211,60,.7)}
 @media (prefers-reduced-motion:reduce){#yzlPath,.yzl-bits i,#yzLoad.wait .yzl-arc,.wspin .ws-a{animation:none;stroke-dashoffset:0;opacity:1}}
+/* ---- Tuma: mwonekano wa kidigitali ---- */
+.step{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:800;margin-right:8px;vertical-align:middle;box-shadow:0 2px 6px rgba(31,122,50,.3)}
+#s-send .amt-card{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 100% 0%,#2E9A45 0%,#1F7A32 45%,#0E3D20 100%);border:1px solid rgba(166,211,60,.3);color:#fff;box-shadow:0 14px 34px rgba(14,61,32,.35)}
+#s-send .amt-card::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 85%)}
+#s-send .amt-card>*{position:relative}
+#s-send .amt-head{width:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.85)}
+#s-send .amt-head .step{background:var(--lime);color:#0E3D20;box-shadow:none}
+#s-send .amt-head .seg{margin-left:auto;width:140px;background:rgba(0,0,0,.28);padding:3px}
+#s-send .amt-head .seg button{height:32px;color:rgba(255,255,255,.7);font-size:13px}
+#s-send .amt-head .seg button.on{background:var(--lime);color:#0E3D20;box-shadow:none}
+#s-send .amt-card .lbl{color:rgba(255,255,255,.7);font-size:12.5px}
+#s-send .amt-wrap{display:flex;align-items:baseline;justify-content:center;gap:8px;width:100%}
+#s-send .amt{color:var(--lime);font-size:52px;letter-spacing:-.03em;width:2ch;max-width:70%;min-width:2ch;text-shadow:0 0 18px rgba(166,211,60,.35);caret-color:var(--lime)}
+#s-send .amt::placeholder{color:rgba(166,211,60,.35)}
+#s-send .amt-unit{font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:rgba(255,255,255,.8)}
+#s-send .amt-card .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px;backdrop-filter:blur(4px)}
+#s-send .amt-card .chips button.on{background:var(--lime);border-color:var(--lime);color:#0E3D20}
+#s-send .amt-card .tzs-row{width:100%;background:rgba(166,211,60,.14);border:1px solid rgba(166,211,60,.35);border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#s-send .amt-card .tzs-row #sTzsL{color:rgba(255,255,255,.85)!important}
+#s-send .amt-card .tzs-row #sTzs{color:var(--lime);text-shadow:0 0 12px rgba(166,211,60,.35)}
+#s-send .amt-card .row.mut{color:rgba(255,255,255,.6)!important}
+#s-send #sProofLbl{border:1.5px dashed rgba(31,122,50,.45);background:linear-gradient(180deg,var(--card),var(--card-2));gap:12px;justify-content:flex-start}
+#s-send .drop-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--lime-soft);color:var(--brand);flex:none}
+#s-send .cta-go{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#B5E04F,#8CC63F);color:#0E3D20;box-shadow:0 10px 26px rgba(140,198,63,.4);font-weight:800;letter-spacing:.01em}
+#s-send .cta-go:active{transform:translateY(1px)}
+#s-send .opt.on,#s-send .opt[aria-pressed="true"]{box-shadow:0 0 0 3px rgba(166,211,60,.25)}
 </style>
 </head>
 <body>
@@ -356,12 +382,12 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1>Tuma pesa</h1></div>
     <button class="opt" id="sBulk" style="background:var(--lime-soft);border-color:transparent"><span class="avs" aria-hidden="true" style="background:var(--card)">👥</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;text-align:left"><b style="font-size:15px">Tuma kwa wengi kwa mara moja</b><span class="mut" style="font-size:12px;font-weight:600">Orodha ya wapokeaji · malipo moja · risiti moja</span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
 
-    <div class="card" style="display:flex;flex-direction:column;gap:12px;align-items:center;padding:22px 16px">
-      <div class="seg" id="amtSeg" role="tablist" style="width:210px"><button id="amtO" class="on" role="tab">Kwa OMR</button><button id="amtT" role="tab">Kwa TZS</button></div>
+    <div class="card amt-card" style="display:flex;flex-direction:column;gap:12px;align-items:center;padding:20px 16px 16px">
+      <div class="amt-head"><span class="step">1</span><span>Kiasi</span><div class="seg" id="amtSeg" role="tablist"><button id="amtO" class="on" role="tab">OMR</button><button id="amtT" role="tab">TZS</button></div></div>
       <label class="lbl" for="sOmr" id="sOmrL">Unatuma (OMR)</label>
-      <input id="sOmr" class="amt" inputmode="decimal" placeholder="0">
+      <div class="amt-wrap"><input id="sOmr" class="amt" inputmode="decimal" placeholder="0"><span class="amt-unit" id="sUnit">OMR</span></div>
       <div class="chips" id="sChips" style="justify-content:center;max-width:100%"><button data-amt="20">20</button><button data-amt="50">50</button><button data-amt="100">100</button><button data-amt="200">200</button><button data-amt="500">500</button></div>
-      <div style="width:100%;background:var(--lime-soft);border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div class="tzs-row">
         <span style="font-size:13px;font-weight:800;color:var(--ok-ink)" id="sTzsL">Mpokeaji atapata</span>
         <span class="num" id="sTzs" style="font-size:22px;font-weight:700">0 TZS</span>
       </div>
@@ -370,7 +396,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec"><h2>Mpokeaji</h2></div>
+      <div class="sec"><h2><span class="step">2</span>Mpokeaji</h2></div>
       <div id="sSaved" style="display:flex;flex-direction:column;gap:8px"></div>
       <button class="opt" id="sAllBtn" style="display:none"><span class="avs" aria-hidden="true">📒</span><span style="flex:1;font-weight:800;text-align:left" id="sAllTxt">Wapokeaji wote</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
       <button class="opt" id="sNewBtn" style="border-style:dashed"><span class="avs" aria-hidden="true">+</span><span style="font-weight:800">Mpokeaji mpya</span></button>
@@ -400,18 +426,18 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec"><h2>Malipo</h2><span class="mut" style="font-size:12px;font-weight:700" id="sPayHint">Lipa OMR, kisha pakia risiti</span></div>
+      <div class="sec"><h2><span class="step">3</span>Malipo</h2><span class="mut" style="font-size:12px;font-weight:700" id="sPayHint">Lipa OMR, kisha pakia risiti</span></div>
       <label class="opt" id="sBalOpt" style="display:none;cursor:pointer;background:var(--ok-soft);border-color:transparent"><input type="checkbox" id="sUseBal" style="width:22px;height:22px;accent-color:var(--brand);flex:none"><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">💰 Lipa kwa salio langu</b><span class="mut" style="font-size:12px;font-weight:600" id="sBalTxt"></span></span></label>
       <div class="card" id="sPay" style="padding:6px 14px"></div>
       <label class="opt" style="border-style:dashed;justify-content:center;min-height:68px;cursor:pointer;position:relative" id="sProofLbl">
         <input type="file" accept="image/*,application/pdf" id="sProof" style="position:absolute;opacity:0;width:1px;height:1px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-        <span id="sProofTxt" style="font-weight:800">Pakia risiti ya malipo</span>
+        <span class="drop-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0 4 4m-4-4-4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span style="display:flex;flex-direction:column;gap:2px;text-align:left"><span id="sProofTxt" style="font-weight:800">Pakia risiti ya malipo</span><span class="mut" style="font-size:12px;font-weight:600">Picha ya skrini au PDF ya benki</span></span>
       </label>
       <img id="sProofImg" alt="Picha ya risiti uliyochagua" style="display:none;max-height:170px;border-radius:16px;object-fit:contain;background:var(--card-2)">
     </div>
     <div class="err" id="sErr"></div>
-    <div class="cta"><button class="btn" id="sGo">Endelea — hakiki order</button></div>
+    <div class="cta"><button class="btn cta-go" id="sGo"><span>Endelea — hakiki oda</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
   </div>
 </section>
 
@@ -504,7 +530,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
   <div class="mut" id="okTxt" style="font-size:15px;line-height:1.5;max-width:320px"></div>
   <div class="card" style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:360px;margin-top:6px"><span class="mut" style="font-weight:700">Ref</span><span class="num" id="okRef" style="font-weight:700"></span></div>
   <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;margin-top:8px">
-    <button class="btn" id="okTrack">Fuatilia order</button>
+    <button class="btn" id="okTrack">Fuatilia oda</button>
     <button class="btn ghost" id="okHome">Rudi nyumbani</button>
   </div>
 </div>
@@ -521,7 +547,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     <div id="cfRows"></div>
     <div class="row" style="gap:12px"><img id="cfImg" alt="Risiti yako" style="width:64px;height:64px;object-fit:cover;border-radius:12px;background:var(--card-2)"><span class="mut" style="font-size:13px;font-weight:600">Risiti ya malipo yako ya OMR imeambatishwa</span></div>
     <div class="err" id="cfErr"></div>
-    <button class="btn" id="cfGo">Ndiyo, tuma order</button>
+    <button class="btn" id="cfGo">Ndiyo, tuma oda</button>
     <button class="btn ghost" id="cfNo">Rudi nirekebishe</button>
   </div>
 </div>

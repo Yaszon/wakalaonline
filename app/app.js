@@ -398,7 +398,7 @@
   }
   function setAmt(tz) {
     var prev = !!S.amtT; S.amtT = !!tz; $('amtO').classList.toggle('on', !tz); $('amtT').classList.toggle('on', !!tz);
-    $('sOmrL').textContent = tz ? 'Wanapokea (TZS)' : 'Unatuma (OMR)'; $('sTzsL').textContent = tz ? 'Utalipa' : 'Mpokeaji atapata';
+    $('sOmrL').textContent = tz ? 'Wanapokea (TZS)' : 'Unatuma (OMR)'; if ($('sUnit')) $('sUnit').textContent = tz ? 'TZS' : 'OMR'; $('sTzsL').textContent = tz ? 'Utalipa' : 'Mpokeaji atapata';
     $('sChips').style.display = tz ? 'none' : 'flex';
     if (prev !== S.amtT) { var v = Number(String($('sOmr').value).replace(/,/g, '')) || 0; if (v) $('sOmr').value = tz ? Math.round(v * rateFor(v)) : omrFor(v); }
     sCalc();
@@ -484,6 +484,7 @@
   }
   $('sUseBal').onchange = function () { S.useBal = this.checked; drawBalOpt(); sCalc(); };
   function sCalc() {
+    try { var vi = $('sOmr'), ln = String(vi.value || '').length; vi.style.width = Math.max(2, ln + 0.6) + 'ch'; } catch (e) {}   // kisanduku kinakua na namba (kitengo kinakaa karibu)
     var A = amtNow(), o = A.o, r = rateFor(o);
     $('sRateTxt').textContent = r ? 'Rate: 1 OMR = ' + tzs(r) + ' TZS' : 'Rate: —';
     var bn = bonusFor(o);
