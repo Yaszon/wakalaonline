@@ -659,7 +659,8 @@
         + '<img src="' + d + '" alt="Risiti" style="width:100%;max-height:220px;object-fit:contain;border-radius:14px;background:#f3f5f4">'
         + '<div class="lbl">Risiti hii ni ya nini?</div>'
         + open.map(function (o) { return '<button class="opt" data-sh-ref="' + esc(o.ref) + '" style="justify-content:space-between"><span><b>📎 Ambatisha kwenye oda ' + esc(o.ref) + '</b><br><span class="mut" style="font-size:12px">' + omr(o.omr) + ' OMR → ' + esc(o.rn || o.net || '') + (o.proof ? ' · tayari ina risiti (itabadilishwa)' : ' · inasubiri risiti') + '</span></span><span>›</span></button>'; }).join('')
-        + '<button class="opt" data-sh="send" style="justify-content:space-between"><span><b>➕ Tuma pesa mpya kwa risiti hii</b><br><span class="mut" style="font-size:12px">Oda mpya — risiti inaambatishwa yenyewe</span></span><span>›</span></button>'
+        + '<button class="opt" data-sh="send" style="justify-content:space-between"><span><b>➕ Tuma pesa Tanzania (OMR → TZS)</b><br><span class="mut" style="font-size:12px">Umelipa OMR hapa Oman — risiti inaambatishwa yenyewe</span></span><span>›</span></button>'
+        + (function () { var i = info() || {}; return i.revOn && i.rateRev ? '<button class="opt" data-sh="rev" style="justify-content:space-between"><span><b>🇴🇲 Nunua Rial (TZS → OMR)</b><br><span class="mut" style="font-size:12px">Umelipa TZS Tanzania — unapokea OMR Oman · rate ' + tzs(i.rateRev) + '</span></span><span>›</span></button>' : ''; })()
         + (S.me && S.me.bal < -0.005 ? '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>💳 Lipa deni kwa risiti hii</b><br><span class="mut" style="font-size:12px">Deni ' + omr(-S.me.bal) + ' OMR</span></span><span>›</span></button>'
           : '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>🏦 Weka kama amana — nitatuma mpokeaji baadaye</b><br><span class="mut" style="font-size:12px">Pesa inakaa kwenye salio lako; ukituma mpokeaji unalipa kwa salio bila risiti</span></span><span>›</span></button>')
         + '</div>';
@@ -670,6 +671,7 @@
       dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () { attach(b.getAttribute('data-sh-ref'), b, close); }; });
       var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
       var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(true); PD.proof = d; setProofUi('pd', d); };
+      var rb = dlg.querySelector('[data-sh="rev"]'); if (rb) rb.onclick = function () { close(); openRev(); RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; toast('Risiti ya TZS imewekwa — jaza kiasi na unakopokea OMR'); };
     }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
   }
   function b64File(b64, mime, name) { var bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new File([u], name || 'risiti', { type: mime || 'image/jpeg' }); }
