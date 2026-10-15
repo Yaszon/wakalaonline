@@ -290,9 +290,32 @@
   }
 
   /* ---------- Nunua Rial (TZS → OMR) ---------- */
-  var RV = { proof: '', ck: '' };
+  var RV = { proof: '', ck: '', kind: 'mobile', sel: null };
+  function rvKind(k) {
+    RV.kind = k; $('rvkMob').classList.toggle('on', k === 'mobile'); $('rvkBank').classList.toggle('on', k === 'bank'); $('rvkWal').classList.toggle('on', k === 'wallet');
+    var me = S.me || {}; $('rvAccL').textContent = k === 'bank' ? 'Namba ya akaunti ya benki' : 'Namba ya simu ya Oman'; $('rvAcc').placeholder = k === 'bank' ? 'mf. 0311064894420024' : '9XXXXXXX';
+    $('rvNetBox').style.display = k === 'mobile' ? 'none' : 'flex'; $('rvNetL').textContent = k === 'bank' ? 'Benki' : 'Wallet';
+    fillSelect($('rvNet'), k === 'bank' ? (me.omBanks || ['Bank Muscat', 'NBO', 'Sohar International', 'Bank Dhofar']) : (me.omWallets || ['eFloos', 'Thawani']), k === 'bank' ? 'Chagua benki' : 'Chagua wallet');
+  }
+  function rvDrawSaved() {
+    var L = (S.me && S.me.payMethods) || [], box = $('rvSaved');
+    box.innerHTML = L.map(function (m) { var on = RV.sel && RV.sel.id === m.id;
+      return '<button class="opt' + (on ? ' on' : '') + '" data-pm="' + esc(m.id) + '" style="' + (on ? 'background:var(--lime-soft);border-color:var(--brand)' : '') + '"><span class="avs" aria-hidden="true">' + (m.kind === 'bank' ? '🏦' : m.kind === 'wallet' ? '👛' : '📱') + '</span>'
+        + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left"><b style="font-size:15px">' + esc(m.name) + '</b><span class="mut" style="font-size:12px;font-weight:600">' + esc(m.bank || '') + ' · ' + esc(m.acc) + '</span></span>'
+        + (on ? svg('check', 20, 'var(--ok-ink)', 3) : '') + '<button type="button" class="iconbtn" data-pmdel="' + esc(m.id) + '" aria-label="Futa" style="width:32px;height:32px;margin-left:4px">✕</button></button>'; }).join('');
+    if (!L.length) { RV.sel = null; $('rvNew').style.display = 'flex'; } else $('rvNew').style.display = RV.sel ? 'none' : $('rvNew').style.display;
+  }
+  $('rvSaved').onclick = function (e) {
+    var d = e.target.closest('[data-pmdel]'); if (d) { e.stopPropagation(); var id = d.getAttribute('data-pmdel'); if (!confirm('Futa njia hii ya kupokea OMR?')) return;
+      api('w_paymethod', { del: id }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); S.me.payMethods = j.payMethods || []; setMe(S.me); if (RV.sel && RV.sel.id === id) RV.sel = null; rvDrawSaved(); }).catch(function (x) { toast(x.message); }); return; }
+    var b = e.target.closest('[data-pm]'); if (!b) return; var m = ((S.me && S.me.payMethods) || []).filter(function (x) { return x.id === b.getAttribute('data-pm'); })[0]; if (!m) return;
+    RV.sel = m; $('rvNew').style.display = 'none'; rvDrawSaved(); haptic();
+  };
+  $('rvNewBtn').onclick = function () { RV.sel = null; $('rvNew').style.display = 'flex'; rvDrawSaved(); $('rvName').focus(); };
+  $('rvkMob').onclick = function () { rvKind('mobile'); }; $('rvkBank').onclick = function () { rvKind('bank'); }; $('rvkWal').onclick = function () { rvKind('wallet'); };
   function openRev() {
     var i = info() || {}; if (!i.revOn || !i.rateRev) return toast('Huduma ya Nunua Rial haipatikani kwa sasa');
+    var L = (S.me && S.me.payMethods) || []; RV.sel = L[0] || null; rvKind(RV.kind); rvDrawSaved(); $('rvNew').style.display = L.length ? 'none' : 'flex';
     $('rvRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; $('rvMin').textContent = 'Kiasi cha chini: OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * i.rateRev) + ')';
     drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; rvCalc(); RV.ck = '';
     S.stack.push('rev'); show('rev', false);
@@ -316,20 +339,24 @@
     var btn = this, i = info() || {}, err = $('rvErr'), v = Math.round(Number(String($('rvTzs').value).replace(/,/g, '')) || 0), r = Number(i.rateRev) || 0; err.textContent = '';
     if (!(v > 0)) { err.textContent = 'Weka kiasi cha TZS unacholipa'; $('rvTzs').focus(); return; }
     if (r && v / r < (i.revMin || 5)) { err.textContent = 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r) + ')'; return; }
-    var rn = $('rvName').value.trim(), rp = $('rvAcc').value.replace(/[\s-]/g, '');
-    if (rn.length < 3) { err.textContent = 'Weka jina kamili la anayepokea OMR'; $('rvName').focus(); return; }
-    if (rp.length < 8) { err.textContent = 'Weka namba ya simu ya Oman au akaunti ya benki'; $('rvAcc').focus(); return; }
+    var rn, rp, net, saveNew = false;
+    if (RV.sel) { rn = RV.sel.name; rp = RV.sel.acc; net = RV.sel.bank || ''; }
+    else { rn = $('rvName').value.trim(); rp = $('rvAcc').value.replace(/[\s-]/g, ''); net = RV.kind === 'mobile' ? 'Simu Oman' : $('rvNet').value; saveNew = !!$('rvSave').checked;
+      if (rn.length < 3) { err.textContent = 'Weka jina kamili la anayepokea OMR'; $('rvName').focus(); return; }
+      if (RV.kind === 'bank' ? rp.length < 8 : !/^(\+?968)?[79]\d{7}$/.test(rp)) { err.textContent = RV.kind === 'bank' ? 'Weka namba ya akaunti ya benki' : 'Weka namba ya simu ya Oman (9… au 7…, tarakimu 8)'; $('rvAcc').focus(); return; }
+      if (RV.kind !== 'mobile' && !net) { err.textContent = RV.kind === 'bank' ? 'Chagua benki' : 'Chagua wallet'; return; } }
     if (!RV.proof) { err.textContent = 'Pakia risiti ya malipo ya TZS kwanza'; return; }
     if (!confirm('Unalipa TZS ' + tzs(v) + ' → unapokea OMR ' + (Math.round(v / r * 1000) / 1000).toFixed(3) + ' kwa ' + rn.toUpperCase() + ' (' + rp + ').\nUmeshalipa TZS kwa namba za wakala?')) return;
     if (!RV.ck) RV.ck = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
-    var body = { tzs: v, rate: r, rn: rn, rp: rp, net: $('rvNet').value.trim(), img: RV.proof, ck: RV.ck };
+    var body = { tzs: v, rate: r, rn: rn, rp: rp, net: net, img: RV.proof, ck: RV.ck };
+    if (saveNew) api('w_paymethod', { kind: RV.kind, name: rn, acc: rp, bank: net }).then(function (j) { if (j.ok) { S.me.payMethods = j.payMethods || []; setMe(S.me); } }).catch(function () {});
     var go = function () { return apiLoad('w_revorder', body, 'Inatuma oda ya Nunua Rial…', '✓ Oda imepokelewa').then(function (j) {
       busy(btn, false);
       if (!j.ok && j.error === 'twin') { if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return go(); } return; }
       if (!j.ok && j.error === 'rate') { setMe(Object.assign({}, S.me, { info: Object.assign({}, info(), { rateRev: j.rate }) })); $('rvRate').textContent = 'rate 1 OMR = ' + tzs(j.rate) + ' TZS'; rvCalc(); err.textContent = j.msg; return; }
       if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
-      setMe(j); RV.proof = ''; RV.ck = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS'; $('rvTzs').value = ''; rvCalc();
+      setMe(j); RV.proof = ''; RV.ck = ''; RV.sel = (j.payMethods || [])[0] || null; $('rvName').value = ''; $('rvAcc').value = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS'; $('rvTzs').value = ''; rvCalc();
       loadOrders().then(function () { haptic(); toast('✓ Oda imepokelewa — wakala anahakiki TZS'); if (j.order) openTrack(j.order.ref); else show('hist'); });
     }).catch(function (e) { busy(btn, false); err.textContent = e.message; }); };
     go();

@@ -473,10 +473,14 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div class="sec"><h2><span class="step">2</span>Anayepokea OMR (Oman)</h2></div>
-      <div class="card" style="display:flex;flex-direction:column;gap:12px">
-        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina kamili<input id="rvName" class="field" autocomplete="off" autocapitalize="characters" placeholder="mf. YASSIR ISSA SALUM"></label>
-        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Namba ya simu ya Oman au akaunti ya benki<input id="rvAcc" class="field num" autocomplete="off" autocapitalize="characters" placeholder="9XXXXXXX au akaunti ya benki"></label>
-        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Benki / mtandao (hiari)<input id="rvNet" class="field" autocomplete="off" placeholder="mf. Bank Muscat, NBO, Sohar, eFloos"></label>
+      <div id="rvSaved" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="opt" id="rvNewBtn" style="border-style:dashed"><span class="avs" aria-hidden="true">+</span><span style="font-weight:800">Njia mpya ya kupokea OMR</span></button>
+      <div class="card" id="rvNew" style="display:none;flex-direction:column;gap:12px">
+        <div class="seg" role="tablist" style="grid-template-columns:1fr 1fr 1fr"><button id="rvkMob" class="on" role="tab">Simu (Oman)</button><button id="rvkBank" role="tab">Benki</button><button id="rvkWal" role="tab">Wallet</button></div>
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px">Jina kamili la mwenye akaunti/namba<input id="rvName" class="field" autocomplete="off" autocapitalize="characters" placeholder="mf. YASSIR ISSA SALUM"></label>
+        <label class="lbl" style="display:flex;flex-direction:column;gap:6px"><span id="rvAccL">Namba ya simu ya Oman</span><input id="rvAcc" class="field num" autocomplete="off" autocapitalize="characters" placeholder="9XXXXXXX"></label>
+        <label class="lbl" id="rvNetBox" style="display:none;flex-direction:column;gap:6px"><span id="rvNetL">Benki</span><select id="rvNet" class="field"></select></label>
+        <label class="opt" style="cursor:pointer;background:var(--card-2);border-color:transparent"><input type="checkbox" id="rvSave" checked style="width:20px;height:20px;accent-color:var(--brand);flex:none"><span style="font-size:14px;font-weight:700">Hifadhi njia hii kwa mara ijayo</span></label>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
