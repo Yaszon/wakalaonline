@@ -77,6 +77,16 @@
     else { btn.disabled = false; if (btn._l) btn.innerHTML = btn._l; }
   }
   function info() { return (S.me && S.me.info) || S.info || null; }
+  /* ada ya kutuma (TZS) — kutoka Daftari → Kanuni. sell = OMR→TZS (inakatwa kwenye TZS za mpokeaji) · rev = TZS→OMR (inatolewa kwenye TZS unazolipa) */
+  function feeFor(d, o) {
+    var i = info(), F = i && i.fees && i.fees[d]; if (!F || F.on !== true || !(o > 0)) return 0;
+    var T = (F.t || []).filter(function (x) { return Number(x.fee) > 0; }).slice().sort(function (a, b) { return (Number(a.to) || Infinity) - (Number(b.to) || Infinity); });
+    for (var k = 0; k < T.length; k++) if (!(Number(T[k].to) > 0) || o <= Number(T[k].to) + 1e-9) return Math.round(Number(T[k].fee));
+    return T.length ? Math.round(Number(T[T.length - 1].fee)) : 0;
+  }
+  function netT(o) { return Math.max(0, Math.round(o * rateFor(o)) - feeFor('sell', o)); }   // TZS atakazopokea mpokeaji (baada ya ada)
+  function rvOmr(v, r) { if (!(r > 0) || !(v > 0)) return 0; var f = feeFor('rev', v / r), o = Math.round(Math.max(0, v - f) / r * 1000) / 1000, f2 = feeFor('rev', o); if (f2 !== f) o = Math.round(Math.max(0, v - f2) / r * 1000) / 1000; return o; }
+  function feeTxt(f) { return f ? ' · ada TZS ' + tzs(f) : ''; }
   function rateFor(o) { var i = info(); if (!i) return 0; var r = (i.rateBig && i.bigMin && o >= i.bigMin) ? i.rateBig : i.rate; return Math.max(r || 0, Number(i.vip) || 0); }
   function initials(n) { n = String(n || '').trim(); return n ? n.charAt(0).toUpperCase() : '?'; }
   function firstName(n) { var s = String(n || '').trim().split(/\s+/)[0] || ''; return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
@@ -255,8 +265,8 @@
   }
   function calc() {
     var o = Number(String($('cOmr').value).replace(/,/g, '')) || 0, r = rateFor(o);
-    $('cTzs').textContent = r ? tzs(o * r) : '—';
-    $('cRateTxt').textContent = r ? '1 OMR = ' + tzs(r) : '';
+    $('cTzs').textContent = r ? tzs(netT(o)) : '—';
+    $('cRateTxt').textContent = r ? '1 OMR = ' + tzs(r) + feeTxt(feeFor('sell', o)) : '';
     chipsOn('cChips', o);
   }
   function chipsOn(id, v) { document.querySelectorAll('#' + id + ' button').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-amt')) === Number(v)); }); }
@@ -325,7 +335,8 @@
   function rvCalc() {
     var i = info() || {}, v = Number(String($('rvTzs').value).replace(/,/g, '')) || 0, r = Number(i.rateRev) || 0;
     try { var vi = $('rvTzs'); vi.style.width = Math.max(3, String(vi.value || '').length + 0.6) + 'ch'; } catch (e) {}
-    $('rvOmr').textContent = (r && v ? (Math.round(v / r * 1000) / 1000).toFixed(3) : '0') + ' OMR';
+    $('rvOmr').textContent = (r && v ? rvOmr(v, r).toFixed(3) : '0') + ' OMR';
+    var fr = r && v ? feeFor('rev', rvOmr(v, r)) : 0; $('rvRate').textContent = r ? 'rate 1 OMR = ' + tzs(r) + ' TZS' + feeTxt(fr) : '';
     document.querySelectorAll('#rvChips button').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-tz')) === v); });
   }
   $('rvTzs').addEventListener('input', rvCalc);
@@ -340,7 +351,7 @@
   $('rvGo').onclick = function () {
     var btn = this, i = info() || {}, err = $('rvErr'), v = Math.round(Number(String($('rvTzs').value).replace(/,/g, '')) || 0), r = Number(i.rateRev) || 0; err.textContent = '';
     if (!(v > 0)) { err.textContent = 'Weka kiasi cha TZS unacholipa'; $('rvTzs').focus(); return; }
-    if (r && v / r < (i.revMin || 5)) { err.textContent = 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r) + ')'; return; }
+    if (r && rvOmr(v, r) < (i.revMin || 5)) { err.textContent = 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r + feeFor('rev', i.revMin || 5)) + ')'; return; }
     var rn, rp, net, saveNew = false, alts = [], L = (S.me && S.me.payMethods) || [], picked = RV.picks.map(function (id) { return L.filter(function (m) { return m.id === id; })[0]; }).filter(Boolean);
     var typed = $('rvName').value.trim() || $('rvAcc').value.trim();
     if (picked.length && !($('rvNew').style.display !== 'none' && typed)) { rn = picked[0].name; rp = picked[0].acc; net = picked[0].bank || ''; alts = picked.slice(1).map(function (m) { return { name: m.name, acc: m.acc, bank: m.bank }; }); }
@@ -471,13 +482,13 @@
   /* kiasi kwa OMR au kwa TZS (mf. LUKU ya TZS 20,000 kamili) */
   function omrFor(t) {
     var i = info() || {}, g = rateFor(t / (i.rate || 6700)); if (!g) return 0;
-    var o = Math.ceil(t / g * 1000) / 1000, g2 = rateFor(o); if (g2 !== g) o = Math.ceil(t / g2 * 1000) / 1000; return o;
+    var f = feeFor('sell', t / g), o = Math.ceil((t + f) / g * 1000) / 1000, g2 = rateFor(o), f2 = feeFor('sell', o); if (g2 !== g || f2 !== f) o = Math.ceil((t + f2) / g2 * 1000) / 1000; return o;
   }
   function setAmt(tz) {
     var prev = !!S.amtT; S.amtT = !!tz; $('amtO').classList.toggle('on', !tz); $('amtT').classList.toggle('on', !!tz);
     $('sOmrL').textContent = tz ? 'Wanapokea (TZS)' : 'Unatuma (OMR)'; if ($('sUnit')) $('sUnit').textContent = tz ? 'TZS' : 'OMR'; $('sTzsL').textContent = tz ? 'Utalipa' : 'Mpokeaji atapata';
     $('sChips').style.display = tz ? 'none' : 'flex';
-    if (prev !== S.amtT) { var v = Number(String($('sOmr').value).replace(/,/g, '')) || 0; if (v) $('sOmr').value = tz ? Math.round(v * rateFor(v)) : omrFor(v); }
+    if (prev !== S.amtT) { var v = Number(String($('sOmr').value).replace(/,/g, '')) || 0; if (v) $('sOmr').value = tz ? netT(v) : omrFor(v); }
     sCalc();
   }
   $('amtO').onclick = function () { setAmt(false); };
@@ -563,9 +574,9 @@
   function sCalc() {
     try { var vi = $('sOmr'), ln = String(vi.value || '').length; vi.style.width = Math.max(2, ln + 0.6) + 'ch'; } catch (e) {}   // kisanduku kinakua na namba (kitengo kinakaa karibu)
     var A = amtNow(), o = A.o, r = rateFor(o);
-    $('sRateTxt').textContent = r ? 'Rate: 1 OMR = ' + tzs(r) + ' TZS' : 'Rate: —';
+    $('sRateTxt').textContent = r ? 'Rate: 1 OMR = ' + tzs(r) + ' TZS' + feeTxt(feeFor('sell', o)) : 'Rate: —';
     var bn = bonusFor(o);
-    $('sTzs').textContent = S.amtT ? omr(o) + ' OMR' : tzs(o * r + bn) + ' TZS';
+    $('sTzs').textContent = S.amtT ? omr(o) + ' OMR' : tzs(netT(o) + bn) + ' TZS';
     $('sBonus').style.display = bn ? 'block' : 'none'; if (bn) $('sBonus').textContent = '🎁 Pamoja na zawadi ya rafiki TZS ' + tzs(bn);
     chipsOn('sChips', o);
     var e = limErr(o, r), i = info() || {}, k = curKind();
@@ -748,11 +759,12 @@
     var r = rateFor(body.omr), net = body.net || '';
     $('cfAmt').textContent = omr(body.omr) + ' OMR';
     var bn = bonusFor(body.omr);
-    $('cfTzs').textContent = tzs(body.omr * r + bn) + ' TZS';
+    $('cfTzs').textContent = tzs(netT(body.omr) + bn) + ' TZS';
+    var fe = feeFor('sell', body.omr);
     if (body.tzs) $('cfTzs').textContent = tzs(body.tzs + bn) + ' TZS';
     var bb = body.kind === 'bill' ? (BL[net] || {}) : null;
-    $('cfRows').innerHTML = (bb ? [['Malipo', (bb.ic || '') + ' ' + (bb.t || net)], [bb.f || 'Namba', body.rp]].concat(body.bref ? [[bb.r || 'Kumbukumbu', body.bref]] : []).concat(body.rn ? [['Jina', body.rn]] : []).concat([['Rate', '1 OMR = ' + tzs(r) + ' TZS']])
-      : [['Mpokeaji', String(body.rn || '').toUpperCase()], [body.kind === 'bank' ? 'Benki' : 'Mtandao', net], [body.kind === 'bank' ? 'Akaunti' : 'Namba', body.rp], ['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(bn ? [['🎁 Zawadi ya rafiki', '+ ' + tzs(bn) + ' TZS']] : [])
+    $('cfRows').innerHTML = (bb ? [['Malipo', (bb.ic || '') + ' ' + (bb.t || net)], [bb.f || 'Namba', body.rp]].concat(body.bref ? [[bb.r || 'Kumbukumbu', body.bref]] : []).concat(body.rn ? [['Jina', body.rn]] : []).concat([['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(fe ? [['💸 Ada ya kutuma', tzs(fe) + ' TZS']] : [])
+      : [['Mpokeaji', String(body.rn || '').toUpperCase()], [body.kind === 'bank' ? 'Benki' : 'Mtandao', net], [body.kind === 'bank' ? 'Akaunti' : 'Namba', body.rp], ['Rate', '1 OMR = ' + tzs(r) + ' TZS']]).concat(fe ? [['💸 Ada ya kutuma', '− ' + tzs(fe) + ' TZS']] : []).concat(bn ? [['🎁 Zawadi ya rafiki', '+ ' + tzs(bn) + ' TZS']] : [])
       .map(function (x) { return '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">' + esc(x[0]) + '</span><b class="num" style="text-align:right">' + esc(x[1]) + '</b></div>'; }).join('');
     if (body.useBal) $('cfRows').innerHTML += '<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span class="mut" style="font-weight:600">Malipo</span><b style="color:var(--ok-ink)">💰 Kutoka salio lako</b></div>';
     if (body.warn) $('cfRows').innerHTML += '<div style="padding:10px 12px;margin-top:8px;border-radius:10px;background:var(--warn-soft,#FBF1DC);color:var(--warn);font-size:13px;font-weight:600">⚠️ ' + esc(body.warn) + ' Ukiendelea na namba isiyo sahihi, malipo yanaweza kwenda kwa mtu mwingine.</div>';
@@ -1213,7 +1225,7 @@
   function bTag(k) {
     var x = B.rows[k], el = document.querySelector('[data-row="' + k + '"]'); if (!el || !x) return;
     var o = Number(String(x.omr || '').replace(/,/g, '')) || 0, r = rateFor(o);
-    el.querySelector('.b-tz').textContent = o ? tzs(o * r) + ' TZS' : '';
+    el.querySelector('.b-tz').textContent = o ? tzs(netT(o)) + ' TZS' : '';
     var tg = el.querySelector('.b-tg');
     if (!x.rp) tg.textContent = '';
     else if (x.net) tg.innerHTML = '<span style="color:' + (NETC[x.net] || 'var(--brand-2)') + '">●</span> ' + esc(x.net) + (x.manual ? '' : ' · imetambuliwa') + ' <button type="button" data-chg="' + k + '" style="background:none;border:none;color:var(--brand-2);font-weight:800;font-size:12px;cursor:pointer;padding:2px 4px">Badilisha</button>';
@@ -1223,7 +1235,7 @@
   }
   function bTot() {
     var to = 0, tt = 0, n = 0;
-    B.rows.forEach(function (x) { var o = Number(String(x.omr || '').replace(/,/g, '')) || 0; if (o) { to += o; tt += o * rateFor(o); n++; } });
+    B.rows.forEach(function (x) { var o = Number(String(x.omr || '').replace(/,/g, '')) || 0; if (o) { to += o; tt += netT(o); n++; } });
     var f = R(), bi = -1; if (f.on && f.bonus) B.rows.some(function (x, k) { if ((Number(x.omr) || 0) >= (f.min || 0)) { bi = k; return true; } });
     var bn = bi >= 0 ? f.bonus : 0;
     $('bTotO').textContent = omr(Math.round(to * 1000) / 1000) + ' OMR'; $('bTotT').textContent = tzs(tt + bn) + ' TZS';
