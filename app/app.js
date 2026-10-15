@@ -295,7 +295,7 @@
     RV.kind = k; $('rvkMob').classList.toggle('on', k === 'mobile'); $('rvkBank').classList.toggle('on', k === 'bank'); $('rvkWal').classList.toggle('on', k === 'wallet');
     var me = S.me || {}; $('rvAccL').textContent = k === 'bank' ? 'Namba ya akaunti ya benki' : 'Namba ya simu ya Oman'; $('rvAcc').placeholder = k === 'bank' ? 'mf. 0311064894420024' : '9XXXXXXX';
     $('rvNetBox').style.display = k === 'mobile' ? 'none' : 'flex'; $('rvNetL').textContent = k === 'bank' ? 'Benki' : 'Wallet';
-    fillSelect($('rvNet'), k === 'bank' ? (me.omBanks || ['Bank Muscat', 'NBO', 'Sohar International', 'Bank Dhofar']) : (me.omWallets || ['eFloos', 'Thawani']), k === 'bank' ? 'Chagua benki' : 'Chagua wallet');
+    fillSelect($('rvNet'), k === 'bank' ? (me.omBanks || ['Bank Muscat', 'Sohar International', 'Ahli Bank', 'Bank Dhofar']) : (me.omWallets || ['eFloos', 'Thawani']), k === 'bank' ? 'Chagua benki' : 'Chagua wallet');
   }
   function rvDrawSaved() {
     var L = (S.me && S.me.payMethods) || [], box = $('rvSaved');
