@@ -109,7 +109,7 @@
   /* namba ya simu ya Tanzania: 0754 123 456 (nafasi za kusoma tu — zinaondolewa kabla ya kutuma) */
   function livePhone(inp) { var d = String(inp.value || '').replace(/\D/g, ''); if (d.charAt(0) !== '0' || d.length > 10) return; var v = d.length > 7 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (inp.value !== v) inp.value = v; }
   /* kitufe cha "Rudi" cha Android: kinafunga karatasi iliyo wazi (hakiki, kitabu, deni, rafiki, risiti…) kabla ya kurudi skrini nyuma */
-  var DLGS = ['ask', 'sh', 'stx', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'], BACKING = false;
+  var DLGS = ['ask', 'dst', 'sh', 'stx', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'], BACKING = false;
   function dlgOpen(d) { return !!d && (d.classList.contains('on') || d.style.display === 'flex'); }
   function closeTop() {
     for (var k = 0; k < DLGS.length; k++) {
@@ -193,7 +193,7 @@
     n.setAttribute('data-ti', idx); n.style.setProperty('--ti', idx);
     n.onclick = function (e) {
       var b = e.target.closest('button'); if (!b) return; var go = b.getAttribute('data-go');
-      if (go === 'send') { var on = document.querySelector('.scr.on'); if (on && on.id === 's-send') return; return openSend(null); }
+      if (go === 'send') { var on = document.querySelector('.scr.on'); if (on && (on.id === 's-send' || on.id === 's-rev')) return; return pickDest(); }
       S.stack = [go]; show(go, false);
     };
   });
@@ -372,7 +372,7 @@
     });
   })();
   $('cOmr').addEventListener('input', calc);
-  $('hSend').onclick = function () { openSend(null, Number($('cOmr').value) || ''); };
+  $('hSend').onclick = function () { pickDest(Number($('cOmr').value) || ''); };
   $('svMob').onclick = function () { haptic(); openSend('mobile'); };
   $('svBank').onclick = function () { haptic(); openSend('bank'); };
   $('svBill').onclick = function () { haptic(); openSend('bill'); };
@@ -488,6 +488,21 @@
     });
   };
 
+  /* ---------- Tuma: unatuma kwenda wapi? (Nunua Rial ikiwa imewashwa kwenye Daftari) ---------- */
+  function pickDest(amount) {
+    var i = info() || {};
+    if (!(i.revOn && i.rateRev)) return openSend(null, amount);
+    var d = $('dst');
+    if (!d) { d = document.createElement('div'); d.id = 'dst'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.style.cssText = 'position:fixed;inset:0;z-index:55;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center'; document.body.appendChild(d); watchDlg(d); }
+    d.innerHTML = '<div class="cfs" style="gap:12px"><div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>'
+      + '<h2 style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600;text-align:center">Unatuma kwenda wapi?</h2>'
+      + '<button class="opt" type="button" data-d="tz" style="padding:16px;gap:14px"><span style="font-size:34px;line-height:1" aria-hidden="true">🇹🇿</span><span style="flex:1;display:flex;flex-direction:column;gap:3px;text-align:left"><b style="font-size:17px">Kwenda Tanzania</b><span class="mut" style="font-size:13px;font-weight:600">Unalipa OMR hapa · mpokeaji anapata TZS</span><span style="font-size:13px;font-weight:800;color:var(--ok-ink)">1 OMR = ' + tzs(rateFor(0)) + ' TZS</span></span><span class="mut" aria-hidden="true">›</span></button>'
+      + '<button class="opt" type="button" data-d="om" style="padding:16px;gap:14px"><span style="font-size:34px;line-height:1" aria-hidden="true">🇴🇲</span><span style="flex:1;display:flex;flex-direction:column;gap:3px;text-align:left"><b style="font-size:17px">Kwenda Oman (Nunua Rial)</b><span class="mut" style="font-size:13px;font-weight:600">Unalipa TZS Tanzania · unapokea OMR Oman</span><span style="font-size:13px;font-weight:800;color:#1B2E52">1 OMR = ' + tzs(i.rateRev) + ' TZS</span></span><span class="mut" aria-hidden="true">›</span></button>'
+      + '<button class="btn ghost" type="button" data-d="x">Funga</button></div>';
+    d.style.display = 'flex';
+    d.onclick = function (e) { var b = e.target.closest('[data-d]'); if (e.target === d || (b && b.getAttribute('data-d') === 'x')) { d.style.display = 'none'; return; } if (!b) return;
+      haptic(); d.style.display = 'none'; if (b.getAttribute('data-d') === 'om') openRev(); else openSend(null, amount); };
+  }
   /* ---------- tuma ---------- */
   function fillSelect(sel, list, ph) { sel.innerHTML = '<option value="">' + ph + '</option>' + list.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join(''); }
   function netFor(p) {
