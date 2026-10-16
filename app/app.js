@@ -109,7 +109,7 @@
   /* namba ya simu ya Tanzania: 0754 123 456 (nafasi za kusoma tu — zinaondolewa kabla ya kutuma) */
   function livePhone(inp) { var d = String(inp.value || '').replace(/\D/g, ''); if (d.charAt(0) !== '0' || d.length > 10) return; var v = d.length > 7 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (inp.value !== v) inp.value = v; }
   /* kitufe cha "Rudi" cha Android: kinafunga karatasi iliyo wazi (hakiki, kitabu, deni, rafiki, risiti…) kabla ya kurudi skrini nyuma */
-  var DLGS = ['ask', 'sh', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'];
+  var DLGS = ['ask', 'sh', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'], BACKING = false;
   function dlgOpen(d) { return !!d && (d.classList.contains('on') || d.style.display === 'flex'); }
   function closeTop() {
     for (var k = 0; k < DLGS.length; k++) {
@@ -123,7 +123,8 @@
   }
   function watchDlg(d) {   // karatasi ikifunguka → ingizo la historia, ili "Rudi" iifunge
     if (!d || d._w || !window.MutationObserver) return; d._w = true; var was = dlgOpen(d);
-    new MutationObserver(function () { var now = dlgOpen(d); if (now && !was && history.state !== 'dlg') { try { history.pushState('dlg', ''); } catch (e) {} } was = now; }).observe(d, { attributes: true, attributeFilter: ['class', 'style'] });
+    new MutationObserver(function () { var now = dlgOpen(d); if (now && !was && history.state !== 'dlg') { try { history.pushState('dlg', ''); } catch (e) {} }
+      else if (!now && was && history.state === 'dlg' && !BACKING) { BACKING = true; try { history.back(); } catch (e) {} setTimeout(function () { BACKING = false; }, 300); } was = now; }).observe(d, { attributes: true, attributeFilter: ['class', 'style'] });
   }
   DLGS.forEach(function (id) { watchDlg($(id)); });
   /* ada ya kutuma (TZS) — kutoka Daftari → Kanuni. sell = OMR→TZS (inakatwa kwenye TZS za mpokeaji) · rev = TZS→OMR (inatolewa kwenye TZS unazolipa) */
@@ -166,8 +167,10 @@
   }
   window.addEventListener('popstate', function () {
     var cur = S.stack[S.stack.length - 1];
-    if (closeTop()) { if (history.state !== cur) { try { history.pushState(cur, ''); } catch (e) {} } return; }
-    if (history.state === 'dlg' || history.state === cur) return;   // ingizo la karatasi iliyofungwa kwa kitufe — hakuna cha kurudi
+    if (BACKING) return;   // tulirudisha historia wenyewe baada ya karatasi kufungwa kwa kitufe
+    if (closeTop()) { cur = S.stack[S.stack.length - 1]; if (history.state !== cur) { try { history.pushState(cur, ''); } catch (e) {} } return; }
+    if (history.state === 'dlg') { try { history.back(); } catch (e) {} return; }   // ingizo la karatasi iliyoshafungwa — liruke
+    if (history.state === cur) return;
     if (S.stack.length > 1) back();
   });
   document.addEventListener('backbutton', function () { if (S.stack.length > 1) back(); }, false);
@@ -241,7 +244,7 @@
   $('lgBack').onclick = function () { $('lg2').style.display = 'none'; $('lg1').style.display = 'flex'; clearInterval(resendT); };
   $('lgGo').onclick = verify;
   function logout(silent) {
-    S.wt = ''; S.me = null; S.orders = []; pushReady = false; ['yzw_t', 'yzw_me', 'yzw_orders', 'yzw_push'].forEach(LS.del);
+    S.wt = ''; S.me = null; S.orders = []; pushReady = false; ['yzw_t', 'yzw_me', 'yzw_orders', 'yzw_push', 'yzw_draft', 'yzw_draft_pf', 'yzw_rvdraft', 'yzw_bulk'].forEach(LS.del);
     S.stack = ['login']; show('login', false); if (!silent) toast('Umetoka');
   }
 
@@ -277,7 +280,7 @@
       try { lis = FS.addListener('progress', function (ev) { if (ev && ev.contentLength > 0) loadSet(ev.bytes / ev.contentLength, Math.round(ev.bytes / 1048576 * 10) / 10 + ' / ' + Math.round(ev.contentLength / 1048576 * 10) / 10 + ' MB'); }); } catch (_) {}
       var unlis = function () { try { if (lis && lis.then) lis.then(function (h) { h.remove(); }); else if (lis && lis.remove) lis.remove(); } catch (_) {} };
       FS.downloadFile({ url: i.appUrl, path: 'WakalaOnline.apk', directory: 'CACHE', progress: true })
-        .then(function (w) { unlis(); loadSet(1, 'Inafungua kisakinishi…'); return FO.open({ filePath: w.path, contentType: 'application/vnd.android.package-archive' }); })
+        .then(function (w) { unlis(); return FS.stat({ path: 'WakalaOnline.apk', directory: 'CACHE' }).then(function (st) { if (!(st && st.size > 1000000)) throw new Error('faili si APK'); loadSet(1, 'Inafungua kisakinishi…'); return FO.open({ filePath: w.path, contentType: 'application/vnd.android.package-archive' }); }); })   // ukurasa wa kosa wa Drive si APK
         .then(function () { loadDone('✓ Imepakuliwa — sakinisha'); })
         .catch(function () { unlis(); xhrGet(); });
       return;
@@ -412,15 +415,19 @@
     if (d.name || d.acc) { $('rvNew').style.display = 'flex'; $('rvName').value = d.name || ''; $('rvAcc').value = d.acc || ''; if (d.net) $('rvNet').value = d.net; }
     $('rvTzs').value = d.tzs || ''; liveTzs($('rvTzs'));
     if (d.proof) { RV.proof = d.proof; $('rvProofImg').src = d.proof; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; }
-    toast('↩ Tumerudisha oda uliyoanza');
+    $('rvDraft').classList.add('on');
   }
+  $('rvDraftX').onclick = function () {
+    rvDraftClear(); RV.proof = ''; RV.picks = []; $('rvName').value = ''; $('rvAcc').value = ''; $('rvTzs').value = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS';
+    var L = (S.me && S.me.payMethods) || []; RV.picks = L.length ? [L[0].id] : []; rvDrawSaved(); $('rvNew').style.display = L.length ? 'none' : 'flex'; rvCalc(); $('rvDraft').classList.remove('on'); haptic(); toast('Fomu imesafishwa');
+  };
   document.getElementById('s-rev').addEventListener('input', rvDraftSave);
   document.getElementById('s-rev').addEventListener('change', rvDraftSave);
   function openRev() {
     var i = info() || {}; if (!i.revOn || !i.rateRev) return toast('Huduma ya Nunua Rial haipatikani kwa sasa');
     var L = (S.me && S.me.payMethods) || []; RV.picks = L.length ? [L[0].id] : []; rvKind(RV.kind); rvDrawSaved(); $('rvNew').style.display = L.length ? 'none' : 'flex';
     $('rvRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; $('rvMin').textContent = 'Kiasi cha chini: OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * i.rateRev) + ')';
-    drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; RV.ck = '';
+    drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; RV.ck = ''; $('rvDraft').classList.remove('on');
     rvDraftRestore(); rvCalc();
     S.stack.push('rev'); show('rev', false);
   }
@@ -432,7 +439,7 @@
     document.querySelectorAll('#rvChips button').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-tz')) === v); });
   }
   $('rvTzs').addEventListener('input', function () { liveTzs(this); rvCalc(); rvDraftSave(); });
-  $('rvChips').onclick = function (e) { var b = e.target.closest('[data-tz]'); if (!b) return; $('rvTzs').value = b.getAttribute('data-tz'); rvCalc(); haptic(); };
+  $('rvChips').onclick = function (e) { var b = e.target.closest('[data-tz]'); if (!b) return; $('rvTzs').value = b.getAttribute('data-tz'); liveTzs($('rvTzs')); rvCalc(); rvDraftSave(); haptic(); };
   $('hRev').onclick = function () { haptic(); openRev(); };
   $('rvPay').onclick = function (e) { $('sPay').onclick.call(this, e); };
   $('rvProof').onchange = function () {
@@ -498,8 +505,8 @@
     if (d.rec) { S.rec = saved.filter(function (r) { return r.rp === d.rec.rp; })[0] || null; drawSaved(saved, false); if (S.rec && isBill(S.rec.net)) setAmt(true); }
     if (!S.rec || d.isNew) { S.rec = d.rec ? S.rec : null; drawSaved(saved, true); setKind(d.kind || 'mobile');
       $('rName').value = d.rName || ''; $('rPhone').value = d.rPhone || ''; $('rAcc').value = d.rAcc || '';
-      if (d.kind === 'mobile') { netUi(false); if (d.netManual && d.rNet) { netUi(true); $('rNet').value = d.rNet; } }
-      if (d.kind === 'bank') { bankUi(false); if (d.bankManual && d.rBank) { bankUi(true); $('rBank').value = d.rBank; } bankWarn(); }
+      if (d.kind === 'mobile') { netUi(false); if (d.netManual && d.rNet) { netUi(true); $('rNet').value = d.rNet; } else if (d.rNet && $('rNetBox').style.display === 'flex') $('rNet').value = d.rNet; }
+      if (d.kind === 'bank') { bankUi(false); if (d.bankManual && d.rBank) { bankUi(true); $('rBank').value = d.rBank; } else if (d.rBank && $('rBankSel').style.display === 'flex') $('rBank').value = d.rBank; bankWarn(); }
       if (d.kind === 'bill') { S.biller = d.biller || ''; drawBillers(); $('rBillAcc').value = d.rBillAcc || ''; $('rBillRef').value = d.rBillRef || ''; $('rBillName').value = d.rBillName || ''; billWarn(); } }
     setAmt(!!d.amtT); $('sOmr').value = d.amt || ''; if (d.amtT) liveTzs($('sOmr'));
     var pf = LS.get(DRAFT_P, ''); if (pf) { S.proof = pf; setProofUi('s', pf); }
@@ -510,6 +517,7 @@
   $('sDraftX').onclick = function () {
     draftClear(); S.rec = null; S.proof = ''; S.useBal = false; S.biller = ''; S.netManual = S.bankManual = false;
     ['sOmr', 'rName', 'rPhone', 'rAcc', 'rBillAcc', 'rBillRef', 'rBillName'].forEach(function (id) { $(id).value = ''; }); $('sProof').value = ''; $('sProofImg').style.display = 'none'; $('sProofTxt').textContent = 'Pakia risiti ya malipo';
+    $('rNetTag').style.display = 'none'; $('rNetBox').style.display = 'none'; $('rBankTag').style.display = 'none'; $('rBankSel').style.display = 'none';
     var saved = (S.me && S.me.recipients) || []; S.rec = saved[0] || null; drawSaved(saved, !saved.length); setKind('mobile'); setAmt(false); drawBalOpt(); sCalc(); haptic(); toast('Fomu imesafishwa');
   };
   document.getElementById('s-send').addEventListener('input', draftSave);
@@ -811,7 +819,7 @@
       dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () { attach(b.getAttribute('data-sh-ref'), b, close); }; });
       var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); draftSave(); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
       var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(true); PD.proof = d; setProofUi('pd', d); };
-      var rb = dlg.querySelector('[data-sh="rev"]'); if (rb) rb.onclick = function () { close(); openRev(); RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; toast('Risiti ya TZS imewekwa — jaza kiasi na unakopokea OMR'); };
+      var rb = dlg.querySelector('[data-sh="rev"]'); if (rb) rb.onclick = function () { close(); openRev(); RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; rvDraftSave(); toast('Risiti ya TZS imewekwa — jaza kiasi na unakopokea OMR'); };
     }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
   }
   function b64File(b64, mime, name) { var bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new File([u], name || 'risiti', { type: mime || 'image/jpeg' }); }
@@ -879,7 +887,7 @@
     }
     else {
       body.rn = $('rName').value; body.kind = S.kind;
-      if (S.kind === 'mobile') { body.rp = $('rPhone').value.replace(/\s+/g, ''); body.net = $('rNet').value; } else { body.rp = $('rAcc').value.replace(/[\s-]/g, ''); body.net = $('rBank').value; }
+      if (S.kind === 'mobile') { body.rp = $('rPhone').value.replace(/[\s-]/g, ''); body.net = $('rNet').value; } else { body.rp = $('rAcc').value.replace(/[\s-]/g, ''); body.net = $('rBank').value; }
       if (String(body.rn).trim().length < 3) return fail(err, 'Weka jina kamili la mpokeaji', $('rName'));
       if (!body.rp) return fail(err, S.kind === 'mobile' ? 'Weka namba ya simu ya mpokeaji' : 'Weka namba ya akaunti', S.kind === 'mobile' ? $('rPhone') : $('rAcc'));
       if (S.kind === 'mobile' && !/^0[67]\d{8}$/.test(body.rp.replace(/^\+?255/, '0'))) return fail(err, 'Namba ya simu ya Tanzania ina tarakimu 10 na inaanza na 06 au 07 (mf. 0754 123 456)', $('rPhone'));
@@ -972,7 +980,7 @@
   var END_ST = { no: 1, cancel: 1, rstop: 1, stop: 1, returned: 1, refunded: 1, used: 1, lost: 1 };
   function endSteps(o, steps) {
     if (!END_ST[o.st]) return steps;
-    var done = steps.filter(function (s2) { return o.step >= s2[2]; });
+    var stp = Math.max(1, Number(o.step) || 1), done = steps.filter(function (s2) { return stp >= s2[2]; });
     var txt = o.st === 'cancel' ? 'Umeghairi oda hii' : o.st === 'no' ? (o.label || 'Oda imesitishwa — malipo hayajaonekana') : o.st === 'rstop' ? (o.label || 'Oda imesitishwa') : o.st === 'returned' ? 'Imesitishwa — pesa imerudi kwenye salio lako' : o.st === 'refunded' ? 'Imesitishwa — umerudishiwa pesa' : o.st === 'used' ? 'Imesitishwa — pesa imetumika kwenye oda nyingine' : o.st === 'lost' ? 'Imesitishwa — pesa haikurudi' : 'Imesitishwa — pesa haijatumwa';
     var at = o.endAt || o.stAt || o.rfAt || 0;
     return done.concat([[txt, at ? when(at) : 'Haitaendelea', 99, 'end']]);
@@ -996,7 +1004,7 @@
       + '<div style="font-size:12.5px;opacity:.9;display:flex;flex-direction:column;gap:2px">' + [{ name: o.rn, acc: o.rp, bank: o.net }].concat(o.alts || []).filter(function (x) { return x && x.acc; }).map(function (x) { var hit = o.paidTo && o.paidTo.acc === x.acc; return '<span>' + (hit ? '✅ ' : (o.alts && o.alts.length ? '• ' : '')) + esc(x.bank || '') + ' · ' + esc(x.acc) + (hit ? ' <b>(imelipwa hapa)</b>' : '') + '</span>'; }).join('') + '</div></div>';
     if (o.rc && (o.rc.dup || o.rc.old)) h += rcCard(o.rc);
     if (o.st === 'cancel') h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b></div>';
-    else if (o.st === 'rstop') h += (o.rc && o.rc.dup ? rcCard(o.rc) : '') + '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">⛔ ' + esc(o.label || 'Oda imesitishwa na WakalaOnline') + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Kama ulishalipa TZS kwa namba za wakala, wasiliana nasi WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b> — tutakurudishia au tutaikamilisha.</div></div>'
+    else if (o.st === 'rstop') h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">⛔ ' + esc(o.label || 'Oda imesitishwa na WakalaOnline') + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Kama ulishalipa TZS kwa namba za wakala, wasiliana nasi WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b> — tutakurudishia au tutaikamilisha.</div></div>'
       + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu oda ' + o.ref + ' (Nunua Rial) iliyositishwa') + '">Wasiliana nasi WhatsApp</a>';
     else if (rno) h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">TZS hazijaonekana kwa wakala</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Wakala: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Hakikisha ulilipa kwa namba sahihi, kisha pakia risiti sahihi — wakala atahakiki tena.</div></div>'
       + '<label class="btn" style="position:relative;cursor:pointer">📎 Pakia risiti sahihi ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
