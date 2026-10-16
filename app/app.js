@@ -976,7 +976,7 @@
       + '<div style="font-size:12.5px;opacity:.9;display:flex;flex-direction:column;gap:2px">' + [{ name: o.rn, acc: o.rp, bank: o.net }].concat(o.alts || []).filter(function (x) { return x && x.acc; }).map(function (x) { var hit = o.paidTo && o.paidTo.acc === x.acc; return '<span>' + (hit ? '✅ ' : (o.alts && o.alts.length ? '• ' : '')) + esc(x.bank || '') + ' · ' + esc(x.acc) + (hit ? ' <b>(imelipwa hapa)</b>' : '') + '</span>'; }).join('') + '</div></div>';
     if (o.rc && (o.rc.dup || o.rc.old)) h += rcCard(o.rc);
     if (o.st === 'cancel') h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b></div>';
-    else if (o.st === 'rstop') h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">⛔ Oda imesitishwa na WakalaOnline</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Kama ulishalipa TZS kwa namba za wakala, wasiliana nasi WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b> — tutakurudishia au tutaikamilisha.</div></div>'
+    else if (o.st === 'rstop') h += (o.rc && o.rc.dup ? rcCard(o.rc) : '') + '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">⛔ ' + esc(o.label || 'Oda imesitishwa na WakalaOnline') + '</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Kama ulishalipa TZS kwa namba za wakala, wasiliana nasi WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b> — tutakurudishia au tutaikamilisha.</div></div>'
       + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu oda ' + o.ref + ' (Nunua Rial) iliyositishwa') + '">Wasiliana nasi WhatsApp</a>';
     else if (rno) h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">TZS hazijaonekana kwa wakala</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Wakala: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Hakikisha ulilipa kwa namba sahihi, kisha pakia risiti sahihi — wakala atahakiki tena.</div></div>'
       + '<label class="btn" style="position:relative;cursor:pointer">📎 Pakia risiti sahihi ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
@@ -1007,7 +1007,7 @@
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
       [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika kwa mnufaika', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
     ];
-    var bad = o.st === 'no' || o.st === 'stop' || o.st === 'lost';
+    var bad = o.st === 'no' || o.st === 'stop' || o.st === 'lost' || o.st === 'rstop';
     var h = '<div style="background:var(--brand);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
       + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut)">' + (o.kind === 'bill' ? ((BL[o.net] || {}).ic || '🧾') + ' ' + esc(o.net) + ' · ' + esc(o.rp) : 'Kwa ' + esc(o.rn || 'mpokeaji') + (o.net ? ' · ' + esc(o.net) : '')) + '</span>' + pill(o) + '</div>'
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
@@ -1242,7 +1242,7 @@
       });
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
-  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rstop: 'Imesitishwa', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine' };
+  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rstop: 'Imesitishwa', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine', part: 'Nusu imetumwa', lost: 'Haikurudi' };
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Kipindi chote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
