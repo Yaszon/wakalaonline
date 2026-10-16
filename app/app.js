@@ -366,7 +366,7 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], rchk: ['p-new', 'Wakala anahakiki'], rno: ['p-no', 'TZS hazijaonekana'], rpay: ['p-ok', 'Tunalipa OMR'], rdone: ['p-paid', 'OMR zimelipwa'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], rchk: ['p-new', 'Wakala anahakiki'], rno: ['p-no', 'TZS hazijaonekana'], rstop: ['p-stop', 'Imesitishwa'], rpay: ['p-ok', 'Tunalipa OMR'], rdone: ['p-paid', 'OMR zimelipwa'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
 
@@ -976,6 +976,8 @@
       + '<div style="font-size:12.5px;opacity:.9;display:flex;flex-direction:column;gap:2px">' + [{ name: o.rn, acc: o.rp, bank: o.net }].concat(o.alts || []).filter(function (x) { return x && x.acc; }).map(function (x) { var hit = o.paidTo && o.paidTo.acc === x.acc; return '<span>' + (hit ? '✅ ' : (o.alts && o.alts.length ? '• ' : '')) + esc(x.bank || '') + ' · ' + esc(x.acc) + (hit ? ' <b>(imelipwa hapa)</b>' : '') + '</span>'; }).join('') + '</div></div>';
     if (o.rc && (o.rc.dup || o.rc.old)) h += rcCard(o.rc);
     if (o.st === 'cancel') h += '<div class="card" style="font-size:14px;line-height:1.55"><b>Umeghairi oda hii.</b></div>';
+    else if (o.st === 'rstop') h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">⛔ Oda imesitishwa na WakalaOnline</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Sababu: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Kama ulishalipa TZS kwa namba za wakala, wasiliana nasi WhatsApp ukiwa na Ref <b>' + esc(o.ref) + '</b> — tutakurudishia au tutaikamilisha.</div></div>'
+      + '<a class="btn dark" target="_blank" rel="noopener" href="https://wa.me/' + HELP_WA + '?text=' + encodeURIComponent('Habari, naomba msaada kuhusu oda ' + o.ref + ' (Nunua Rial) iliyositishwa') + '">Wasiliana nasi WhatsApp</a>';
     else if (rno) h += '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft)"><b style="color:var(--bad)">TZS hazijaonekana kwa wakala</b>' + (o.note ? '<div style="margin-top:6px;font-size:14px">Wakala: ' + esc(o.note) + '</div>' : '') + '<div style="margin-top:8px;font-size:14px">Hakikisha ulilipa kwa namba sahihi, kisha pakia risiti sahihi — wakala atahakiki tena.</div></div>'
       + '<label class="btn" style="position:relative;cursor:pointer">📎 Pakia risiti sahihi ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
     else if (rdone) h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>🎉 OMR ' + omr(o.omr) + ' zimelipwa</b> kwa ' + esc(o.rn || '') + (o.paidAt ? ' · ' + when(o.paidAt) : '') + '.</div>' + (o.receipt ? '<div id="tRc" class="card" style="padding:8px;cursor:pointer"><div class="mut" style="font-size:12px;font-weight:700;padding:4px 6px">Risiti ya malipo ya OMR</div></div>' : '');
@@ -1240,7 +1242,7 @@
       });
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
-  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine' };
+  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rstop: 'Imesitishwa', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine' };
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Kipindi chote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
