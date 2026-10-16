@@ -1279,11 +1279,19 @@
   function dtLocal(t) { var d = new Date(t), z = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
   function dtShort(t) { return new Date(t).toLocaleDateString('en-GB'); }
   /* kipindi maalum: tarehe ya kuanzia / kumalizia (siku nzima) */
+  /* kitufe kimoja: karatasi ya kuchagua kipindi (leo / wiki / mwezi / mwezi uliopita / mwezi uliochaguliwa / miezi yote / tarehe maalum) */
+  var STX = { p: 'this' };
+  function stxPick(p) { STX.p = p; $('stx').querySelectorAll('#stxP button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-p') === p); }); $('stxCustom').style.display = p === 'custom' ? 'flex' : 'none'; $('stxErr').textContent = ''; }
   function openStx(btn) {
-    var now = Date.now(); $('stxFrom').value = dtLocal(now - 864e5); $('stxTo').value = dtLocal(now); $('stxErr').textContent = ''; $('stx').style.display = 'flex';
+    var now = Date.now(); $('stxFrom').value = dtLocal(now - 6 * 864e5); $('stxTo').value = dtLocal(now); $('stxErr').textContent = ''; $('stx').style.display = 'flex';
+    var pm = $('hiStMon'), cur = monKey(now), lastD = new Date(); lastD.setMonth(lastD.getMonth() - 1);
+    var showM = S.mon && S.mon !== cur && S.mon !== monKey(lastD.getTime()); pm.style.display = showM ? '' : 'none'; if (showM) pm.textContent = monthName(new Date(+S.mon.slice(0, 4), +S.mon.slice(5, 7) - 1, 1));
+    stxPick(showM ? 'mon' : S.mon === cur || !S.mon ? 'this' : 'last');
     $('stxClose').onclick = function () { $('stx').style.display = 'none'; }; $('stx').onclick = function (e) { if (e.target === $('stx')) $('stx').style.display = 'none'; };
-    $('stx').querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { var q = b.getAttribute('data-q'), ms = q === '24h' ? 864e5 : q === '7d' ? 7 * 864e5 : q === '30d' ? 30 * 864e5 : 90 * 864e5; $('stxFrom').value = dtLocal(Date.now() - ms); $('stxTo').value = dtLocal(Date.now()); haptic(); }; });
+    $('stxP').onclick = function (e) { var b = e.target.closest('[data-p]'); if (!b) return; stxPick(b.getAttribute('data-p')); haptic(); };
+    $('stx').querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { var q = b.getAttribute('data-q'), d = q === '24h' ? 1 : q === '7d' ? 6 : q === '30d' ? 29 : 89; $('stxFrom').value = dtLocal(Date.now() - d * 864e5); $('stxTo').value = dtLocal(Date.now()); haptic(); }; });
     $('stxGo').onclick = function () {
+      if (STX.p !== 'custom') { $('stx').style.display = 'none'; return statementPdf(STX.p, btn); }
       var f = new Date($('stxFrom').value + 'T00:00:00').getTime(), t = new Date($('stxTo').value + 'T00:00:00').getTime();
       if (!(f > 0) || !(t > 0)) return fail($('stxErr'), 'Weka tarehe zote mbili', $('stxFrom'));
       if (t < f) return fail($('stxErr'), '"Hadi" lazima iwe baada ya "Kuanzia"', $('stxTo'));
@@ -1384,7 +1392,7 @@
         + '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="num" style="font-weight:600;font-size:14px">' + omr(o.omr) + ' OMR</span>' + pill(o) + '</span></button>';
     }).join('') : (S.mon || S.filt !== 'all' ? '<div class="empty">Hakuna miamala kwenye kichujio hiki.</div>' : '<div class="empty">Bado hakuna miamala hapa.<br>Bonyeza <b>Tuma</b> kuanza.</div>');
   }
-  document.querySelectorAll('[data-st]').forEach(function (b) { b.onclick = function () { statementPdf(b.getAttribute('data-st'), b); }; });
+  $('hiStBtn').onclick = function () { openStx(this); };
   function monKey(t) { var d = new Date(t); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
   function monOk(o) { return !S.mon || (o.at && monKey(o.at) === S.mon); }
   function monShort(m) { var M = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'], y = m.slice(0, 4), k = +m.slice(5, 7) - 1; return M[k] + (y === String(new Date().getFullYear()) ? '' : ' ' + y); }
