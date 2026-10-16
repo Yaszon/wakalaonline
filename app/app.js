@@ -15,9 +15,9 @@
   function server() { return String(window.YZ_SERVER || '').trim(); }
   function api(action, body, opts) {
     var url = server();
-    if (!url) return Promise.reject(new Error('Seva haijawekwa kwenye app'));
+    if (!url) return Promise.reject(new Error('App haijawekwa sawa — wasiliana nasi WhatsApp'));
     var payload = Object.assign({ action: action }, body || {}); if (S.wt) payload.wt = S.wt;
-    var parse = function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Seva haikujibu vizuri. Jaribu tena'); } if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); } return j; };
+    var parse = function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Hatukupata jibu — jaribu tena'); } if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); } return j; };
     /* muda wa kusubiri: sekunde 45 kwa maombi ya kawaida, dakika 4 kwa upakiaji wa risiti — badala ya kusubiri bila kikomo */
     var ac = window.AbortController ? new AbortController() : null, tmo = setTimeout(function () { if (ac) ac.abort(); }, opts && opts.progress ? 240000 : 45000);
     var netErr = function (e) { clearTimeout(tmo); throw new Error(e && e.name === 'AbortError' ? 'Mtandao ni wa polepole sana — jaribu tena' : 'Hakuna mtandao. Angalia intaneti yako'); };
@@ -54,7 +54,7 @@
   /* tuma kwa seva ukionyesha asilimia: label (mf. "Inatuma oda…"); baada ya upakiaji 100% → "Inathibitisha…" mpaka seva ijibu */
   function apiLoad(action, body, label, okMsg) {
     loadShow(label, 'Inapakia risiti na taarifa…');
-    return api(action, body, { progress: function (p) { loadSet(p * 0.98, p >= 0.98 ? 'Inathibitisha na seva…' : 'Inapakia risiti na taarifa…'); } })
+    return api(action, body, { progress: function (p) { loadSet(p * 0.98, p >= 0.98 ? 'Inathibitisha…' : 'Inapakia risiti na taarifa…'); } })
       .then(function (j) { if (j && j.ok !== false) loadDone(okMsg || '✓ Imekamilika'); else loadDone(); return j; }, function (e) { loadDone(); throw e; });
   }
 
@@ -272,7 +272,7 @@
     var i = (S.me && S.me.info) || S.info || {}; if (!i.appUrl) return;
     i = Object.assign({}, i, { appUrl: dlUrl(i.appUrl) });
     var C = window.Capacitor && window.Capacitor.Plugins, FS = C && C.Filesystem, FO = C && C.FileOpener;
-    if (!FS || !FO) { window.open(i.appUrl, '_blank'); toast('Inapakua… fungua faili likiisha'); return; }
+    if (!FS || !FO) { window.open(i.appUrl, '_blank'); toast('Inapakua kwa Chrome… fungua faili likiisha'); return; }
     $('up').classList.remove('on'); loadShow('Inapakua toleo jipya 1.' + (Number(i.appVer) || '') + '…', 'WakalaOnline.apk');
     // Njia ya 1: kupakua ndani ya app (native — hakuna kivinjari, mteja haoni link ya GitHub). Njia ya 2 (XHR) ni akiba tu.
     if (typeof FS.downloadFile === 'function') {
@@ -280,7 +280,7 @@
       try { lis = FS.addListener('progress', function (ev) { if (ev && ev.contentLength > 0) loadSet(ev.bytes / ev.contentLength, Math.round(ev.bytes / 1048576 * 10) / 10 + ' / ' + Math.round(ev.contentLength / 1048576 * 10) / 10 + ' MB'); }); } catch (_) {}
       var unlis = function () { try { if (lis && lis.then) lis.then(function (h) { h.remove(); }); else if (lis && lis.remove) lis.remove(); } catch (_) {} };
       FS.downloadFile({ url: i.appUrl, path: 'WakalaOnline.apk', directory: 'CACHE', progress: true })
-        .then(function (w) { unlis(); return FS.stat({ path: 'WakalaOnline.apk', directory: 'CACHE' }).then(function (st) { if (!(st && st.size > 1000000)) throw new Error('faili si APK'); loadSet(1, 'Inafungua kisakinishi…'); return FO.open({ filePath: w.path, contentType: 'application/vnd.android.package-archive' }); }); })   // ukurasa wa kosa wa Drive si APK
+        .then(function (w) { unlis(); return FS.stat({ path: 'WakalaOnline.apk', directory: 'CACHE' }).then(function (st) { if (!(st && st.size > 1000000)) throw new Error('faili si APK'); loadSet(1, 'Inafungua kusakinisha…'); return FO.open({ filePath: w.path, contentType: 'application/vnd.android.package-archive' }); }); })   // ukurasa wa kosa wa Drive si APK
         .then(function () { loadDone('✓ Imepakuliwa — sakinisha'); })
         .catch(function () { unlis(); xhrGet(); });
       return;
@@ -289,10 +289,10 @@
     function xhrGet() {
     var x = new XMLHttpRequest(); x.open('GET', i.appUrl, true); x.responseType = 'blob';
     x.onprogress = function (ev) { if (ev.lengthComputable) loadSet(ev.loaded / ev.total, Math.round(ev.loaded / 1048576 * 10) / 10 + ' / ' + Math.round(ev.total / 1048576 * 10) / 10 + ' MB'); };
-    x.onerror = function () { loadDone(); window.open(i.appUrl, '_blank'); toast('Inapakua kwa kivinjari… fungua faili likiisha'); };
+    x.onerror = function () { loadDone(); window.open(i.appUrl, '_blank'); toast('Inapakua kwa Chrome… fungua faili likiisha'); };
     x.onload = function () {
       if (x.status >= 400) return x.onerror();
-      loadSet(1, 'Inafungua kisakinishi…');
+      loadSet(1, 'Inafungua kusakinisha…');
       var rd = new FileReader(); rd.onload = function () {
         var b64 = String(rd.result).split(',')[1];
         FS.writeFile({ path: 'WakalaOnline.apk', data: b64, directory: 'CACHE' }).then(function (w) { return FO.open({ filePath: w.uri, contentType: 'application/vnd.android.package-archive' }); })
@@ -369,7 +369,7 @@
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
   /* majina ya hali — yale yale kwenye kadi, orodha, historia na PDF */
-  var PILL = { 'new': ['p-new', 'Inasubiri uhakiki'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Malipo hayajaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Umerudishiwa pesa'], used: ['p-paid', 'Imetumika kwenye oda nyingine'],
+  var PILL = { 'new': ['p-new', 'Tunahakiki malipo'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Malipo hayajaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Umerudishiwa pesa'], used: ['p-paid', 'Imetumika kwenye oda nyingine'],
     rchk: ['p-new', 'Wakala anahakiki TZS'], rno: ['p-no', 'TZS hazijaonekana'], rstop: ['p-stop', 'Imesitishwa'], rpay: ['p-ok', 'Tunakulipa OMR'], rdone: ['p-paid', 'OMR umelipwa'], lost: ['p-stop', 'Pesa haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Imetumwa sehemu'], cancel: ['p-stop', 'Umeghairi'] };
   function pill(o) {
     var t = PILL[o.st] || ['p-new', o.st];
@@ -950,7 +950,7 @@
     if (!rc || !rc.amt) return '';
     var amt = rc.cur === 'OMR' ? omr(rc.amt) + ' OMR' : tzs(rc.amt) + ' TZS', head = '🧾 Risiti yako: <b>' + amt + '</b>' + (rc.bank ? ' · ' + esc(rc.bank) : '') + (rc.date ? ' · ' + esc(rc.date.slice(8, 10) + '/' + rc.date.slice(5, 7)) : '');
     if (rc.dup) return '<div class="card" style="border-color:#F3C4BE;background:var(--bad-soft);font-size:14px;line-height:1.55">' + head + '<div style="margin-top:6px"><b style="color:var(--bad)">⚠️ Risiti hii ishatumika</b> — ' + esc(rc.dup.replace(/^Rejea\s+\S+\s+ILISHATUMIKA kwenye\s+/i, '')) + '. Tuma risiti ya malipo mapya.</div></div>';
-    if (rc.old || rc.amtNote) return '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55">' + head + '<div style="margin-top:6px">⚠️ ' + esc(rc.old || rc.amtNote) + '</div></div>';
+    if (rc.old || rc.amtNote) return '<div class="card" style="border-color:#F2D49B;background:var(--warn-soft);font-size:14px;line-height:1.55">' + head + '<div style="margin-top:6px">⚠️ ' + esc(rc.old || rc.amtNote) + ' — wakala ataihakiki.</div></div>';
     return '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55">' + head + ' ✅</div>';
   }
   function rcCheck(ref, box) {   // baada ya kupakia risiti: seva inaisoma (sekunde chache) → onyo papo hapo ikiwa ishatumika
