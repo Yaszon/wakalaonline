@@ -109,7 +109,7 @@
   /* namba ya simu ya Tanzania: 0754 123 456 (nafasi za kusoma tu — zinaondolewa kabla ya kutuma) */
   function livePhone(inp) { var d = String(inp.value || '').replace(/\D/g, ''); if (d.charAt(0) !== '0' || d.length > 10) return; var v = d.length > 7 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (inp.value !== v) inp.value = v; }
   /* kitufe cha "Rudi" cha Android: kinafunga karatasi iliyo wazi (hakiki, kitabu, deni, rafiki, risiti…) kabla ya kurudi skrini nyuma */
-  var DLGS = ['ask', 'sh', 'stx', 'amx', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'], BACKING = false;
+  var DLGS = ['ask', 'sh', 'stx', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'], BACKING = false;
   function dlgOpen(d) { return !!d && (d.classList.contains('on') || d.style.display === 'flex'); }
   function closeTop() {
     for (var k = 0; k < DLGS.length; k++) {
@@ -1809,55 +1809,13 @@
     } catch (e) {}
   }
 
-  /* ---------- MIPANGILIO ya mteja ---------- */
-  var DEF_AMTS = [20, 50, 100, 200, 500];
-  function prefs() { return (S.me && S.me.prefs) || { rateDaily: 0, rateAt: 0, news: 1, waToo: 0 }; }
-  function amts() { var a = LS.get('yzw_amts', null); return Array.isArray(a) && a.length === 5 ? a : DEF_AMTS; }
+  /* ---------- MIPANGILIO ya mteja: usalama tu ---------- */
   function hideOn() { return !!LS.get('yzw_hide', 0); }
-  function drawAmtChips() {
-    var A = amts(); ['cChips', 'sChips'].forEach(function (id) { var el = $(id); if (el) el.innerHTML = A.map(function (v) { return '<button data-amt="' + v + '">' + v + '</button>'; }).join(''); });
-    var hint = $('pAmtsS'); if (hint) hint.textContent = A.join(' · ') + ' OMR';
-    try { chipsOn('cChips', Number($('cOmr').value) || 0); } catch (e) {}
-  }
-  function pSave(set, okMsg) {
-    api('w_prefs', { set: set }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); if (S.me) { S.me.prefs = j.prefs; setMe(S.me); } drawPrefs(); if (okMsg) toast(okMsg); if (set.rateDaily || set.rateAt) { if (j.fcm === false) toast('Taarifa za simu hazijawashwa — wasiliana nasi'); } })
-      .catch(function (e) { toast(e.message); drawPrefs(); });
-  }
-  function drawPrefs() {
-    var p = prefs();
-    $('pRd').checked = !!p.rateDaily; $('pRdH').style.display = p.rateDaily ? '' : 'none'; if (p.rateDaily) $('pRdH').value = String(p.rateDaily);
-    $('pRa').checked = !!p.rateAt; $('pRaV').style.display = p.rateAt ? '' : 'none'; if (p.rateAt) $('pRaV').value = tzs(p.rateAt);
-    $('pRaS').textContent = p.rateAt ? 'Tutakujulisha rate ikifika ' + tzs(p.rateAt) + ' TZS' : 'Tutakutumia taarifa rate ikipanda kufikia unayotaka';
-    $('pNews').checked = p.news !== 0; $('pWa').checked = !!p.waToo;
-    $('pPin').checked = !!LS.get('yzw_pin', null); $('pHide').checked = hideOn();
-    drawAmtChips();
-  }
-  $('pRd').onchange = function () { if (this.checked) { $('pRdH').style.display = ''; if (!prefs().rateDaily) $('pRdH').value = '8'; pSave({ rateDaily: Number($('pRdH').value) || 8 }, '✓ Utapata rate kila siku'); } else pSave({ rateDaily: 0 }, 'Rate ya kila siku imezimwa'); };
-  $('pRdH').onchange = function () { pSave({ rateDaily: Number(this.value) || 8 }, '✓ Saa imebadilishwa'); };
-  $('pRa').onchange = function () { if (this.checked) { $('pRaV').style.display = ''; $('pRaV').focus(); } else pSave({ rateAt: 0 }, 'Taarifa ya rate lengwa imezimwa'); };
-  $('pRaV').addEventListener('input', function () { liveTzs(this); });
-  $('pRaV').onchange = function () { var v = Number(String(this.value).replace(/,/g, '')) || 0, cur = (info() || {}).rate || 0;
-    if (!(v >= 1000)) { fail($('pRaS'), 'Andika rate ya TZS (mf. 6,800)', this); return; }
-    if (cur && v <= cur) { toast('Rate ya sasa tayari ni ' + tzs(cur) + ' — weka kubwa zaidi'); }
-    pSave({ rateAt: v }, '✓ Tutakujulisha rate ikifika ' + tzs(v)); };
-  $('pNews').onchange = function () { pSave({ news: this.checked ? 1 : 0 }, this.checked ? '✓ Utapata matangazo' : 'Matangazo yamezimwa'); };
-  $('pWa').onchange = function () { pSave({ waToo: this.checked ? 1 : 0 }, this.checked ? '✓ Risiti zitakuja WhatsApp pia' : '✓ Taarifa za simu tu'); };
+  function drawPrefs() { $('pPin').checked = !!LS.get('yzw_pin', null); $('pHide').checked = hideOn(); }
   $('pHide').onchange = function () { LS.set('yzw_hide', this.checked ? 1 : 0); S.reveal = false; toast(this.checked ? '✓ Salio limefichwa — gusa kuona' : '✓ Salio linaonekana'); };
   $('pPin').onchange = function () { var me = this; if (me.checked) { me.checked = false; pinSetup(function (ok) { me.checked = ok; }); } else ask({ icon: '🔓', title: 'Ondoa kufuli ya app?', ok: 'Ondoa', no: 'Acha' }).then(function (y) { if (y) { LS.del('yzw_pin'); toast('Kufuli imeondolewa'); } else me.checked = true; }); };
   $('pOutAll').onclick = function () { ask({ icon: '📵', title: 'Toka kwenye simu zote?', text: 'Simu zote zilizoingia kwa namba yako zitatolewa — pamoja na hii. Utaingia tena kwa code ya WhatsApp.', ok: 'Toka zote', no: 'Acha', danger: true }).then(function (y) { if (!y) return;
-    api('w_logoutall', {}).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); logout(true); toast('✓ Umetoka kwenye simu zote'); }).catch(function (e) { toast(e.message); }); }); };
-  $('aDel').onclick = function () { ask({ icon: '🗑', title: 'Ondoa akaunti yangu ya app?', text: 'Tutafuta: taarifa za simu, mipangilio, kitabu cha wapokeaji na njia zako za kupokea OMR. Hesabu yako na oda zako zinabaki kwenye kumbukumbu za WakalaOnline. Unaweza kujiunga tena wakati wowote.', ok: 'Ndiyo, ondoa', no: 'Acha', danger: true }).then(function (y) { if (!y) return;
-    api('w_delete', {}).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); ['yzw_pin', 'yzw_hide', 'yzw_amts', 'yzw_lastphone'].forEach(LS.del); logout(true); toast('Akaunti ya app imeondolewa. Karibu tena wakati wowote 🙏'); }).catch(function (e) { toast(e.message); }); }); };
-  /* kiasi cha haraka */
-  $('pAmts').onclick = function () {
-    var A = amts(); $('amxIn').innerHTML = A.map(function (v, k) { return '<input class="field num" inputmode="numeric" value="' + v + '" aria-label="Kiasi ' + (k + 1) + '" style="padding:0 6px;text-align:center;height:48px">'; }).join('');
-    $('amxErr').textContent = ''; $('amx').style.display = 'flex';
-    $('amxClose').onclick = function () { $('amx').style.display = 'none'; }; $('amx').onclick = function (e) { if (e.target === $('amx')) $('amx').style.display = 'none'; };
-    $('amxGo').onclick = function () { var vals = Array.prototype.map.call($('amxIn').querySelectorAll('input'), function (i) { return Math.round(Number(String(i.value).replace(/,/g, '')) || 0); });
-      if (vals.some(function (v) { return !(v >= 1 && v <= 10000); })) return fail($('amxErr'), 'Weka kiasi cha OMR 1 hadi 10,000 kwenye kila kisanduku', $('amxIn').querySelector('input'));
-      vals.sort(function (a, b) { return a - b; }); LS.set('yzw_amts', vals); drawAmtChips(); $('amx').style.display = 'none'; haptic(); toast('✓ Vitufe vya kiasi: ' + vals.join(' · ')); };
-    $('amxReset').onclick = function () { LS.del('yzw_amts'); drawAmtChips(); $('amx').style.display = 'none'; toast('✓ Vimerudishwa: 20 · 50 · 100 · 200 · 500'); };
-  };
+    api('w_logoutall', {}).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); LS.del('yzw_pin'); logout(true); toast('✓ Umetoka kwenye simu zote'); }).catch(function (e) { toast(e.message); }); }); };
   /* kufuli ya PIN (ndani ya simu hii tu) */
   function pinHash(pin, salt) { var h = 2166136261, str = salt + '|' + pin; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16) + '.' + str.length; }
   var LK = { mode: '', buf: '', first: '', fails: 0, cb: null };
@@ -1893,7 +1851,6 @@
   /* ---------- kuanza ---------- */
   var lp = LS.get('yzw_lastphone', null); if (lp) { $('lgCc').value = lp.cc; $('lgPhone').value = lp.raw; }
   function drawLoginRate() { var i = S.info, el = $('loginRate'); if (i && i.rate) { el.style.display = 'inline-flex'; el.querySelector('span').textContent = 'Rate ya sasa: 1 OMR = ' + tzs(i.rate) + ' TZS'; } }
-  drawAmtChips();
   if (S.wt) {
     S.stack = ['home']; show('home', false); lockNow();
     Promise.all([loadMe(), loadOrders()]).then(function () { if (S.wt) drawHome(); pushInit(); });

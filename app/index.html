@@ -208,7 +208,6 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 @keyframes draw{to{stroke-dashoffset:0}}
 .srow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.srow:last-child{border-bottom:0}.srow .si{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--card-2);font-size:20px;flex:none}.srow .st{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.srow .st b{font-size:15px}.srow .st span{font-size:12.5px;color:var(--mut);font-weight:600}
 .sw{position:relative;width:50px;height:30px;flex:none}.sw input{position:absolute;opacity:0;width:1px;height:1px}.sw i{position:absolute;inset:0;border-radius:15px;background:var(--line);transition:background .2s;cursor:pointer}.sw i::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .2s}.sw input:checked+i{background:var(--brand)}.sw input:checked+i::after{transform:translateX(20px)}
-.ssel{height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);font-weight:700;padding:0 10px;color:var(--ink);font-size:14px}
 #lock{position:fixed;inset:0;z-index:90;background:var(--ground);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}#lock.on{display:flex}
 .pind{display:flex;gap:14px}.pind i{width:16px;height:16px;border-radius:50%;border:2px solid var(--brand);background:transparent}.pind i.on{background:var(--brand)}
 .pinpad{display:grid;grid-template-columns:repeat(3,76px);gap:12px}.pinpad button{height:64px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-family:Sora,sans-serif;font-size:24px;font-weight:600;color:var(--ink);cursor:pointer}.pinpad button:active{background:var(--lime-soft)}
@@ -587,21 +586,13 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
       <button class="btn dark" id="aSave">Hifadhi jina</button>
     </div>
     <div class="card" style="display:flex;flex-direction:column;gap:0;padding:4px 16px">
-      <div class="sec" style="padding:12px 0 4px"><h2>🔔 Taarifa</h2></div>
-      <div class="srow"><span class="si">📈</span><span class="st"><b>Rate ya kila siku</b><span>Tunakutumia rate kila siku saa unayochagua</span></span><select class="ssel" id="pRdH" style="display:none"><option value="7">Saa 1 asubuhi</option><option value="8">Saa 2 asubuhi</option><option value="9">Saa 3 asubuhi</option><option value="12">Saa 6 mchana</option><option value="18">Saa 12 jioni</option><option value="20">Saa 2 usiku</option></select><label class="sw"><input type="checkbox" id="pRd"><i></i></label></div>
-      <div class="srow"><span class="si">🎯</span><span class="st"><b>Nijulishe rate ikifika</b><span id="pRaS">Tutakutumia taarifa rate ikipanda kufikia unayotaka</span></span><input class="ssel num" id="pRaV" inputmode="numeric" placeholder="mf. 6,800" style="width:92px;display:none"><label class="sw"><input type="checkbox" id="pRa"><i></i></label></div>
-      <div class="srow"><span class="si">📣</span><span class="st"><b>Matangazo</b><span>Rate mpya, ofa na taarifa za ofisi</span></span><label class="sw"><input type="checkbox" id="pNews"><i></i></label></div>
-      <div class="srow"><span class="si">💬</span><span class="st"><b>Risiti kwa WhatsApp pia</b><span>Mbali na taarifa ya simu, tukutumie risiti kwenye WhatsApp</span></span><label class="sw"><input type="checkbox" id="pWa"><i></i></label></div>
       <div class="sec" style="padding:12px 0 4px"><h2>🔒 Usalama</h2></div>
       <div class="srow"><span class="si">🔐</span><span class="st"><b>Kufuli ya app (PIN)</b><span>Ukifungua app, uweke PIN ya tarakimu 4</span></span><label class="sw"><input type="checkbox" id="pPin"><i></i></label></div>
       <div class="srow"><span class="si">👁</span><span class="st"><b>Ficha salio na deni</b><span>Nyumbani na Historia, gusa kuona</span></span><label class="sw"><input type="checkbox" id="pHide"><i></i></label></div>
       <div class="srow" style="cursor:pointer" id="pOutAll"><span class="si">📵</span><span class="st"><b>Toka kwenye simu zote</b><span>Ukiwa umeingia kwenye simu nyingine</span></span><span class="mut">›</span></div>
-      <div class="sec" style="padding:12px 0 4px"><h2>💸 Kutuma</h2></div>
-      <div class="srow" style="cursor:pointer" id="pAmts"><span class="si">⚡</span><span class="st"><b>Kiasi cha haraka</b><span id="pAmtsS">20 · 50 · 100 · 200 · 500 OMR</span></span><span class="mut">›</span></div>
     </div>
     <a class="btn ghost" id="aHelp" target="_blank" rel="noopener">Wasiliana nasi WhatsApp</a>
     <button class="btn ghost" id="aOut" style="color:var(--bad)">Toka (Logout)</button>
-    <button type="button" id="aDel" style="background:none;border:0;color:var(--mut);font-size:13px;font-weight:700;cursor:pointer;padding:6px">Ondoa akaunti yangu ya app</button>
     <div class="mut" style="font-size:12px;text-align:center">WakalaOnline · Tuma pesa Tanzania kwa urahisi</div>
   </div>
   <nav class="tabs" data-tab="acct"></nav>
@@ -712,17 +703,6 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
   <div class="pinpad" id="lockPad"><button type="button">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><button type="button">5</button><button type="button">6</button><button type="button">7</button><button type="button">8</button><button type="button">9</button><button type="button" data-k="x" style="visibility:hidden"></button><button type="button">0</button><button type="button" data-k="del" aria-label="Futa">⌫</button></div>
   <button type="button" id="lockForgot" style="background:none;border:0;color:var(--brand-2);font-weight:800;font-size:14px;cursor:pointer">Umesahau PIN? Ingia upya kwa WhatsApp</button>
   <button type="button" id="lockCancel" style="display:none;background:none;border:0;color:var(--mut);font-weight:800;font-size:14px;cursor:pointer">Ghairi</button>
-</div>
-<div id="amx" role="dialog" aria-modal="true" aria-labelledby="amxT" style="position:fixed;inset:0;z-index:53;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center">
-  <div class="cfs">
-    <div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>
-    <div class="row" style="justify-content:space-between"><h2 id="amxT" style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600">⚡ Kiasi cha haraka</h2><button class="iconbtn" id="amxClose" aria-label="Funga"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-    <div class="mut" style="font-size:14px;margin-top:-6px">Vitufe vya kiasi (OMR) kwenye skrini ya Tuma na kikokotoo.</div>
-    <div id="amxIn" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
-    <div class="err" id="amxErr"></div>
-    <button class="btn" id="amxGo">Hifadhi</button>
-    <button class="btn ghost" id="amxReset">Rudisha vya kawaida (20 · 50 · 100 · 200 · 500)</button>
-  </div>
 </div>
 <div id="stx" role="dialog" aria-modal="true" aria-labelledby="stxT" style="position:fixed;inset:0;z-index:53;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center">
   <div class="cfs">
