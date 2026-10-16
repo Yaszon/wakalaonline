@@ -284,28 +284,28 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 #s-send .cta-go,#s-rev .cta-go{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#B5E04F,#8CC63F);color:#0E3D20;box-shadow:0 10px 26px rgba(140,198,63,.4);font-weight:800;letter-spacing:.01em}
 #s-send .cta-go:active,#s-rev .cta-go:active{transform:translateY(1px)}
 #s-send .opt.on,#s-send .opt[aria-pressed="true"]{box-shadow:0 0 0 3px rgba(166,211,60,.25)}
-.rev-card{background:radial-gradient(130% 120% at 0% 0%,#B3263E 0%,#7E1528 48%,#3D0712 100%);color:#fff;border:1px solid rgba(255,209,102,.38);box-shadow:0 14px 34px rgba(90,12,28,.38)}
+.rev-card{background:radial-gradient(130% 120% at 0% 0%,#9B5560 0%,#743E48 50%,#47282E 100%);color:#fff;border:1px solid rgba(242,203,122,.30);box-shadow:0 12px 28px rgba(71,40,46,.28)}
 /* Nunua Rial (Oman): burgundy + dhahabu — inatofautiana na kijani cha Tanzania */
 #hRev{position:relative;overflow:hidden;padding:16px}
 #hRev::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:22px 22px;pointer-events:none;mask-image:linear-gradient(90deg,transparent,#000 60%)}
-#hRev::after{content:"";position:absolute;top:0;bottom:0;width:60px;left:-80px;background:linear-gradient(90deg,transparent,rgba(255,224,150,.28),transparent);transform:skewX(-20deg);animation:revShine 4.5s ease-in-out infinite}
+#hRev::after{content:"";position:absolute;top:0;bottom:0;width:60px;left:-80px;background:linear-gradient(90deg,transparent,rgba(255,236,190,.16),transparent);transform:skewX(-20deg);animation:revShine 4.5s ease-in-out infinite}
 @keyframes revShine{0%,70%{left:-80px}100%{left:110%}}
 #hRev>*{position:relative;z-index:1}
-#hRev .si{background:linear-gradient(145deg,#FFE08A,#E8A21A)!important;box-shadow:0 4px 14px rgba(232,162,26,.45),inset 0 1px 0 rgba(255,255,255,.6)}
+#hRev .si{background:linear-gradient(145deg,#F6DCA0,#DDB066)!important;box-shadow:0 4px 12px rgba(221,176,102,.30),inset 0 1px 0 rgba(255,255,255,.5)}
 #hRev b{color:#fff;letter-spacing:.01em}
-#hRev #hRevRate{color:#FFD166;font-weight:800;opacity:1}
-#hRev .rv-go{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#FFD166;color:#5A0E1C;flex:none;box-shadow:0 4px 12px rgba(255,209,102,.35)}
-#s-rev .sec .step{background:#7E1528;color:#FFD166}
-#s-rev .amt-card.rev{background:radial-gradient(120% 90% at 100% 0%,#B3263E 0%,#7E1528 45%,#3D0712 100%);border-color:rgba(255,209,102,.35)}
-#s-rev .amt-card.rev .amt,#s-rev .amt-card.rev .tzs-row #sTzs,#s-rev .amt-card.rev #rvOmr{color:#FFD166;text-shadow:0 0 16px rgba(255,209,102,.35)}
-#s-rev .amt-card.rev .amt::placeholder{color:rgba(255,209,102,.35)}
+#hRev #hRevRate{color:#F2CB7A;font-weight:800;opacity:1}
+#hRev .rv-go{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#F2CB7A;color:#47282E;flex:none;box-shadow:0 4px 10px rgba(242,203,122,.25)}
+#s-rev .sec .step{background:#743E48;color:#F2CB7A}
+#s-rev .amt-card.rev{background:radial-gradient(120% 90% at 100% 0%,#9B5560 0%,#743E48 48%,#47282E 100%);border-color:rgba(242,203,122,.30)}
+#s-rev .amt-card.rev .amt,#s-rev .amt-card.rev .tzs-row #sTzs,#s-rev .amt-card.rev #rvOmr{color:#F2CB7A;text-shadow:none}
+#s-rev .amt-card.rev .amt::placeholder{color:rgba(242,203,122,.35)}
 #s-rev .amt-card.rev .tzs-row{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)} #s-rev .amt-card.rev .tzs-row span:first-child{color:rgba(255,255,255,.85)!important}
-#s-rev .amt-card.rev .amt-head .step{background:#FFD166;color:#0E1A33}
-#s-rev .amt-card.rev .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px} #s-rev .amt-card.rev .chips button.on{background:#FFD166;border-color:#FFD166;color:#0E1A33}
+#s-rev .amt-card.rev .amt-head .step{background:#F2CB7A;color:#47282E}
+#s-rev .amt-card.rev .chips button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#fff;height:36px} #s-rev .amt-card.rev .chips button.on{background:#F2CB7A;border-color:#F2CB7A;color:#47282E;--x:#0E1A33}
 #s-rev .amt-card.rev .lbl,#s-rev .amt-card.rev .row.mut{color:rgba(255,255,255,.7)!important}
 #s-rev .amt-card.rev .amt-unit{color:rgba(255,255,255,.85)}
 #s-rev .amt-card.rev .amt-wrap .amt{min-width:3ch}
-#s-rev .cta-go{background:linear-gradient(135deg,#FFD166,#F4A300);color:#0E1A33;box-shadow:0 10px 26px rgba(244,163,0,.3)}
+#s-rev .cta-go{background:linear-gradient(135deg,#F2CB7A,#DDB066);color:#47282E;box-shadow:0 8px 20px rgba(221,176,102,.28)}
 #s-rev .step{background:#1B2E52}
 </style>
 </head>
