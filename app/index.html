@@ -538,7 +538,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
 <!-- ============ FUATILIA ============ -->
 <section class="scr" id="s-track">
   <div class="pad">
-    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 id="tTitle">Order</h1></div>
+    <div class="top"><button class="iconbtn" data-back aria-label="Rudi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><h1 id="tTitle">Oda</h1></div>
     <div id="tBody" style="display:flex;flex-direction:column;gap:16px"></div>
   </div>
 </section>
@@ -551,11 +551,11 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
       <div class="hero" style="padding:16px;border-radius:22px;gap:6px"><span style="font-size:12px;color:var(--on-brand-mut);font-weight:700">Umetuma mwezi huu</span><span class="num" id="hiMonth" style="font-size:22px;font-weight:700;color:var(--lime)">—</span></div>
       <div class="card" id="hiBalCard" style="padding:16px;display:flex;flex-direction:column;gap:6px;border-radius:22px"><span class="mut" style="font-size:12px;font-weight:700" id="hiBalLbl">Salio lako</span><span class="num" id="hiBal" style="font-size:22px;font-weight:700">—</span><button class="cpy" type="button" id="hiPay" style="display:none;align-self:flex-start;border-color:var(--bad);color:var(--bad)">💳 Lipa deni</button></div>
     </div>
+    <div class="chips" id="hiFilt"><button data-f="all">Zote</button><button data-f="open">Zinazoendelea</button><button data-f="paid">Zilizokamilika</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec"><h2>Taarifa ya miamala (PDF)</h2></div>
-      <div class="chips"><button data-st="this">Mwezi huu</button><button data-st="last">Mwezi uliopita</button><button data-st="all">Zote</button></div>
+      <div class="sec"><h2>Taarifa ya miamala (PDF)</h2><span class="mut" id="hiStHint" style="font-size:12px;font-weight:700"></span></div>
+      <div class="chips" style="flex-wrap:wrap"><button data-st="this">Mwezi huu</button><button data-st="last">Mwezi uliopita</button><button data-st="all">Miezi yote</button></div>
     </div>
-    <div class="chips" id="hiFilt"><button data-f="all">Zote</button><button data-f="open">Zinaendelea</button><button data-f="paid">Zimekamilika</button></div>
     <div class="card list" style="padding:0;overflow:hidden" id="hiList"></div>
   </div>
   <nav class="tabs" data-tab="hist"></nav>
@@ -575,7 +575,7 @@ pre.pay{margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-he
       <button class="btn dark" id="aSave">Hifadhi jina</button>
     </div>
     <a class="btn ghost" id="aHelp" target="_blank" rel="noopener">Wasiliana nasi WhatsApp</a>
-    <button class="btn ghost" id="aOut" style="color:var(--bad)">Toka (Logout)</button>
+    <button class="btn ghost" id="aOut" style="color:var(--bad)">Toka kwenye app</button>
     <div class="mut" style="font-size:12px;text-align:center">WakalaOnline · Tuma pesa Tanzania kwa urahisi</div>
   </div>
   <nav class="tabs" data-tab="acct"></nav>

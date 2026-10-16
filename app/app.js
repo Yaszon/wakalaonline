@@ -365,8 +365,11 @@
   $('hRefresh').onclick = function () { var b = this, old = b.innerHTML; b.disabled = true; b.innerHTML = WSPIN; Promise.all([loadMe(), loadOrders()]).then(function () { b.disabled = false; b.innerHTML = old; drawHome(); toast('Imesasishwa'); }, function () { b.disabled = false; b.innerHTML = old; }); };
   $('hRec').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; var k = b.getAttribute('data-r'); openSend(k === 'new' ? 'new' : (S.me.recipients || [])[+k]); };
   $('hActive').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b) openTrack(b.getAttribute('data-ref')); };
+  /* majina ya hali — yale yale kwenye kadi, orodha, historia na PDF */
+  var PILL = { 'new': ['p-new', 'Inasubiri uhakiki'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Malipo hayajaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Umerudishiwa pesa'], used: ['p-paid', 'Imetumika kwenye oda nyingine'],
+    rchk: ['p-new', 'Wakala anahakiki TZS'], rno: ['p-no', 'TZS hazijaonekana'], rstop: ['p-stop', 'Imesitishwa'], rpay: ['p-ok', 'Tunakulipa OMR'], rdone: ['p-paid', 'OMR umelipwa'], lost: ['p-stop', 'Pesa haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Imetumwa sehemu'], cancel: ['p-stop', 'Umeghairi'] };
   function pill(o) {
-    var t = { 'new': ['p-new', 'Inasubiri'], ok: ['p-ok', 'Inatumwa'], paid: ['p-paid', 'Imefika'], no: ['p-no', 'Haijaonekana'], stop: ['p-stop', 'Imesitishwa'], returned: ['p-stop', 'Pesa imerudi'], refunded: ['p-paid', 'Refunded'], used: ['p-paid', 'Imetumika kwingine'], rchk: ['p-new', 'Wakala anahakiki'], rno: ['p-no', 'TZS hazijaonekana'], rstop: ['p-stop', 'Imesitishwa'], rpay: ['p-ok', 'Tunalipa OMR'], rdone: ['p-paid', 'OMR zimelipwa'], lost: ['p-stop', 'Haikurudi'], hold: ['p-new', 'Thibitisha jina'], part: ['p-ok', 'Nusu imetumwa'], cancel: ['p-stop', 'Imeghairiwa'] }[o.st] || ['p-new', o.st];
+    var t = PILL[o.st] || ['p-new', o.st];
     return '<span class="pill ' + t[0] + '">' + t[1] + '</span>';
   }
 
@@ -954,7 +957,7 @@
   }
   /* ---------- imefanikiwa ---------- */
   function showOk(o) {
-    $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order';
+    $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia oda';
     $('okAmt').textContent = tzs(o.tzs) + ' TZS';
     $('okTxt').textContent = o.kind === 'bill' ? (o.net || 'Bili') + ' · ' + o.rp + '. Tunathibitisha malipo yako sasa — utapata taarifa ikilipwa' + (/LUKU|ZECO|TUKUZA/.test(o.net) ? ', na TOKEN itaonekana kwenye app.' : '.') : 'Kwa ' + (o.rn || 'mpokeaji') + (o.net ? ' · ' + o.net : '') + '. Tunathibitisha malipo yako sasa — utapata taarifa pesa ikifika.';
     $('okRef').textContent = o.ref; $('ok').classList.add('on'); haptic();
@@ -1005,7 +1008,7 @@
     var steps = [
       ['Oda imepokelewa', when(o.at), 1],
       ['Malipo yako yamethibitishwa', o.okAt ? when(o.okAt) : (o.step >= 2 ? 'Imethibitishwa' : 'Tunaangalia risiti yako'), 2],
-      [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika kwa mnufaika', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
+      [o.kind === 'bill' ? 'Bili imelipwa' : 'Pesa imefika kwa mpokeaji', o.paidAt ? when(o.paidAt) + (o.okAt ? ' · ndani ya dakika ' + Math.max(1, Math.round((o.paidAt - o.at) / 60000)) : '') : 'Bado', 3]
     ];
     var bad = o.st === 'no' || o.st === 'stop' || o.st === 'lost' || o.st === 'rstop';
     var h = '<div style="background:var(--brand);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:8px">'
@@ -1013,7 +1016,7 @@
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
       + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 zawadi TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
     if (o.st === 'refunded') {
-      h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↩️ Refunded.</b> Muamala huu ulisitishwa, pesa ikarudi, na OMR <b>' + omr(o.rfOmr || o.back || o.omr) + '</b> zimerudishwa kwako' + (o.rfAt ? ' (' + when(o.rfAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>';
+      h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↩️ Umerudishiwa pesa.</b> Muamala huu ulisitishwa, pesa ikarudi, na OMR <b>' + omr(o.rfOmr || o.back || o.omr) + '</b> zimerudishwa kwako' + (o.rfAt ? ' (' + when(o.rfAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>';
     } else if (o.st === 'used') {
       h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↪️ Imetumika kwenye muamala mwingine.</b> Muamala huu ulisitishwa, pesa ikarudi kwenye salio lako, na umeitumia kwenye oda ' + (o.rfRef ? '<b>' + esc(o.rfRef) + '</b>' : 'nyingine') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>'
         + (o.rfRef ? '<button class="btn ghost" id="tGoRef" data-ref="' + esc(o.rfRef) + '">Fungua oda ' + esc(o.rfRef) + '</button>' : '');
@@ -1242,19 +1245,22 @@
       });
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
-  var LBL = { 'new': 'Inasubiri', ok: 'Inatumwa', paid: 'Imefika', no: 'Haijaonekana', stop: 'Imesitishwa', hold: 'Thibitisha jina', cancel: 'Imeghairiwa', rchk: 'Wakala anahakiki', rno: 'TZS hazijaonekana', rstop: 'Imesitishwa', rpay: 'Tunalipa OMR', rdone: 'OMR zimelipwa', returned: 'Pesa imerudi', refunded: 'Refunded', used: 'Imetumika kwingine', part: 'Nusu imetumwa', lost: 'Haikurudi' };
+  var LBL = {}; Object.keys(PILL).forEach(function (k) { LBL[k] = PILL[k][1]; });
+  var OPEN_ST = { 'new': 1, ok: 1, hold: 1, part: 1, rchk: 1, rpay: 1, rno: 1 }, DONE_ST = { paid: 1, rdone: 1 };   // zinaendelea · zilizofanikiwa (si zilizokataliwa/zilizositishwa)
+  function filtOk(o) { return S.filt === 'all' || (S.filt === 'open' ? !!OPEN_ST[o.st] : !!DONE_ST[o.st]); }
   function statementPdf(period, btn) {
-    var now = new Date(), from = 0, to = Infinity, label = 'Kipindi chote';
+    var now = new Date(), from = 0, to = Infinity, label = 'Miezi yote';
+    var fl = S.filt === 'open' ? 'Zinazoendelea' : S.filt === 'paid' ? 'Zilizokamilika' : 'Zote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
     if (period === 'last') { var d = new Date(now.getFullYear(), now.getMonth() - 1, 1); from = d.getTime(); to = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(d); }
     busy(btn, true, 'Inaandaa PDF…');
     loadOrders().then(function () {
-      var L = S.orders.filter(function (o) { return o.at >= from && o.at < to; }).sort(function (a, b) { return a.at - b.at; });
-      if (!L.length) throw new Error('Hakuna miamala kwenye ' + label);
+      var L = S.orders.filter(function (o) { return o.at >= from && o.at < to && filtOk(o); }).sort(function (a, b) { return a.at - b.at; });
+      if (!L.length) throw new Error('Hakuna miamala ' + (S.filt === 'all' ? '' : S.filt === 'open' ? 'inayoendelea ' : 'iliyokamilika ') + 'kwenye ' + label);
       var J = PDF(), doc = new J({ unit: 'mm', format: 'a4' }), W = 210, H = 297, me = S.me || {};
       var done = L.filter(function (o) { return o.st === 'paid' || o.st === 'ok'; }), so = 0, st = 0, rv = L.filter(function (o) { return o.st === 'rdone'; }), ro = 0, rt = 0;
       done.forEach(function (o) { so += Number(o.omr) || 0; st += Number(o.tzs) || 0; }); rv.forEach(function (o) { ro += Number(o.omr) || 0; rt += Number(o.tzs) || 0; });
-      pdfHead(doc, W, 'Taarifa ya miamala', label);
+      pdfHead(doc, W, 'Taarifa ya miamala · ' + fl, label);
       doc.setTextColor(15, 42, 28); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(me.name || 'Mteja wa WakalaOnline', 12, 42);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(91, 107, 98);
       doc.text('+' + (me.phone || '') + '   ·   Imetolewa ' + new Date().toLocaleDateString('en-GB'), 12, 48);
@@ -1268,11 +1274,11 @@
         headStyles: { fillColor: [31, 122, 50], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [244, 246, 242] },
         columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' } },
-        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 7) { var v = d.cell.raw; d.cell.styles.textColor = v === 'Imefika' ? [23, 96, 42] : (v === 'Haijaonekana' || v === 'Imeghairiwa' || v === 'Imesitishwa') ? [180, 35, 24] : [138, 90, 11]; } }
+        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 7) { var v = d.cell.raw; d.cell.styles.textColor = /Imefika|umelipwa|Umerudishiwa|Imetumika/.test(v) ? [23, 96, 42] : /hayajaonekana|hazijaonekana|Umeghairi|Imesitishwa|haikurudi/i.test(v) ? [180, 35, 24] : [138, 90, 11]; } }
       });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
-      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala · WakalaOnline · ' + label);
+      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + (S.filt === 'all' ? '' : '-' + fl) + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala (' + fl.toLowerCase() + ') · WakalaOnline · ' + label);
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
   function monthName(d) { return ['Januari', 'Februari', 'Machi', 'Aprili', 'Mei', 'Juni', 'Julai', 'Agosti', 'Septemba', 'Oktoba', 'Novemba', 'Desemba'][d.getMonth()] + ' ' + d.getFullYear(); }
@@ -1288,7 +1294,8 @@
     $('hiBal').textContent = omr(Math.abs(b)) + ' OMR';
     $('hiBal').style.color = b < 0 ? 'var(--bad)' : '';
     document.querySelectorAll('#hiFilt button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-f') === S.filt); });
-    var L = S.orders.filter(function (o) { return S.filt === 'all' || (S.filt === 'open' ? (o.st === 'new' || o.st === 'ok' || o.st === 'hold' || o.st === 'part' || o.st === 'rchk' || o.st === 'rpay' || o.st === 'rno') : (o.st === 'paid' || o.st === 'rdone')); });
+    var L = S.orders.filter(filtOk);
+    var fl = S.filt === 'open' ? 'zinazoendelea' : S.filt === 'paid' ? 'zilizokamilika' : 'zote'; document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'PDF itakuwa na oda ' + fl + (S.filt === 'paid' ? ' (zilizofanikiwa tu)' : ''); });
     $('hiList').innerHTML = L.length ? L.map(function (o) {
       if (o.dir === 'to') return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs" style="background:#E3EAF7;color:#1B2E52">🇴🇲</span>'
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nunua Rial · ' + esc(o.rn || '') + '</span>'
@@ -1505,8 +1512,8 @@
       $('okTxt').textContent = 'Kundi ' + (j.bt || '') + ' · wapokeaji ' + (j.orders || []).length + '. Tunathibitisha malipo yako sasa — utapata taarifa pesa ikifika kwa kila mmoja.';
       $('okRef').textContent = j.bt || ''; $('ok').classList.add('on'); haptic();
       $('okTrack').textContent = 'Ona oda zote';
-      $('okTrack').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['hist']; show('hist', false); };
-      $('okHome').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia order'; S.stack = ['home']; show('home', false); };
+      $('okTrack').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia oda'; S.stack = ['hist']; show('hist', false); };
+      $('okHome').onclick = function () { $('ok').classList.remove('on'); $('okT').textContent = 'Oda imepokelewa!'; $('okTrack').textContent = 'Fuatilia oda'; S.stack = ['home']; show('home', false); };
       loadMe(); loadOrders();
     }).catch(function (e) { busy(btn, false); err.textContent = e.message + ' — oda hazijatumwa, jaribu tena.'; });
   }
