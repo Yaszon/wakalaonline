@@ -1326,7 +1326,26 @@
           if (d.column.index === 6) d.cell.styles.textColor = /^Deni/.test(String(d.cell.raw)) ? [180, 35, 24] : [23, 96, 42];
           if (d.column.index === 2) d.cell.styles.textColor = k === 'lost' || k === 'stop' ? [180, 35, 24] : k === 'returned' || k === 'refund' ? [138, 90, 11] : [15, 42, 28]; }
       });
-      var y = doc.lastAutoTable.finalY + 6; doc.setFontSize(8); doc.setTextColor(91, 107, 98);
+      /* mwisho wa hesabu: muhtasari kwa kila mwezi (miamala, TZS, umelipa, imetoka, salio mwisho wa mwezi) */
+      var MO = {}, MK = [];
+      L.forEach(function (x) { var k = monKey(x.at); if (!MO[k]) { MO[k] = { n: 0, tzs: 0, inn: 0, out: 0, bal: null }; MK.push(k); } var m = MO[k]; if (x.kind === 'sale' || x.kind === 'rev') m.n++; m.tzs += x.tzs || 0; m.inn += x.inn || 0; m.out += x.out || 0; if (x.bal != null) m.bal = x.bal; });
+      var y = doc.lastAutoTable.finalY + 10;
+      if (MK.length) {
+        if (y > H - 60) { doc.addPage(); y = 40; }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(15, 42, 28); doc.text('Muhtasari kwa mwezi', 12, y); doc.setFont('helvetica', 'normal');
+        doc.autoTable({
+          startY: y + 4, margin: { left: 12, right: 12, bottom: 16 },
+          head: [['Mwezi', 'Miamala', 'TZS', 'Umelipa (OMR)', 'Imetoka (OMR)', 'Salio / Deni mwisho wa mwezi']],
+          body: MK.map(function (k) { var m = MO[k], d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1); return [monthName(d), String(m.n), tzs(m.tzs), omr(m.inn), omr(m.out), fmtBal(m.bal)]; }),
+          styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2, textColor: [15, 42, 28] },
+          headStyles: { fillColor: [63, 90, 18], textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [244, 246, 242] },
+          columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right', fontStyle: 'bold' } },
+          didParseCell: function (d) { if (d.section === 'body' && d.column.index === 5) d.cell.styles.textColor = /^Deni/.test(String(d.cell.raw)) ? [180, 35, 24] : [23, 96, 42]; }
+        });
+        y = doc.lastAutoTable.finalY + 6;
+      }
+      doc.setFontSize(8); doc.setTextColor(91, 107, 98);
       doc.text('Umelipa (OMR) = pesa uliyotoa / kuweka kwetu · Imetoka (OMR) = kiasi cha muamala au refund · Salio chanya = amana yako, "Deni" = unachodaiwa. Oda zilizokataliwa au kughairiwa haziingii.', 12, y, { maxWidth: W - 24 });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
