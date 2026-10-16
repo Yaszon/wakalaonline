@@ -214,6 +214,19 @@
     var C = window.Capacitor && window.Capacitor.Plugins, FS = C && C.Filesystem, FO = C && C.FileOpener;
     if (!FS || !FO) { window.open(i.appUrl, '_blank'); toast('Inapakua… fungua faili likiisha'); return; }
     $('up').classList.remove('on'); loadShow('Inapakua toleo jipya 1.' + (Number(i.appVer) || '') + '…', 'WakalaOnline.apk');
+    // Njia ya 1: kupakua ndani ya app (native — hakuna kivinjari, mteja haoni link ya GitHub). Njia ya 2 (XHR) ni akiba tu.
+    if (typeof FS.downloadFile === 'function') {
+      var lis = null;
+      try { lis = FS.addListener('progress', function (ev) { if (ev && ev.contentLength > 0) loadSet(ev.bytes / ev.contentLength, Math.round(ev.bytes / 1048576 * 10) / 10 + ' / ' + Math.round(ev.contentLength / 1048576 * 10) / 10 + ' MB'); }); } catch (_) {}
+      var unlis = function () { try { if (lis && lis.then) lis.then(function (h) { h.remove(); }); else if (lis && lis.remove) lis.remove(); } catch (_) {} };
+      FS.downloadFile({ url: i.appUrl, path: 'WakalaOnline.apk', directory: 'CACHE', progress: true })
+        .then(function (w) { unlis(); loadSet(1, 'Inafungua kisakinishi…'); return FO.open({ filePath: w.path, contentType: 'application/vnd.android.package-archive' }); })
+        .then(function () { loadDone('✓ Imepakuliwa — sakinisha'); })
+        .catch(function () { unlis(); xhrGet(); });
+      return;
+    }
+    xhrGet();
+    function xhrGet() {
     var x = new XMLHttpRequest(); x.open('GET', i.appUrl, true); x.responseType = 'blob';
     x.onprogress = function (ev) { if (ev.lengthComputable) loadSet(ev.loaded / ev.total, Math.round(ev.loaded / 1048576 * 10) / 10 + ' / ' + Math.round(ev.total / 1048576 * 10) / 10 + ' MB'); };
     x.onerror = function () { loadDone(); window.open(i.appUrl, '_blank'); toast('Inapakua kwa kivinjari… fungua faili likiisha'); };
@@ -227,6 +240,7 @@
       }; rd.readAsDataURL(x.response);
     };
     x.send();
+    }
   };
   $('upLater').onclick = function () { var i = (S.me && S.me.info) || S.info || {}; LS.set('yzw_upskip', { v: Number(i.appVer) || 0, at: Date.now() }); $('up').classList.remove('on'); };
   $('upBar').onclick = showUpdate;
