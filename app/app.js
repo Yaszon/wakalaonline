@@ -1279,34 +1279,38 @@
   function dtLocal(t) { var d = new Date(t), z = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
   function dtShort(t) { return new Date(t).toLocaleDateString('en-GB'); }
   /* kipindi maalum: tarehe ya kuanzia / kumalizia (siku nzima) */
-  /* kitufe kimoja: karatasi ya kuchagua kipindi (leo / wiki / mwezi / mwezi uliopita / mwezi uliochaguliwa / miezi yote / tarehe maalum) */
-  var STX = { p: 'this' };
-  function stxPick(p) { STX.p = p; $('stx').querySelectorAll('#stxP button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-p') === p); }); $('stxCustom').style.display = p === 'custom' ? 'flex' : 'none'; $('stxErr').textContent = ''; }
+  /* kitufe kimoja → karatasi kama ya Daftari: Siku / Wiki / Mwezi / Tarehe, na ‹ › kurudi nyuma. Kikomo kwa mteja: mwezi mmoja (siku 31), tarehe tu (bila saa). */
+  var STX = { k: 'm', off: 0 };
+  function stxRange(k, off) {
+    var n = new Date(), d0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()), f, t, l;
+    if (k === 'd') { f = new Date(d0); f.setDate(f.getDate() + off); t = new Date(f); t.setDate(t.getDate() + 1); l = (off === 0 ? 'Leo · ' : off === -1 ? 'Jana · ' : '') + f.toLocaleDateString('en-GB'); }
+    else if (k === 'w') { f = new Date(d0); f.setDate(f.getDate() - (f.getDay() + 6) % 7 + 7 * off); t = new Date(f); t.setDate(t.getDate() + 7); var e = new Date(t); e.setDate(e.getDate() - 1); l = (off === 0 ? 'Wiki hii · ' : '') + f.toLocaleDateString('en-GB') + ' – ' + e.toLocaleDateString('en-GB'); }
+    else { f = new Date(n.getFullYear(), n.getMonth() + off, 1); t = new Date(f.getFullYear(), f.getMonth() + 1, 1); l = monthName(f); }
+    return { from: f.getTime(), to: t.getTime(), label: l };
+  }
+  function stxDraw() {
+    $('stx').querySelectorAll('#stxP button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === STX.k); });
+    var c = STX.k === 'c'; $('stxCustom').style.display = c ? 'flex' : 'none'; $('stxNav').style.display = c ? 'none' : 'flex'; $('stxErr').textContent = '';
+    if (!c) { $('stxLbl').textContent = stxRange(STX.k, STX.off).label; $('stxNext').disabled = STX.off >= 0; $('stxNext').style.opacity = STX.off >= 0 ? '.35' : ''; }
+  }
   function openStx(btn) {
-    var now = Date.now(); $('stxFrom').value = dtLocal(now - 6 * 864e5); $('stxTo').value = dtLocal(now); $('stxErr').textContent = ''; $('stx').style.display = 'flex';
-    var pm = $('hiStMon'), cur = monKey(now), lastD = new Date(); lastD.setMonth(lastD.getMonth() - 1);
-    var showM = S.mon && S.mon !== cur && S.mon !== monKey(lastD.getTime()); pm.style.display = showM ? '' : 'none'; if (showM) pm.textContent = monthName(new Date(+S.mon.slice(0, 4), +S.mon.slice(5, 7) - 1, 1));
-    stxPick(showM ? 'mon' : S.mon === cur || !S.mon ? 'this' : 'last');
+    var now = Date.now(); $('stxFrom').value = dtLocal(now - 6 * 864e5); $('stxTo').value = dtLocal(now); $('stxFrom').max = $('stxTo').max = dtLocal(now);
+    STX.k = 'm'; STX.off = 0; stxDraw(); $('stx').style.display = 'flex';
     $('stxClose').onclick = function () { $('stx').style.display = 'none'; }; $('stx').onclick = function (e) { if (e.target === $('stx')) $('stx').style.display = 'none'; };
-    $('stxP').onclick = function (e) { var b = e.target.closest('[data-p]'); if (!b) return; stxPick(b.getAttribute('data-p')); haptic(); };
-    $('stx').querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { var q = b.getAttribute('data-q'), d = q === '24h' ? 1 : q === '7d' ? 6 : q === '30d' ? 29 : 89; $('stxFrom').value = dtLocal(Date.now() - d * 864e5); $('stxTo').value = dtLocal(Date.now()); haptic(); }; });
+    $('stxP').onclick = function (e) { var b = e.target.closest('[data-k]'); if (!b) return; STX.k = b.getAttribute('data-k'); STX.off = 0; stxDraw(); haptic(); };
+    $('stxPrev').onclick = function () { STX.off--; stxDraw(); haptic(); };
+    $('stxNext').onclick = function () { if (STX.off < 0) { STX.off++; stxDraw(); haptic(); } };
     $('stxGo').onclick = function () {
-      if (STX.p !== 'custom') { $('stx').style.display = 'none'; return statementPdf(STX.p, btn); }
+      if (STX.k !== 'c') { $('stx').style.display = 'none'; return statementPdf(stxRange(STX.k, STX.off), btn); }
       var f = new Date($('stxFrom').value + 'T00:00:00').getTime(), t = new Date($('stxTo').value + 'T00:00:00').getTime();
       if (!(f > 0) || !(t > 0)) return fail($('stxErr'), 'Weka tarehe zote mbili', $('stxFrom'));
       if (t < f) return fail($('stxErr'), '"Hadi" lazima iwe baada ya "Kuanzia"', $('stxTo'));
-      $('stx').style.display = 'none'; statementPdf({ from: f, to: t + 864e5, label: dtShort(f) + ' – ' + dtShort(t), file: 'Kipindi' }, btn);   // 'hadi' ni siku nzima
+      if ((t - f) / 864e5 > 30.5) return fail($('stxErr'), 'Kipindi kisizidi siku 31 — chagua mwezi mmoja tu', $('stxTo'));
+      $('stx').style.display = 'none'; statementPdf({ from: f, to: t + 864e5, label: dtShort(f) + ' – ' + dtShort(t) }, btn);
     };
   }
   function statementPdf(period, btn) {
-    var now = new Date(), from = 0, to = 0, label = 'Miezi yote', fileLbl = '';
-    if (period === 'custom') return openStx(btn);
-    if (period && typeof period === 'object') { from = period.from; to = period.to; label = period.label; fileLbl = period.file || ''; }
-    if (period === 'day') { from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(); label = 'Leo ' + now.toLocaleDateString('en-GB'); }
-    if (period === 'week') { var wd = (now.getDay() + 6) % 7, ws = new Date(now.getFullYear(), now.getMonth(), now.getDate() - wd); from = ws.getTime(); label = 'Wiki hii (kuanzia ' + ws.toLocaleDateString('en-GB') + ')'; }
-    if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
-    if (period === 'last') { var d = new Date(now.getFullYear(), now.getMonth() - 1, 1); from = d.getTime(); to = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(d); }
-    if (period === 'mon' && S.mon) { var dm = new Date(+S.mon.slice(0, 4), +S.mon.slice(5, 7) - 1, 1); from = dm.getTime(); to = new Date(dm.getFullYear(), dm.getMonth() + 1, 1).getTime(); label = monthName(dm); }
+    var p = period && typeof period === 'object' ? period : stxRange('m', 0), from = p.from, to = p.to, label = p.label;
     busy(btn, true, 'Inaandaa PDF…');
     api('w_statement', { from: from, to: to }).then(function (j) {
       if (!j.ok || !j.rows) throw new Error(j.msg || 'Taarifa haikupatikana — jaribu tena');
@@ -1357,7 +1361,7 @@
       doc.text('Umelipa (OMR) = pesa uliyotoa / kuweka kwetu · Imetoka (OMR) = kiasi cha muamala au refund · Salio chanya = amana yako, "Deni" = unachodaiwa. Oda zilizokataliwa au kughairiwa haziingii.', 12, y, { maxWidth: W - 24 });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
-      return shareFile('WakalaOnline-Taarifa-' + (fileLbl || label).replace(/[^\w\u00C0-\u024F-]+/g, '-').slice(0, 40) + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala na hesabu · WakalaOnline · ' + label);
+      return shareFile('WakalaOnline-Taarifa-' + label.replace(/[^\w\u00C0-\u024F-]+/g, '-').slice(0, 40) + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala na hesabu · WakalaOnline · ' + label);
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
   function monthName(d) { return ['Januari', 'Februari', 'Machi', 'Aprili', 'Mei', 'Juni', 'Julai', 'Agosti', 'Septemba', 'Oktoba', 'Novemba', 'Desemba'][d.getMonth()] + ' ' + d.getFullYear(); }
