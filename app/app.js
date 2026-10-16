@@ -18,20 +18,20 @@
     if (!url) return Promise.reject(new Error('Seva haijawekwa kwenye app'));
     var payload = Object.assign({ action: action }, body || {}); if (S.wt) payload.wt = S.wt;
     var parse = function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Seva haikujibu vizuri. Jaribu tena'); } if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); } return j; };
+    /* muda wa kusubiri: sekunde 45 kwa maombi ya kawaida, dakika 4 kwa upakiaji wa risiti — badala ya kusubiri bila kikomo */
+    var ac = window.AbortController ? new AbortController() : null, tmo = setTimeout(function () { if (ac) ac.abort(); }, opts && opts.progress ? 240000 : 45000);
+    var netErr = function (e) { clearTimeout(tmo); throw new Error(e && e.name === 'AbortError' ? 'Mtandao ni wa polepole sana — jaribu tena' : 'Hakuna mtandao. Angalia intaneti yako'); };
+    var fo = function (data) { return { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: data, redirect: 'follow', signal: ac ? ac.signal : undefined }; };
     if (opts && opts.progress) {   // asilimia inakadiriwa (Apps Script haikubali preflight ya XHR upload); seva ikijibu → 100%
       var data = JSON.stringify(payload), est = 600 + data.length / 120, t0 = Date.now();
       var id = setInterval(function () { opts.progress(Math.min(0.92, (Date.now() - t0) / est)); }, 80);
-      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: data, redirect: 'follow' })
-        .then(function (r) { clearInterval(id); opts.progress(1); return r.text(); }, function () { clearInterval(id); throw new Error('Hakuna mtandao. Angalia intaneti yako'); })
+      return fetch(url, fo(data))
+        .then(function (r) { clearInterval(id); clearTimeout(tmo); opts.progress(1); return r.text(); }, function (e) { clearInterval(id); netErr(e); })
         .then(parse);
     }
-    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' })
-      .then(function (r) { return r.text(); })
-      .then(function (t) {
-        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('Seva haikujibu vizuri. Jaribu tena'); }
-        if (j && j.error === 'login') { logout(true); throw new Error('Ingia tena'); }
-        return j;
-      }, function () { throw new Error('Hakuna mtandao. Angalia intaneti yako'); });
+    return fetch(url, fo(JSON.stringify(payload)))
+      .then(function (r) { clearTimeout(tmo); return r.text(); }, netErr)
+      .then(parse);
   }
 
   /* ---------- kipakia cha kidigitali: nembo ya W inajichora, pete ya asilimia, na namba ---------- */
@@ -77,6 +77,55 @@
     else { btn.disabled = false; if (btn._l) btn.innerHTML = btn._l; }
   }
   function info() { return (S.me && S.me.info) || S.info || null; }
+  /* ---------- karatasi ya kuuliza (badala ya confirm() ya kivinjari): Promise<boolean> ---------- */
+  var ASK = { close: null };
+  function ask(o) {
+    o = o || {};
+    return new Promise(function (res) {
+      var d = $('ask');
+      if (!d) { d = document.createElement('div'); d.id = 'ask'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); document.body.appendChild(d); watchDlg(d); }
+      d.innerHTML = '<div class="cfs" style="gap:12px"><div style="width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 2px"></div>'
+        + (o.icon ? '<div style="font-size:40px;text-align:center;line-height:1" aria-hidden="true">' + o.icon + '</div>' : '')
+        + '<h2 style="margin:0;font-family:Sora,sans-serif;font-size:20px;font-weight:600;text-align:center">' + esc(o.title || 'Una uhakika?') + '</h2>'
+        + (o.text ? '<div class="mut" style="font-size:14.5px;line-height:1.55;text-align:center;white-space:pre-wrap">' + esc(o.text) + '</div>' : '')
+        + '<button class="btn" id="askOk"' + (o.danger ? ' style="background:var(--bad);color:#fff;box-shadow:none"' : '') + '>' + esc(o.ok || 'Ndiyo') + '</button>'
+        + '<button class="btn ghost" id="askNo">' + esc(o.no || 'Hapana') + '</button></div>';
+      d.style.display = 'flex';
+      var done = function (v) { d.style.display = 'none'; ASK.close = null; res(v); };
+      $('askOk').onclick = function () { haptic(); done(true); };
+      $('askNo').onclick = function () { done(false); };
+      d.onclick = function (e) { if (e.target === d) done(false); };
+      ASK.close = function () { done(false); };
+    });
+  }
+  /* kosa la fomu: andika, sogeza skrini kwenye ujumbe, na tikisa kisanduku husika */
+  function fail(errEl, msg, el) {
+    errEl.textContent = msg; haptic();
+    try { errEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+    if (el) setTimeout(function () { try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} } el.classList.add('shake'); setTimeout(function () { el.classList.remove('shake'); }, 500); }, 260);
+  }
+  /* tarakimu za TZS zinaandikwa na koma mara moja: 1000000 → 1,000,000 */
+  function liveTzs(inp) { var raw = String(inp.value || '').replace(/\D/g, ''); var v = raw ? Number(raw).toLocaleString('en-US') : ''; if (inp.value !== v) inp.value = v; }
+  /* namba ya simu ya Tanzania: 0754 123 456 (nafasi za kusoma tu — zinaondolewa kabla ya kutuma) */
+  function livePhone(inp) { var d = String(inp.value || '').replace(/\D/g, ''); if (d.charAt(0) !== '0' || d.length > 10) return; var v = d.length > 7 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d; if (inp.value !== v) inp.value = v; }
+  /* kitufe cha "Rudi" cha Android: kinafunga karatasi iliyo wazi (hakiki, kitabu, deni, rafiki, risiti…) kabla ya kurudi skrini nyuma */
+  var DLGS = ['ask', 'sh', 'up', 'nw', 'rv', 'pk', 'pd', 'rf', 'cf', 'ok'];
+  function dlgOpen(d) { return !!d && (d.classList.contains('on') || d.style.display === 'flex'); }
+  function closeTop() {
+    for (var k = 0; k < DLGS.length; k++) {
+      var d = $(DLGS[k]); if (!dlgOpen(d)) continue;
+      if (DLGS[k] === 'ask') { if (ASK.close) ASK.close(); else d.style.display = 'none'; }
+      else if (DLGS[k] === 'ok') { d.classList.remove('on'); S.stack = ['home']; show('home', false); }
+      else { d.classList.remove('on'); if (d.style.display === 'flex') d.style.display = 'none'; }
+      return true;
+    }
+    return false;
+  }
+  function watchDlg(d) {   // karatasi ikifunguka → ingizo la historia, ili "Rudi" iifunge
+    if (!d || d._w || !window.MutationObserver) return; d._w = true; var was = dlgOpen(d);
+    new MutationObserver(function () { var now = dlgOpen(d); if (now && !was && history.state !== 'dlg') { try { history.pushState('dlg', ''); } catch (e) {} } was = now; }).observe(d, { attributes: true, attributeFilter: ['class', 'style'] });
+  }
+  DLGS.forEach(function (id) { watchDlg($(id)); });
   /* ada ya kutuma (TZS) — kutoka Daftari → Kanuni. sell = OMR→TZS (inakatwa kwenye TZS za mpokeaji) · rev = TZS→OMR (inatolewa kwenye TZS unazolipa) */
   function feeFor(d, o) {
     var i = info(), F = i && i.fees && i.fees[d]; if (!F || F.on !== true || !(o > 0)) return 0;
@@ -115,7 +164,12 @@
     S.stack.pop(); var prev = S.stack[S.stack.length - 1] || (S.wt ? 'home' : 'login');
     show(prev, false);
   }
-  window.addEventListener('popstate', function () { if (S.stack.length > 1) back(); });
+  window.addEventListener('popstate', function () {
+    var cur = S.stack[S.stack.length - 1];
+    if (closeTop()) { if (history.state !== cur) { try { history.pushState(cur, ''); } catch (e) {} } return; }
+    if (history.state === 'dlg' || history.state === cur) return;   // ingizo la karatasi iliyofungwa kwa kitufe — hakuna cha kurudi
+    if (S.stack.length > 1) back();
+  });
   document.addEventListener('backbutton', function () { if (S.stack.length > 1) back(); }, false);
   document.querySelectorAll('[data-back]').forEach(function (b) { b.onclick = back; });
   document.querySelectorAll('nav.tabs').forEach(function (n) {
@@ -124,7 +178,7 @@
     n.innerHTML = tabs.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (t[0] === on ? 'on' : '') + '"' + (t[0] === on ? ' aria-current="page"' : '') + '>' + svg(t[2]) + t[1] + '</button>'; }).join('');
     n.onclick = function (e) {
       var b = e.target.closest('button'); if (!b) return; var go = b.getAttribute('data-go');
-      if (go === 'send') return openSend(null);
+      if (go === 'send') { var on = document.querySelector('.scr.on'); if (on && on.id === 's-send') return; return openSend(null); }
       S.stack = [go]; show(go, false);
     };
   });
@@ -334,19 +388,37 @@
     if (!L.length) { RV.sel = null; $('rvNew').style.display = 'flex'; } else $('rvNew').style.display = RV.sel ? 'none' : $('rvNew').style.display;
   }
   $('rvSaved').onclick = function (e) {
-    var d = e.target.closest('[data-pmdel]'); if (d) { e.stopPropagation(); var id = d.getAttribute('data-pmdel'); if (!confirm('Futa njia hii ya kupokea OMR?')) return;
-      api('w_paymethod', { del: id }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); S.me.payMethods = j.payMethods || []; setMe(S.me); if (RV.sel && RV.sel.id === id) RV.sel = null; rvDrawSaved(); }).catch(function (x) { toast(x.message); }); return; }
+    var d = e.target.closest('[data-pmdel]'); if (d) { e.stopPropagation(); var id = d.getAttribute('data-pmdel');
+      ask({ icon: '🗑', title: 'Futa njia hii ya kupokea OMR?', ok: 'Futa', no: 'Acha', danger: true }).then(function (yes) { if (!yes) return;
+        api('w_paymethod', { del: id }).then(function (j) { if (!j.ok) return toast(j.msg || 'Imeshindikana'); S.me.payMethods = j.payMethods || []; setMe(S.me); if (RV.sel && RV.sel.id === id) RV.sel = null; rvDrawSaved(); }).catch(function (x) { toast(x.message); }); }); return; }
     var b = e.target.closest('[data-pm]'); if (!b) return; var m = ((S.me && S.me.payMethods) || []).filter(function (x) { return x.id === b.getAttribute('data-pm'); })[0]; if (!m) return;
     var at = RV.picks.indexOf(m.id); if (at >= 0) RV.picks.splice(at, 1); else { if (RV.picks.length >= 3) return toast('Njia 3 tu kwa oda moja'); RV.picks.push(m.id); }
-    if (RV.picks.length) $('rvNew').style.display = 'none'; rvDrawSaved(); haptic();
+    if (RV.picks.length) $('rvNew').style.display = 'none'; rvDrawSaved(); haptic(); rvDraftSave();
   };
   $('rvNewBtn').onclick = function () { $('rvNew').style.display = 'flex'; $('rvName').focus(); };
   $('rvkMob').onclick = function () { rvKind('mobile'); }; $('rvkBank').onclick = function () { rvKind('bank'); };
+  var RVD_K = 'yzw_rvdraft', rvDraftT = 0;
+  function rvDraftSave() { clearTimeout(rvDraftT); rvDraftT = setTimeout(function () { var on = document.querySelector('.scr.on'); if (!on || on.id !== 's-rev') return;
+    var d = { at: Date.now(), tzs: $('rvTzs').value, kind: RV.kind, name: $('rvName').value, acc: $('rvAcc').value, net: $('rvNet').value, picks: RV.picks, proof: RV.proof || '' };
+    if (!d.tzs && !d.name && !d.acc && !d.proof) return LS.del(RVD_K); LS.set(RVD_K, d); }, 350); }
+  function rvDraftClear() { LS.del(RVD_K); }
+  function rvDraftRestore() {
+    var d = LS.get(RVD_K, null); if (!d || Date.now() - (d.at || 0) > 6 * 36e5) { if (d) rvDraftClear(); return; }
+    var L = (S.me && S.me.payMethods) || []; var picks = (d.picks || []).filter(function (id) { return L.some(function (m) { return m.id === id; }); }); if (picks.length) RV.picks = picks;
+    rvKind(d.kind || 'mobile'); rvDrawSaved();
+    if (d.name || d.acc) { $('rvNew').style.display = 'flex'; $('rvName').value = d.name || ''; $('rvAcc').value = d.acc || ''; if (d.net) $('rvNet').value = d.net; }
+    $('rvTzs').value = d.tzs || ''; liveTzs($('rvTzs'));
+    if (d.proof) { RV.proof = d.proof; $('rvProofImg').src = d.proof; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; }
+    toast('↩ Tumerudisha oda uliyoanza');
+  }
+  document.getElementById('s-rev').addEventListener('input', rvDraftSave);
+  document.getElementById('s-rev').addEventListener('change', rvDraftSave);
   function openRev() {
     var i = info() || {}; if (!i.revOn || !i.rateRev) return toast('Huduma ya Nunua Rial haipatikani kwa sasa');
     var L = (S.me && S.me.payMethods) || []; RV.picks = L.length ? [L[0].id] : []; rvKind(RV.kind); rvDrawSaved(); $('rvNew').style.display = L.length ? 'none' : 'flex';
     $('rvRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; $('rvMin').textContent = 'Kiasi cha chini: OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * i.rateRev) + ')';
-    drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; rvCalc(); RV.ck = '';
+    drawPayInto('rvPay', i.payTzs || '—'); $('rvErr').textContent = ''; RV.ck = '';
+    rvDraftRestore(); rvCalc();
     S.stack.push('rev'); show('rev', false);
   }
   function rvCalc() {
@@ -356,41 +428,42 @@
     var fr = r && v ? feeFor('rev', rvOmr(v, r)) : 0; $('rvRate').textContent = r ? 'rate 1 OMR = ' + tzs(r) + ' TZS' + feeTxt(fr) : '';
     document.querySelectorAll('#rvChips button').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-tz')) === v); });
   }
-  $('rvTzs').addEventListener('input', rvCalc);
+  $('rvTzs').addEventListener('input', function () { liveTzs(this); rvCalc(); rvDraftSave(); });
   $('rvChips').onclick = function (e) { var b = e.target.closest('[data-tz]'); if (!b) return; $('rvTzs').value = b.getAttribute('data-tz'); rvCalc(); haptic(); };
   $('hRev').onclick = function () { haptic(); openRev(); };
   $('rvPay').onclick = function (e) { $('sPay').onclick.call(this, e); };
   $('rvProof').onchange = function () {
     var f = this.files && this.files[0]; if (!f) return; $('rvProofTxt').textContent = 'Inaandaa risiti…';
-    shrink(f, 1600, 0.82).then(function (d) { RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; })
+    shrink(f, 1600, 0.82).then(function (d) { RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; rvDraftSave(); })
       .catch(function () { RV.proof = ''; $('rvProofTxt').textContent = 'Faili halikufunguka — jaribu lingine'; });
   };
   $('rvGo').onclick = function () {
     var btn = this, i = info() || {}, err = $('rvErr'), v = Math.round(Number(String($('rvTzs').value).replace(/,/g, '')) || 0), r = Number(i.rateRev) || 0; err.textContent = '';
-    if (!(v > 0)) { err.textContent = 'Weka kiasi cha TZS unacholipa'; $('rvTzs').focus(); return; }
-    if (r && rvOmr(v, r) < (i.revMin || 5)) { err.textContent = 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r + feeFor('rev', i.revMin || 5)) + ')'; return; }
+    if (!(v > 0)) return fail(err, 'Weka kiasi cha TZS unacholipa', $('rvTzs'));
+    if (r && rvOmr(v, r) < (i.revMin || 5)) return fail(err, 'Kiasi cha chini ni OMR ' + (i.revMin || 5) + ' (TZS ' + tzs((i.revMin || 5) * r + feeFor('rev', i.revMin || 5)) + ')', $('rvTzs'));
     var rn, rp, net, saveNew = false, alts = [], L = (S.me && S.me.payMethods) || [], picked = RV.picks.map(function (id) { return L.filter(function (m) { return m.id === id; })[0]; }).filter(Boolean);
     var typed = $('rvName').value.trim() || $('rvAcc').value.trim();
     if (picked.length && !($('rvNew').style.display !== 'none' && typed)) { rn = picked[0].name; rp = picked[0].acc; net = picked[0].bank || ''; alts = picked.slice(1).map(function (m) { return { name: m.name, acc: m.acc, bank: m.bank }; }); }
     else { rn = $('rvName').value.trim(); alts = picked.slice(0, 2).map(function (m) { return { name: m.name, acc: m.acc, bank: m.bank }; }); rp = $('rvAcc').value.replace(/[\s-]/g, ''); net = RV.kind === 'mobile' ? 'Simu Oman' : $('rvNet').value; saveNew = !!$('rvSave').checked;
-      if (rn.length < 3) { err.textContent = 'Weka jina kamili la anayepokea OMR'; $('rvName').focus(); return; }
-      if (RV.kind === 'bank' ? rp.length < 8 : !/^(\+?968)?[79]\d{7}$/.test(rp)) { err.textContent = RV.kind === 'bank' ? 'Weka namba ya akaunti ya benki' : 'Weka namba ya simu ya Oman (9… au 7…, tarakimu 8)'; $('rvAcc').focus(); return; }
-      if (RV.kind === 'bank' && !net) { err.textContent = 'Chagua benki'; return; } }
-    if (!RV.proof) { err.textContent = 'Pakia risiti ya malipo ya TZS kwanza'; return; }
-    if (!confirm('Unalipa TZS ' + tzs(v) + ' → unapokea OMR ' + (Math.round(v / r * 1000) / 1000).toFixed(3) + ' kwa ' + rn.toUpperCase() + ' (' + rp + ')' + (alts.length ? ' au ' + alts.map(function (a) { return a.acc; }).join(' / ') : '') + '.\nUmeshalipa TZS kwa namba za wakala?')) return;
+      if (rn.length < 3) return fail(err, 'Weka jina kamili la anayepokea OMR', $('rvName'));
+      if (RV.kind === 'bank' ? rp.length < 8 : !/^(\+?968)?[79]\d{7}$/.test(rp)) return fail(err, RV.kind === 'bank' ? 'Weka namba ya akaunti ya benki' : 'Weka namba ya simu ya Oman (9… au 7…, tarakimu 8)', $('rvAcc'));
+      if (RV.kind === 'bank' && !net) return fail(err, 'Chagua benki', $('rvNet')); }
+    if (!RV.proof) return fail(err, 'Pakia risiti ya malipo ya TZS kwanza', $('rvProofLbl'));
+    ask({ icon: '🇴🇲', title: 'Tuma oda ya Nunua Rial?', text: 'Unalipa TZS ' + tzs(v) + ' → unapokea OMR ' + (Math.round(v / r * 1000) / 1000).toFixed(3) + '\nkwa ' + rn.toUpperCase() + ' (' + rp + ')' + (alts.length ? ' au ' + alts.map(function (a) { return a.acc; }).join(' / ') : '') + '\n\nUmeshalipa TZS kwa namba za wakala?', ok: 'Ndiyo, nimeshalipa — tuma', no: 'Bado' }).then(function (yes) { if (!yes) return;
     if (!RV.ck) RV.ck = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
     var body = { tzs: v, rate: r, rn: rn, rp: rp, net: net, alts: alts, img: RV.proof, ck: RV.ck };
     if (saveNew) api('w_paymethod', { kind: RV.kind, name: rn, acc: rp, bank: net }).then(function (j) { if (j.ok) { S.me.payMethods = j.payMethods || []; setMe(S.me); } }).catch(function () {});
     var go = function () { return apiLoad('w_revorder', body, 'Inatuma oda ya Nunua Rial…', '✓ Oda imepokelewa').then(function (j) {
       busy(btn, false);
-      if (!j.ok && j.error === 'twin') { if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return go(); } return; }
+      if (!j.ok && j.error === 'twin') return ask({ icon: '👯', title: 'Oda inayofanana ipo', text: j.msg, ok: 'Tuma hii pia', no: 'Acha' }).then(function (y2) { if (y2) { body.again = 1; return go(); } });
       if (!j.ok && j.error === 'rate') { setMe(Object.assign({}, S.me, { info: Object.assign({}, info(), { rateRev: j.rate }) })); $('rvRate').textContent = 'rate 1 OMR = ' + tzs(j.rate) + ' TZS'; rvCalc(); err.textContent = j.msg; return; }
       if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; return; }
-      setMe(j); RV.proof = ''; RV.ck = ''; RV.picks = []; $('rvName').value = ''; $('rvAcc').value = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS'; $('rvTzs').value = ''; rvCalc();
+      setMe(j); RV.proof = ''; RV.ck = ''; RV.picks = []; $('rvName').value = ''; $('rvAcc').value = ''; $('rvProof').value = ''; $('rvProofImg').style.display = 'none'; $('rvProofTxt').textContent = 'Pakia risiti ya malipo ya TZS'; $('rvTzs').value = ''; rvCalc(); rvDraftClear();
       loadOrders().then(function () { haptic(); toast('✓ Oda imepokelewa — wakala anahakiki TZS'); if (j.order) openTrack(j.order.ref); else show('hist'); });
     }).catch(function (e) { busy(btn, false); err.textContent = e.message; }); };
     go();
+    });
   };
 
   /* ---------- tuma ---------- */
@@ -401,8 +474,46 @@
     var N = { 'Mixx by Yas': ['65', '67', '71', '77', '70'], 'Vodacom M-Pesa': ['74', '75', '76', '79', '72'], 'Airtel Money': ['68', '69', '78', '66'], 'Halopesa': ['62', '61', '63'], 'TTCL T-Pesa': ['73'] };
     for (var k in N) if (N[k].indexOf(x) >= 0) return k; return '';
   }
+  /* rasimu ya oda: mteja anatoka kwenda app ya benki kulipa; akirudi (hata Android ikiwa imefunga app) fomu inarudi kama alivyoiacha */
+  var DRAFT_K = 'yzw_draft', DRAFT_P = 'yzw_draft_pf', draftT = 0, draftOn = false;
+  function draftSave() {
+    if (!draftOn) return; clearTimeout(draftT);
+    draftT = setTimeout(function () {
+      var on = document.querySelector('.scr.on'); if (!on || on.id !== 's-send') return;
+      var d = { at: Date.now(), amt: $('sOmr').value, amtT: !!S.amtT, kind: S.kind, rec: S.rec ? { rp: S.rec.rp, rn: S.rec.rn, net: S.rec.net } : null, isNew: $('sNew').style.display !== 'none',
+        rName: $('rName').value, rPhone: $('rPhone').value, rNet: $('rNet').value, netManual: !!S.netManual, rAcc: $('rAcc').value, rBank: $('rBank').value, bankManual: !!S.bankManual,
+        biller: S.biller || '', rBillAcc: $('rBillAcc').value, rBillRef: $('rBillRef').value, rBillName: $('rBillName').value, useBal: !!S.useBal };
+      var has = d.amt || d.rName || d.rPhone || d.rAcc || d.rBillAcc || S.proof;
+      if (!has) { LS.del(DRAFT_K); LS.del(DRAFT_P); return; }
+      LS.set(DRAFT_K, d); if (S.proof) LS.set(DRAFT_P, S.proof); else LS.del(DRAFT_P);
+    }, 350);
+  }
+  function draftClear() { LS.del(DRAFT_K); LS.del(DRAFT_P); $('sDraft').classList.remove('on'); }
+  function draftRestore() {
+    var d = LS.get(DRAFT_K, null); if (!d || !d.at || Date.now() - d.at > 6 * 36e5) { if (d) draftClear(); return false; }
+    var saved = (S.me && S.me.recipients) || [];
+    if (d.rec) { S.rec = saved.filter(function (r) { return r.rp === d.rec.rp; })[0] || null; drawSaved(saved, false); if (S.rec && isBill(S.rec.net)) setAmt(true); }
+    if (!S.rec || d.isNew) { S.rec = d.rec ? S.rec : null; drawSaved(saved, true); setKind(d.kind || 'mobile');
+      $('rName').value = d.rName || ''; $('rPhone').value = d.rPhone || ''; $('rAcc').value = d.rAcc || '';
+      if (d.kind === 'mobile') { netUi(false); if (d.netManual && d.rNet) { netUi(true); $('rNet').value = d.rNet; } }
+      if (d.kind === 'bank') { bankUi(false); if (d.bankManual && d.rBank) { bankUi(true); $('rBank').value = d.rBank; } bankWarn(); }
+      if (d.kind === 'bill') { S.biller = d.biller || ''; drawBillers(); $('rBillAcc').value = d.rBillAcc || ''; $('rBillRef').value = d.rBillRef || ''; $('rBillName').value = d.rBillName || ''; billWarn(); } }
+    setAmt(!!d.amtT); $('sOmr').value = d.amt || ''; if (d.amtT) liveTzs($('sOmr'));
+    var pf = LS.get(DRAFT_P, ''); if (pf) { S.proof = pf; setProofUi('s', pf); }
+    S.useBal = !!d.useBal; drawBalOpt(); sCalc();
+    $('sDraft').classList.add('on');
+    return true;
+  }
+  $('sDraftX').onclick = function () {
+    draftClear(); S.rec = null; S.proof = ''; S.useBal = false; S.biller = ''; S.netManual = S.bankManual = false;
+    ['sOmr', 'rName', 'rPhone', 'rAcc', 'rBillAcc', 'rBillRef', 'rBillName'].forEach(function (id) { $(id).value = ''; }); $('sProof').value = ''; $('sProofImg').style.display = 'none'; $('sProofTxt').textContent = 'Pakia risiti ya malipo';
+    var saved = (S.me && S.me.recipients) || []; S.rec = saved[0] || null; drawSaved(saved, !saved.length); setKind('mobile'); setAmt(false); drawBalOpt(); sCalc(); haptic(); toast('Fomu imesafishwa');
+  };
+  document.getElementById('s-send').addEventListener('input', draftSave);
+  document.getElementById('s-send').addEventListener('change', draftSave);
+  document.getElementById('s-send').addEventListener('click', draftSave);
   function openSend(rec, amount) {
-    S.ck = '';
+    S.ck = ''; draftOn = false; $('sDraft').classList.remove('on');
     var i = info() || {};
     fillSelect($('rNet'), i.nets || ['Mixx by Yas', 'Vodacom M-Pesa', 'Airtel Money', 'Halopesa', 'TTCL T-Pesa'], 'Chagua mtandao');
     S.netManual = false; $('rNetTag').style.display = 'none'; $('rNetBox').style.display = 'none';
@@ -421,7 +532,11 @@
     setAmt((S.rec && isBill(S.rec.net)) || (!S.rec && S.kind === 'bill'));
     S.useBal = false; drawBalOpt();
     sCalc();
+    /* fomu ilivyoachwa (mteja alienda kulipa benki) — inarudishwa akifungua "Tuma" bila kuchagua mpokeaji mpya */
+    if (!rec && !amount) draftRestore(); else draftClear();
+    draftOn = true; draftSave();
     S.stack.push('send'); show('send', false);
+    if (rec && typeof rec === 'object' && !$('sOmr').value) setTimeout(function () { try { $('sOmr').focus({ preventScroll: true }); } catch (e) {} }, 420);   // mpokeaji yupo — anaandika kiasi tu
   }
   function drawSaved(saved, wantNew) {
     var top = saved.slice(0, 5);
@@ -505,7 +620,9 @@
     var prev = !!S.amtT; S.amtT = !!tz; $('amtO').classList.toggle('on', !tz); $('amtT').classList.toggle('on', !!tz);
     $('sOmrL').textContent = tz ? 'Wanapokea (TZS)' : 'Unatuma (OMR)'; if ($('sUnit')) $('sUnit').textContent = tz ? 'TZS' : 'OMR'; $('sTzsL').textContent = tz ? 'Utalipa' : 'Mpokeaji atapata';
     $('sChips').style.display = tz ? 'none' : 'flex';
+    $('sOmr').setAttribute('inputmode', tz ? 'numeric' : 'decimal');
     if (prev !== S.amtT) { var v = Number(String($('sOmr').value).replace(/,/g, '')) || 0; if (v) $('sOmr').value = tz ? netT(v) : omrFor(v); }
+    if (tz) liveTzs($('sOmr'));
     sCalc();
   }
   $('amtO').onclick = function () { setAmt(false); };
@@ -614,7 +731,10 @@
     return r && o * r > mm ? 'Kwa pesa ya simu, kiasi cha juu ni ' + tzs(mm) + ' TZS kwa oda moja (≈ ' + omr(Math.floor(mm / r)) + ' OMR). Kwa zaidi chagua akaunti ya benki' : '';
   }
   $('sChips').onclick = function (e) { var b = e.target.closest('[data-amt]'); if (!b) return; $('sOmr').value = b.getAttribute('data-amt'); sCalc(); };
-  $('sOmr').addEventListener('input', sCalc);
+  $('sOmr').addEventListener('input', function () { if (S.amtT) liveTzs(this); sCalc(); });
+  $('rPhone').addEventListener('input', function () { livePhone(this); });
+  $('rName').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); (S.kind === 'mobile' ? $('rPhone') : $('rAcc')).focus(); } });
+  $('cf').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('on'); });
   /* maelezo ya malipo: kila namba (akaunti, simu) ina kitufe chake cha kunakili */
   function copyText(t) {
     var fb = function () { var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); return ok ? Promise.resolve() : Promise.reject(); };
@@ -651,7 +771,7 @@
     var f = this.files && this.files[0]; if (!f) return;
     $('sProofTxt').textContent = 'Inaandaa picha…';
     shrink(f, 1600, 0.82).then(function (d) {
-      S.proof = d; $('sProofImg').src = d; $('sProofImg').style.display = 'block'; $('sProofTxt').textContent = '✓ Risiti imewekwa · badilisha';
+      S.proof = d; $('sProofImg').src = d; $('sProofImg').style.display = 'block'; $('sProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; draftSave();
     }).catch(function () { S.proof = ''; $('sProofTxt').textContent = 'Picha haikufunguka — jaribu nyingine'; });
   };
   /* ---------- risiti iliyoshirikiwa kutoka kwenye picha/PDF za mteja (Android "Share" / Web Share Target) ---------- */
@@ -681,12 +801,12 @@
         + (S.me && S.me.bal < -0.005 ? '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>💳 Lipa deni kwa risiti hii</b><br><span class="mut" style="font-size:12px">Deni ' + omr(-S.me.bal) + ' OMR</span></span><span>›</span></button>'
           : '<button class="opt" data-sh="pd" style="justify-content:space-between"><span><b>🏦 Weka kama amana — nitatuma mpokeaji baadaye</b><br><span class="mut" style="font-size:12px">Pesa inakaa kwenye salio lako; ukituma mpokeaji unalipa kwa salio bila risiti</span></span><span>›</span></button>')
         + '</div>';
-      var dlg = $('sh'); if (!dlg) { dlg = document.createElement('div'); dlg.id = 'sh'; dlg.setAttribute('role', 'dialog'); dlg.style.cssText = 'position:fixed;inset:0;z-index:54;background:rgba(6,14,10,.55);display:flex;align-items:flex-end;justify-content:center'; document.body.appendChild(dlg); }
+      var dlg = $('sh'); if (!dlg) { dlg = document.createElement('div'); dlg.id = 'sh'; dlg.setAttribute('role', 'dialog'); dlg.style.cssText = 'position:fixed;inset:0;z-index:54;background:rgba(6,14,10,.55);display:none;align-items:flex-end;justify-content:center'; document.body.appendChild(dlg); watchDlg(dlg); }
       dlg.innerHTML = h; dlg.style.display = 'flex';
       var close = function () { dlg.style.display = 'none'; };
       $('shClose').onclick = close; dlg.onclick = function (e) { if (e.target === dlg) close(); };
       dlg.querySelectorAll('[data-sh-ref]').forEach(function (b) { b.onclick = function () { attach(b.getAttribute('data-sh-ref'), b, close); }; });
-      var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
+      var sb = dlg.querySelector('[data-sh="send"]'); if (sb) sb.onclick = function () { close(); openSend(); S.proof = d; setProofUi('s', d); draftSave(); toast('Risiti imewekwa — jaza mpokeaji na kiasi'); };
       var pb = dlg.querySelector('[data-sh="pd"]'); if (pb) pb.onclick = function () { close(); openPay(true); PD.proof = d; setProofUi('pd', d); };
       var rb = dlg.querySelector('[data-sh="rev"]'); if (rb) rb.onclick = function () { close(); openRev(); RV.proof = d; $('rvProofImg').src = d; $('rvProofImg').style.display = 'block'; $('rvProofTxt').textContent = '✓ Risiti imewekwa · badilisha'; toast('Risiti ya TZS imewekwa — jaza kiasi na unakopokea OMR'); };
     }).catch(function () { toast('Faili halikufunguka — tuma picha au PDF ya risiti'); });
@@ -743,30 +863,31 @@
   $('sGo').onclick = function () {
     var btn = this, i = info() || {}, A = amtNow(), o = A.o, err = $('sErr');
     err.textContent = '';
-    if (!(o >= (i.min || 1))) { err.textContent = S.amtT ? 'Kiasi cha chini ni ' + omr(i.min || 1) + ' OMR (≈ TZS ' + tzs((i.min || 1) * rateFor(i.min || 1)) + ')' : 'Weka kiasi cha OMR unachotuma'; return; }
-    var le = limErr(o, rateFor(o)); if (le) { err.textContent = le; return; }
+    if (!(o >= (i.min || 1))) return fail(err, S.amtT ? 'Kiasi cha chini ni ' + omr(i.min || 1) + ' OMR (≈ TZS ' + tzs((i.min || 1) * rateFor(i.min || 1)) + ')' : 'Weka kiasi cha OMR unachotuma', $('sOmr'));
+    var le = limErr(o, rateFor(o)); if (le) return fail(err, le, $('sOmr'));
     var body = { omr: o, rate: rateFor(o) }; if (S.amtT) body.tzs = A.t;
     if (S.rec) { body.rn = S.rec.rn; body.rp = S.rec.rp; body.net = S.rec.net; body.kind = isBill(S.rec.net) ? 'bill' : /^0[67]\d{8}$/.test(String(S.rec.rp).replace(/\D/g, '')) || /M-Pesa|Mixx|Airtel|Halo|T-Pesa|TTCL/i.test(S.rec.net) ? 'mobile' : 'bank'; }
     else if (S.kind === 'bill') {
-      var B0 = BL[S.biller]; if (!B0) { err.textContent = 'Chagua unacholipa (LUKU, maji, TV…)'; return; }
+      var B0 = BL[S.biller]; if (!B0) return fail(err, 'Chagua unacholipa (LUKU, maji, TV…)', $('rBillers'));
       body.kind = 'bill'; body.net = S.biller; body.rp = $('rBillAcc').value.replace(/\s+/g, '').toUpperCase(); body.rn = $('rBillName').value.trim(); body.bref = $('rBillRef').value.trim();
-      if (body.rp.length < 3) { err.textContent = 'Weka ' + B0.f.toLowerCase(); $('rBillAcc').focus(); return; }
+      if (body.rp.length < 3) return fail(err, 'Weka ' + B0.f.toLowerCase(), $('rBillAcc'));
       if (B0.chk && !B0.chk.re.test(body.rp)) body.warn = B0.chk.msg;   // haizuii — inaonyeshwa kwenye muhtasari wa kuhakiki
-      if (B0.r && body.bref.length < 2) { err.textContent = 'Weka ' + B0.r.toLowerCase(); $('rBillRef').focus(); return; }
+      if (B0.r && body.bref.length < 2) return fail(err, 'Weka ' + B0.r.toLowerCase(), $('rBillRef'));
     }
     else {
       body.rn = $('rName').value; body.kind = S.kind;
-      if (S.kind === 'mobile') { body.rp = $('rPhone').value; body.net = $('rNet').value; } else { body.rp = $('rAcc').value; body.net = $('rBank').value; }
-      if (String(body.rn).trim().length < 3) { err.textContent = 'Weka jina kamili la mpokeaji'; return; }
-      if (!body.rp) { err.textContent = S.kind === 'mobile' ? 'Weka namba ya simu ya mpokeaji' : 'Weka namba ya akaunti'; return; }
-      if (!body.net) { if (S.kind === 'mobile') { netUi(true); err.textContent = 'Chagua mtandao wa mpokeaji'; } else { bankUi(true); err.textContent = 'Chagua benki ya mpokeaji'; } return; }
+      if (S.kind === 'mobile') { body.rp = $('rPhone').value.replace(/\s+/g, ''); body.net = $('rNet').value; } else { body.rp = $('rAcc').value.replace(/[\s-]/g, ''); body.net = $('rBank').value; }
+      if (String(body.rn).trim().length < 3) return fail(err, 'Weka jina kamili la mpokeaji', $('rName'));
+      if (!body.rp) return fail(err, S.kind === 'mobile' ? 'Weka namba ya simu ya mpokeaji' : 'Weka namba ya akaunti', S.kind === 'mobile' ? $('rPhone') : $('rAcc'));
+      if (S.kind === 'mobile' && !/^0[67]\d{8}$/.test(body.rp.replace(/^\+?255/, '0'))) return fail(err, 'Namba ya simu ya Tanzania ina tarakimu 10 na inaanza na 06 au 07 (mf. 0754 123 456)', $('rPhone'));
+      if (!body.net) { if (S.kind === 'mobile') { netUi(true); return fail(err, 'Chagua mtandao wa mpokeaji', $('rNet')); } bankUi(true); return fail(err, 'Chagua benki ya mpokeaji', $('rBank')); }
       if (S.kind === 'bank') { var BF = BANK_FMT[body.net], ba = String(body.rp).toUpperCase().replace(/[\s-]/g, ''); if (BF && !BF.re.test(ba)) body.warn = 'Akaunti za ' + body.net + ' kwa kawaida: ' + BF.h + '.'; }
     }
     if (S.useBal) {
-      if (balAvail() + 0.0005 < o) { err.textContent = 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa oda hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.'; return; }
+      if (balAvail() + 0.0005 < o) return fail(err, 'Salio lako ni ' + omr(balAvail()) + ' OMR tu — halitoshi kwa oda hii. Ondoa alama ya "Lipa kwa salio" ulipe kawaida.', $('sBalOpt'));
       body.useBal = 1;
     } else {
-      if (!S.proof) { err.textContent = 'Pakia risiti ya malipo yako ya OMR kwanza'; return; }
+      if (!S.proof) return fail(err, 'Pakia risiti ya malipo yako ya OMR kwanza', $('sProofLbl'));
       body.img = S.proof;
     }
     if (!S.ck) S.ck = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -799,12 +920,12 @@
     var send = Object.assign({}, body); delete send.warn;   // onyo ni la skrini tu
     apiLoad('w_order', send, 'Inatuma oda…', '✓ Oda imepokelewa').then(function (j) {
       busy(btn, false);
-      if (!j.ok && j.error === 'twin') {
-        if (confirm(j.msg + '\n\nBonyeza OK kutuma oda nyingine tena.')) { body.again = 1; return submit(body, btn); }
-        $('cf').classList.remove('on'); loadOrders().then(function () { S.stack = ['home']; openTrack(j.ref); }); return;
-      }
+      if (!j.ok && j.error === 'twin') return ask({ icon: '👯', title: 'Oda inayofanana ipo', text: j.msg, ok: 'Tuma hii pia', no: 'Nione ile ya awali' }).then(function (yes) {
+        if (yes) { body.again = 1; return submit(body, btn); }
+        $('cf').classList.remove('on'); loadOrders().then(function () { S.stack = ['home']; openTrack(j.ref); });
+      });
       if (!j.ok) { err.textContent = j.msg || 'Imeshindikana'; if (j.error === 'bal') loadMe().then(drawBalOpt); if (j.error === 'rate') Promise.all([loadInfo(), loadMe()]).then(function () { sCalc(); $('cf').classList.remove('on'); $('sErr').textContent = j.msg; }); return; }
-      $('cf').classList.remove('on'); S.ck = ''; S.useBal = false;
+      $('cf').classList.remove('on'); S.ck = ''; S.useBal = false; draftClear();
       S.proof = ''; $('sProof').value = ''; $('sProofImg').style.display = 'none'; $('sProofTxt').textContent = 'Pakia risiti ya malipo'; $('sOmr').value = '';
       ['rName', 'rPhone', 'rAcc', 'rBillAcc', 'rBillRef', 'rBillName'].forEach(function (id) { $(id).value = ''; });
       if (!j.dup) { S.orders.unshift(j.order); LS.set('yzw_orders', S.orders); }
@@ -968,11 +1089,12 @@
     var tk = $('tBody').querySelector('[data-tok]'); if (tk) tk.onclick = function () { var b = this; copyText(b.getAttribute('data-tok')).then(function () { haptic(); b.textContent = '✓ Imenakiliwa'; toast('✓ Token imenakiliwa'); setTimeout(function () { b.textContent = 'Nakili token'; }, 2000); }); };
     var gr = $('tGoRef'); if (gr) gr.onclick = function () { openTrack(gr.getAttribute('data-ref')); };
     var retPick = function (btn, choice) {
-      if (choice === 'refund' && !confirm('Tukurudishie OMR ' + omr(o.back || o.omr) + ' badala ya kuzitumia kwenye oda ijayo?')) return;
+      (choice === 'refund' ? ask({ icon: '↩️', title: 'Naomba refund', text: 'Tukurudishie OMR ' + omr(o.back || o.omr) + ' badala ya kuzitumia kwenye oda ijayo?', ok: 'Ndiyo, nirudishieni', no: 'Acha' }) : Promise.resolve(true)).then(function (yes) { if (!yes) return;
       busy(btn, true, 'Inatuma…');
       apiLoad('w_retchoice', { ref: o.ref, choice: choice }, 'Inatuma chaguo lako…', '✓ Imepokelewa').then(function (j) { busy(btn, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
         S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); haptic(); toast(choice === 'refund' ? '✓ Ombi la refund limetumwa' : '✓ Zimebaki kwenye salio lako'); })
         .catch(function (e) { busy(btn, false); toast(e.message); });
+      });
     };
     var rb = $('tRetBal'), rr = $('tRetRefund'); if (rb) rb.onclick = function () { retPick(this, 'bal'); }; if (rr) rr.onclick = function () { retPick(this, 'refund'); };
     var hy = $('tHoldYes'), hn = $('tHoldNo'), hs = $('tHoldSend');
@@ -982,19 +1104,20 @@
         haptic(); S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast(okMsg); })
         .catch(function (e) { busy(btn, false); toast(e.message); });
     };
-    if (hy) hy.onclick = function () { if (!confirm('Thibitisha: ' + (o.note || '') + ' ndiye mpokeaji sahihi? Pesa itatumwa kwake sasa.')) return; holdReply(this, { ref: o.ref, ok: true }, '✅ Asante — wakala anatuma sasa'); };
+    if (hy) hy.onclick = function () { var b = this; ask({ icon: '✅', title: 'Ni mtu sahihi?', text: (o.note || '') + ' ndiye mpokeaji sahihi? Pesa itatumwa kwake sasa.', ok: 'Ndiyo, tumeni', no: 'Hapana' }).then(function (yes) { if (yes) holdReply(b, { ref: o.ref, ok: true }, '✅ Asante — wakala anatuma sasa'); }); };
     if (hn) hn.onclick = function () { var f = $('tHoldForm'); f.style.display = f.style.display === 'none' ? 'flex' : 'none'; if (f.style.display === 'flex') $('tHrn').focus(); };
     if (hs) hs.onclick = function () { var rn = $('tHrn').value.trim(), rp = $('tHrp').value.replace(/[\s-]/g, '');
       if (rn.length < 2) return toast('Andika jina kamili la mpokeaji'); if (rp.length < 9) return toast('Namba/akaunti si sahihi');
-      if (!confirm('Tuma TZS ' + tzs(o.tzs) + ' kwa ' + rn.toUpperCase() + ' · ' + rp + '?')) return;
-      holdReply(this, { ref: o.ref, ok: false, rn: rn, rp: rp }, '✏️ Mpokeaji amebadilishwa — wakala anatuma sasa'); };
+      var b = this; ask({ icon: '✏️', title: 'Tuma kwa mpokeaji huyu?', text: 'TZS ' + tzs(o.tzs) + ' kwa ' + rn.toUpperCase() + ' · ' + rp, ok: 'Ndiyo, tuma', no: 'Rudi' }).then(function (yes) { if (yes) holdReply(b, { ref: o.ref, ok: false, rn: rn, rp: rp }, '✏️ Mpokeaji amebadilishwa — wakala anatuma sasa'); }); };
     var cb = $('tCancel');
     if (cb) cb.onclick = function () {
-      if (!confirm('Ghairi oda ' + o.ref + ' ya ' + omr(o.omr) + ' OMR kwa ' + o.rn + '?')) return;
-      var b = this; busy(b, true, 'Inaghairi…');
+      var b = this;
+      ask({ icon: '🛑', title: 'Ghairi oda ' + o.ref + '?', text: omr(o.omr) + ' OMR kwa ' + (o.rn || 'mpokeaji') + '. Kama ulishalipa OMR, tutakurudishia.', ok: 'Ndiyo, ghairi', no: 'Acha', danger: true }).then(function (yes) { if (!yes) return;
+      busy(b, true, 'Inaghairi…');
       api('w_cancel', { ref: o.ref }).then(function (j) { busy(b, false); if (!j.ok) return toast(j.msg || 'Imeshindikana');
         S.orders = S.orders.map(function (x) { return x.ref === o.ref ? j.order : x; }); LS.set('yzw_orders', S.orders); drawTrack(); toast('Oda imeghairiwa'); })
         .catch(function (e) { busy(b, false); toast(e.message); });
+      });
     };
     if (o.receipt) {
       receiptImg(o).then(function (url) {
@@ -1364,7 +1487,7 @@
     busy(btn, true, 'Inatuma oda ' + body.items.length + '…');
     apiLoad('w_batch', body, 'Inatuma oda za kundi…', '✓ Oda zimepokelewa').then(function (j) {
       busy(btn, false);
-      if (!j.ok && j.error === 'twin') { if (confirm(j.msg + '\n\nBonyeza OK kuendelea.')) { body.again = 1; return bSubmit(body, btn); } $('cf').classList.remove('on'); if (j.row != null) bBad(j.row, j.msg); return; }
+      if (!j.ok && j.error === 'twin') return ask({ icon: '👯', title: 'Oda inayofanana ipo', text: j.msg, ok: 'Endelea', no: 'Acha' }).then(function (yes) { if (yes) { body.again = 1; return bSubmit(body, btn); } $('cf').classList.remove('on'); if (j.row != null) bBad(j.row, j.msg); });
       if (!j.ok) {
         if (j.error === 'rate') { $('cf').classList.remove('on'); Promise.all([loadInfo(), loadMe()]).then(function () { bDraw(); $('bErr').textContent = j.msg; }); return; }
         if (j.row != null) { $('cf').classList.remove('on'); bBad(j.row, j.msg); return; }
@@ -1436,8 +1559,8 @@
   };
   $('pdGo').onclick = function () {
     var btn = this, a = Math.round((Number(String($('pdAmt').value).replace(/,/g, '')) || 0) * 1000) / 1000, err = $('pdErr'); err.textContent = '';
-    if (!(a >= 0.5)) { err.textContent = 'Weka kiasi unacholipa'; return; }
-    if (!PD.proof) { err.textContent = 'Pakia risiti ya malipo yako'; return; }
+    if (!(a >= 0.5)) return fail(err, 'Weka kiasi unacholipa', $('pdAmt'));
+    if (!PD.proof) return fail(err, 'Pakia risiti ya malipo yako', $('pdProofTxt').parentNode);
     if (!PD.ck) PD.ck = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     busy(btn, true, 'Inatuma…');
     apiLoad('w_paydebt', { omr: a, img: PD.proof, ck: PD.ck, src: PD.src || '' }, 'Inatuma malipo…', '✓ Malipo yamepokelewa').then(function (j) {
@@ -1513,7 +1636,7 @@
       api('w_me', {}).then(function (m) { if (m && m.ok) { S.me = m; setMe(m); drawAcct(); } }).catch(function () {});
     }).catch(function (e) { busy(btn, false); toast(e.message); });
   };
-  $('aOut').onclick = function () { if (confirm('Unataka kutoka kwenye app?')) logout(); };
+  $('aOut').onclick = function () { ask({ icon: '👋', title: 'Kutoka kwenye app?', text: 'Utahitaji code ya WhatsApp kuingia tena. Oda zako zinabaki.', ok: 'Toka', no: 'Baki', danger: true }).then(function (yes) { if (yes) logout(); }); };
 
   /* ---------- matangazo ya WakalaOnline (mmiliki anatuma kutoka Daftari) ---------- */
   function newsAgo(t) { var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'sasa hivi' : m < 60 ? 'dakika ' + m + ' zilizopita' : m < 1440 ? 'saa ' + Math.round(m / 60) + ' zilizopita' : new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
