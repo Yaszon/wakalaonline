@@ -1267,8 +1267,13 @@
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
   var LBL = {}; Object.keys(PILL).forEach(function (k) { LBL[k] = PILL[k][1]; });
-  var OPEN_ST = { 'new': 1, ok: 1, hold: 1, part: 1, rchk: 1, rpay: 1, rno: 1 }, DONE_ST = { paid: 1, rdone: 1 };   // zinaendelea · zilizofanikiwa (si zilizokataliwa/zilizositishwa)
-  function filtOk(o) { return S.filt === 'all' || (S.filt === 'open' ? !!OPEN_ST[o.st] : !!DONE_ST[o.st]); }
+  var OPEN_ST = { 'new': 1, ok: 1, hold: 1, part: 1, rchk: 1, rpay: 1, rno: 1 }, DONE_ST = { paid: 1, rdone: 1 }, BAD_ST = { no: 1, rstop: 1, cancel: 1, stop: 1, lost: 1, returned: 1, refunded: 1, used: 1 };   // zinaendelea · zilizofanikiwa · zilizositishwa
+  function filtOk(o) {
+    var f = S.filt;
+    if (f === 'open') return !!OPEN_ST[o.st]; if (f === 'paid') return !!DONE_ST[o.st]; if (f === 'bad') return !!BAD_ST[o.st];
+    if (f === 'rev') return o.dir === 'to'; if (f === 'bill') return o.kind === 'bill'; if (f === 'mobile') return o.dir !== 'to' && o.kind !== 'bill' && /^0[67]\d{8}$|^\d{4} •••|M-Pesa|Mixx|Airtel|Halo|T-Pesa|TTCL/i.test(String(o.net || '') + ' ' + String(o.rp || '')); if (f === 'bank') return o.dir !== 'to' && o.kind !== 'bill' && !/M-Pesa|Mixx|Airtel|Halo|T-Pesa|TTCL/i.test(String(o.net || ''));
+    return true;
+  }
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Miezi yote';
     var fl = 'Zilizokamilika';   // PDF: miamala iliyofanikiwa tu (iliyofika / OMR umelipwa); historia ndani ya app inaonyesha zote
