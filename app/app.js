@@ -1276,18 +1276,18 @@
   }
   /* Taarifa ya hesabu ya mteja (PDF): miamala iliyofanyika kweli (zilizofika, pesa zilizorudi, refund, zilizositishwa bila kurudi, amana, malipo ya deni)
      kwa mpangilio wa muda, na salio/deni baada ya kila muamala — kutoka kwenye daftari la seva (kanuni zile zile za salio). Oda zilizokataliwa haziingii. */
-  function dtLocal(t) { var d = new Date(t), z = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()); }
-  function dtShort(t) { var d = new Date(t); return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
-  /* kipindi maalum: tarehe na saa ya kuanzia / kumalizia */
+  function dtLocal(t) { var d = new Date(t), z = function (n) { return ('0' + n).slice(-2); }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+  function dtShort(t) { return new Date(t).toLocaleDateString('en-GB'); }
+  /* kipindi maalum: tarehe ya kuanzia / kumalizia (siku nzima) */
   function openStx(btn) {
     var now = Date.now(); $('stxFrom').value = dtLocal(now - 864e5); $('stxTo').value = dtLocal(now); $('stxErr').textContent = ''; $('stx').style.display = 'flex';
     $('stxClose').onclick = function () { $('stx').style.display = 'none'; }; $('stx').onclick = function (e) { if (e.target === $('stx')) $('stx').style.display = 'none'; };
     $('stx').querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { var q = b.getAttribute('data-q'), ms = q === '24h' ? 864e5 : q === '7d' ? 7 * 864e5 : q === '30d' ? 30 * 864e5 : 90 * 864e5; $('stxFrom').value = dtLocal(Date.now() - ms); $('stxTo').value = dtLocal(Date.now()); haptic(); }; });
     $('stxGo').onclick = function () {
-      var f = new Date($('stxFrom').value).getTime(), t = new Date($('stxTo').value).getTime();
-      if (!(f > 0) || !(t > 0)) return fail($('stxErr'), 'Weka tarehe na saa zote mbili', $('stxFrom'));
-      if (t <= f) return fail($('stxErr'), '"Hadi" lazima iwe baada ya "Kuanzia"', $('stxTo'));
-      $('stx').style.display = 'none'; statementPdf({ from: f, to: t, label: dtShort(f) + ' – ' + dtShort(t), file: 'Kipindi' }, btn);
+      var f = new Date($('stxFrom').value + 'T00:00:00').getTime(), t = new Date($('stxTo').value + 'T00:00:00').getTime();
+      if (!(f > 0) || !(t > 0)) return fail($('stxErr'), 'Weka tarehe zote mbili', $('stxFrom'));
+      if (t < f) return fail($('stxErr'), '"Hadi" lazima iwe baada ya "Kuanzia"', $('stxTo'));
+      $('stx').style.display = 'none'; statementPdf({ from: f, to: t + 864e5, label: dtShort(f) + ' – ' + dtShort(t), file: 'Kipindi' }, btn);   // 'hadi' ni siku nzima
     };
   }
   function statementPdf(period, btn) {
