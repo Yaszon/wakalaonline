@@ -1271,13 +1271,13 @@
   function filtOk(o) { return S.filt === 'all' || (S.filt === 'open' ? !!OPEN_ST[o.st] : !!DONE_ST[o.st]); }
   function statementPdf(period, btn) {
     var now = new Date(), from = 0, to = Infinity, label = 'Miezi yote';
-    var fl = S.filt === 'open' ? 'Zinazoendelea' : S.filt === 'paid' ? 'Zilizokamilika' : 'Zote';
+    var fl = 'Zilizokamilika';   // PDF: miamala iliyofanikiwa tu (iliyofika / OMR umelipwa); historia ndani ya app inaonyesha zote
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
     if (period === 'last') { var d = new Date(now.getFullYear(), now.getMonth() - 1, 1); from = d.getTime(); to = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(d); }
     busy(btn, true, 'Inaandaa PDF…');
     loadOrders().then(function () {
-      var L = S.orders.filter(function (o) { return o.at >= from && o.at < to && filtOk(o); }).sort(function (a, b) { return a.at - b.at; });
-      if (!L.length) throw new Error('Hakuna miamala ' + (S.filt === 'all' ? '' : S.filt === 'open' ? 'inayoendelea ' : 'iliyokamilika ') + 'kwenye ' + label);
+      var L = S.orders.filter(function (o) { return o.at >= from && o.at < to && !!DONE_ST[o.st]; }).sort(function (a, b) { return a.at - b.at; });
+      if (!L.length) throw new Error('Hakuna miamala iliyokamilika kwenye ' + label);
       var J = PDF(), doc = new J({ unit: 'mm', format: 'a4' }), W = 210, H = 297, me = S.me || {};
       var done = L.filter(function (o) { return o.st === 'paid' || o.st === 'ok'; }), so = 0, st = 0, rv = L.filter(function (o) { return o.st === 'rdone'; }), ro = 0, rt = 0;
       done.forEach(function (o) { so += Number(o.omr) || 0; st += Number(o.tzs) || 0; }); rv.forEach(function (o) { ro += Number(o.omr) || 0; rt += Number(o.tzs) || 0; });
@@ -1299,7 +1299,7 @@
       });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
-      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + (S.filt === 'all' ? '' : '-' + fl) + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala (' + fl.toLowerCase() + ') · WakalaOnline · ' + label);
+      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala iliyokamilika · WakalaOnline · ' + label);
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
   function monthName(d) { return ['Januari', 'Februari', 'Machi', 'Aprili', 'Mei', 'Juni', 'Julai', 'Agosti', 'Septemba', 'Oktoba', 'Novemba', 'Desemba'][d.getMonth()] + ' ' + d.getFullYear(); }
@@ -1316,7 +1316,7 @@
     $('hiBal').style.color = b < 0 ? 'var(--bad)' : '';
     document.querySelectorAll('#hiFilt button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-f') === S.filt); });
     var L = S.orders.filter(filtOk);
-    var fl = S.filt === 'open' ? 'zinazoendelea' : S.filt === 'paid' ? 'zilizokamilika' : 'zote'; document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'PDF itakuwa na oda ' + fl + (S.filt === 'paid' ? ' (zilizofanikiwa tu)' : ''); });
+    document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'Miamala iliyokamilika tu'; });
     $('hiList').innerHTML = L.length ? L.map(function (o) {
       if (o.dir === 'to') return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs" style="background:#E3EAF7;color:#1B2E52">🇴🇲</span>'
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nunua Rial · ' + esc(o.rn || '') + '</span>'
