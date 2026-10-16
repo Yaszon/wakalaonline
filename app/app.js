@@ -326,7 +326,7 @@
     var h = new Date().getHours();
     $('hGreet').textContent = h < 5 ? 'Habari za usiku' : h < 12 ? 'Habari za asubuhi' : h < 16 ? 'Habari za mchana' : h < 20 ? 'Habari za jioni' : 'Habari za usiku';   // saa ya simu ya mteja
     $('hName').textContent = me.name ? firstName(me.name) : 'Karibu WakalaOnline';
-    var hr = $('hRev'); if (hr) { hr.style.display = i && i.revOn && i.rateRev ? 'flex' : 'none'; if (i && i.rateRev) $('hRevRate').textContent = 'rate 1 OMR = ' + tzs(i.rateRev) + ' TZS'; }
+    var hr = $('hRev'); if (hr) { hr.style.display = i && i.revOn && i.rateRev ? 'flex' : 'none'; if (i && i.rateRev) $('hRevRate').textContent = '1 OMR = ' + tzs(i.rateRev) + ' TZS'; }
     $('hAv').textContent = initials(me.name || 'W');
     if (i && i.rate) $('hRate').textContent = tzs(rateFor(0));
     $('hVip').style.display = i && i.vip && i.vip > i.rate ? 'inline-flex' : 'none';
