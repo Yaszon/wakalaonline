@@ -203,6 +203,8 @@
     var skip = LS.get('yzw_upskip', null); if (skip && skip.v === nv && Date.now() - skip.at < 864e5) return;
     upShown = true; showUpdate();
   }
+  // Link ya Drive → link ya moja kwa moja (faili lenyewe, bila ukurasa wa Drive wala redirect) — mteja anaona pete ya asilimia tu
+  function dlUrl(u) { var m = /drive\.google\.com\/uc\?(?:.*&)?id=([\w-]+)/.exec(String(u || '')); return m ? 'https://drive.usercontent.google.com/download?id=' + m[1] + '&export=download&confirm=t' : String(u || ''); }
   function showUpdate() {
     var i = (S.me && S.me.info) || S.info || {};
     $('upTxt').innerHTML = 'Toleo <b>1.' + (Number(i.appVer) || '') + '</b> liko tayari (wewe una 1.' + (Number(window.YZ_VER) || '') + '). Pakua upate maboresho mapya.';
@@ -211,6 +213,7 @@
   }
   $('upGo').onclick = function () {
     var i = (S.me && S.me.info) || S.info || {}; if (!i.appUrl) return;
+    i = Object.assign({}, i, { appUrl: dlUrl(i.appUrl) });
     var C = window.Capacitor && window.Capacitor.Plugins, FS = C && C.Filesystem, FO = C && C.FileOpener;
     if (!FS || !FO) { window.open(i.appUrl, '_blank'); toast('Inapakua… fungua faili likiisha'); return; }
     $('up').classList.remove('on'); loadShow('Inapakua toleo jipya 1.' + (Number(i.appVer) || '') + '…', 'WakalaOnline.apk');
