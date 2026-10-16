@@ -1274,38 +1274,45 @@
     if (f === 'rev') return o.dir === 'to'; if (f === 'bill') return o.kind === 'bill'; if (f === 'mobile') return o.dir !== 'to' && o.kind !== 'bill' && /^0[67]\d{8}$|^\d{4} •••|M-Pesa|Mixx|Airtel|Halo|T-Pesa|TTCL/i.test(String(o.net || '') + ' ' + String(o.rp || '')); if (f === 'bank') return o.dir !== 'to' && o.kind !== 'bill' && !/M-Pesa|Mixx|Airtel|Halo|T-Pesa|TTCL/i.test(String(o.net || ''));
     return true;
   }
+  /* Taarifa ya hesabu ya mteja (PDF): miamala iliyofanyika kweli (zilizofika, pesa zilizorudi, refund, zilizositishwa bila kurudi, amana, malipo ya deni)
+     kwa mpangilio wa muda, na salio/deni baada ya kila muamala — kutoka kwenye daftari la seva (kanuni zile zile za salio). Oda zilizokataliwa haziingii. */
   function statementPdf(period, btn) {
-    var now = new Date(), from = 0, to = Infinity, label = 'Miezi yote';
-    var fl = 'Zilizokamilika';   // PDF: miamala iliyofanikiwa tu (iliyofika / OMR umelipwa); historia ndani ya app inaonyesha zote
+    var now = new Date(), from = 0, to = 0, label = 'Miezi yote';
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
     if (period === 'last') { var d = new Date(now.getFullYear(), now.getMonth() - 1, 1); from = d.getTime(); to = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(d); }
     if (period === 'mon' && S.mon) { var dm = new Date(+S.mon.slice(0, 4), +S.mon.slice(5, 7) - 1, 1); from = dm.getTime(); to = new Date(dm.getFullYear(), dm.getMonth() + 1, 1).getTime(); label = monthName(dm); }
     busy(btn, true, 'Inaandaa PDF…');
-    loadOrders().then(function () {
-      var L = S.orders.filter(function (o) { return o.at >= from && o.at < to && !!DONE_ST[o.st]; }).sort(function (a, b) { return a.at - b.at; });
-      if (!L.length) throw new Error('Hakuna miamala iliyokamilika kwenye ' + label);
+    api('w_statement', { from: from, to: to }).then(function (j) {
+      if (!j.ok || !j.rows) throw new Error(j.msg || 'Taarifa haikupatikana — jaribu tena');
+      var L = j.rows; if (!L.length) throw new Error('Hakuna miamala kwenye ' + label);
       var J = PDF(), doc = new J({ unit: 'mm', format: 'a4' }), W = 210, H = 297, me = S.me || {};
-      var done = L.filter(function (o) { return o.st === 'paid' || o.st === 'ok'; }), so = 0, st = 0, rv = L.filter(function (o) { return o.st === 'rdone'; }), ro = 0, rt = 0;
-      done.forEach(function (o) { so += Number(o.omr) || 0; st += Number(o.tzs) || 0; }); rv.forEach(function (o) { ro += Number(o.omr) || 0; rt += Number(o.tzs) || 0; });
-      pdfHead(doc, W, 'Taarifa ya miamala · ' + fl, label);
+      var nSend = 0, tzsSent = 0, omrSent = 0, inn = 0, out = 0, back = 0;
+      L.forEach(function (x) { if (x.kind === 'sale') { nSend++; tzsSent += x.tzs || 0; omrSent += x.out || 0; } if (x.kind === 'pay' || x.kind === 'open') inn += x.inn || 0; if (x.kind === 'refund') back += x.out || 0; if (x.kind === 'returned') back += 0; });
+      var balEnd = L[L.length - 1].bal, balTxt = balEnd == null ? '—' : balEnd < -0.0005 ? 'Deni ' + omr(-balEnd) + ' OMR' : balEnd > 0.0005 ? 'Amana ' + omr(balEnd) + ' OMR' : '0 OMR';
+      pdfHead(doc, W, 'Taarifa ya miamala na hesabu', label);
       doc.setTextColor(15, 42, 28); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(me.name || 'Mteja wa WakalaOnline', 12, 42);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(91, 107, 98);
       doc.text('+' + (me.phone || '') + '   ·   Imetolewa ' + new Date().toLocaleDateString('en-GB'), 12, 48);
       var box = function (x, t, v) { doc.setFillColor(238, 246, 220); doc.roundedRect(x, 54, 58, 20, 3, 3, 'F'); doc.setFontSize(8.5); doc.setTextColor(63, 90, 18); doc.text(t, x + 4, 61); doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(15, 42, 28); doc.text(v, x + 4, 69); doc.setFont('helvetica', 'normal'); };
-      box(12, 'Umetuma Tanzania', done.length + ' · ' + omr(so) + ' OMR'); box(76, 'TZS zilizotumwa', tzs(st)); box(140, rv.length ? 'Nunua Rial: OMR ulizopokea' : 'Jumla TZS', rv.length ? omr(ro) + ' (TZS ' + tzs(rt) + ')' : tzs(st));
+      box(12, 'Umetuma Tanzania', nSend + ' · ' + omr(omrSent) + ' OMR'); box(76, 'TZS zilizotumwa', tzs(tzsSent)); box(140, 'Salio mwisho wa kipindi', balTxt);
+      var fmtBal = function (b) { return b == null ? '—' : b < -0.0005 ? 'Deni ' + omr(-b) : b > 0.0005 ? omr(b) : '0'; };
       doc.autoTable({
         startY: 82, margin: { left: 12, right: 12, bottom: 16 },
-        head: [['Tarehe', 'Ref', 'Aina', 'Mpokeaji', 'Mtandao', 'OMR', 'TZS', 'Hali']],
-        body: L.map(function (o) { return [new Date(o.at).toLocaleDateString('en-GB'), o.ref, o.dir === 'to' ? 'Nunua Rial (TZS→OMR)' : (o.kind === 'bill' ? 'Bili' : 'Tuma TZS'), o.rn || '', o.net || '', omr(o.omr), tzs(o.tzs), LBL[o.st] || o.st]; }),
-        styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2, textColor: [15, 42, 28] },
+        head: [['Tarehe', 'Ref', 'Maelezo', 'TZS', 'Umelipa (OMR)', 'Imetoka (OMR)', 'Salio / Deni baada']],
+        body: L.map(function (x) { return [new Date(x.at).toLocaleDateString('en-GB'), x.ref || '', x.desc || '', x.tzs ? tzs(x.tzs) : '', x.inn ? '+' + omr(x.inn) : '', x.out ? '-' + omr(x.out) : '', fmtBal(x.bal)]; }),
+        styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, textColor: [15, 42, 28], overflow: 'linebreak' },
         headStyles: { fillColor: [31, 122, 50], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [244, 246, 242] },
-        columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' } },
-        didParseCell: function (d) { if (d.section === 'body' && d.column.index === 7) { var v = d.cell.raw; d.cell.styles.textColor = /Imefika|umelipwa|Umerudishiwa|Imetumika/.test(v) ? [23, 96, 42] : /hayajaonekana|hazijaonekana|Umeghairi|Imesitishwa|haikurudi/i.test(v) ? [180, 35, 24] : [138, 90, 11]; } }
+        columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 24 }, 2: { cellWidth: 66 }, 3: { halign: 'right', cellWidth: 18 }, 4: { halign: 'right', cellWidth: 20 }, 5: { halign: 'right', cellWidth: 20 }, 6: { halign: 'right' } },
+        didParseCell: function (d) { if (d.section !== 'body') return; var k = L[d.row.index] && L[d.row.index].kind;
+          if (d.column.index === 6) d.cell.styles.textColor = /^Deni/.test(String(d.cell.raw)) ? [180, 35, 24] : [23, 96, 42];
+          if (d.column.index === 2) d.cell.styles.textColor = k === 'lost' || k === 'stop' ? [180, 35, 24] : k === 'returned' || k === 'refund' ? [138, 90, 11] : [15, 42, 28]; }
       });
+      var y = doc.lastAutoTable.finalY + 6; doc.setFontSize(8); doc.setTextColor(91, 107, 98);
+      doc.text('Umelipa (OMR) = pesa uliyotoa / kuweka kwetu · Imetoka (OMR) = kiasi cha muamala au refund · Salio chanya = amana yako, "Deni" = unachodaiwa. Oda zilizokataliwa au kughairiwa haziingii.', 12, y, { maxWidth: W - 24 });
       pdfFoot(doc, W, H);
       var b64 = doc.output('datauristring').split(',')[1];
-      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala iliyokamilika · WakalaOnline · ' + label);
+      return shareFile('WakalaOnline-Taarifa-' + label.replace(/\s+/g, '-') + '.pdf', b64, 'application/pdf', 'Taarifa ya miamala na hesabu · WakalaOnline · ' + label);
     }).catch(shareErr).then(function () { busy(btn, false); });
   }
   function monthName(d) { return ['Januari', 'Februari', 'Machi', 'Aprili', 'Mei', 'Juni', 'Julai', 'Agosti', 'Septemba', 'Oktoba', 'Novemba', 'Desemba'][d.getMonth()] + ' ' + d.getFullYear(); }
@@ -1327,7 +1334,7 @@
     $('hiMon').innerHTML = '<button data-m="" class="' + (!S.mon ? 'on' : '') + '">Miezi yote</button>' + ML.map(function (m) { return '<button data-m="' + m + '" class="' + (S.mon === m ? 'on' : '') + '">' + monShort(m) + '</button>'; }).join('');
     $('hiMon').style.display = ML.length > 1 ? 'flex' : 'none';
     var L = S.orders.filter(function (o) { return filtOk(o) && monOk(o); });
-    document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'Miamala iliyokamilika tu'; });
+    document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'Miamala iliyofanyika na salio/deni baada ya kila moja'; });
     var pm = $('hiStMon'); if (pm) { var cur = monKey(Date.now()), lastD = new Date(); lastD.setMonth(lastD.getMonth() - 1); var showM = S.mon && S.mon !== cur && S.mon !== monKey(lastD.getTime()); pm.style.display = showM ? '' : 'none'; if (showM) pm.textContent = monShort(S.mon) + (S.mon.slice(0, 4) === String(new Date().getFullYear()) ? ' ' + S.mon.slice(0, 4) : ''); }
     $('hiList').innerHTML = L.length ? L.map(function (o) {
       if (o.dir === 'to') return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs" style="background:#E3EAF7;color:#1B2E52">🇴🇲</span>'
