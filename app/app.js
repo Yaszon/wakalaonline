@@ -1762,7 +1762,7 @@
       api('w_me', {}).then(function (m) { if (m && m.ok) { S.me = m; setMe(m); drawAcct(); } }).catch(function () {});
     }).catch(function (e) { busy(btn, false); toast(e.message); });
   };
-  $('aOut').onclick = function () { ask({ icon: '👋', title: 'Kutoka kwenye app?', text: 'Utahitaji code ya WhatsApp kuingia tena. Oda zako zinabaki.', ok: 'Toka', no: 'Baki', danger: true }).then(function (yes) { if (yes) logout(); }); };
+  $('aOut').onclick = function () { ask({ icon: '👋', title: 'Toka (Logout)?', text: 'Utahitaji code ya WhatsApp kuingia tena. Oda zako zinabaki.', ok: 'Logout', no: 'Baki', danger: true }).then(function (yes) { if (yes) logout(); }); };
 
   /* ---------- matangazo ya WakalaOnline (mmiliki anatuma kutoka Daftari) ---------- */
   function newsAgo(t) { var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'sasa hivi' : m < 60 ? 'dakika ' + m + ' zilizopita' : m < 1440 ? 'saa ' + Math.round(m / 60) + ' zilizopita' : new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
