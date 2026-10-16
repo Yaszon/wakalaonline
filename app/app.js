@@ -1370,7 +1370,7 @@
   /* ---------- historia ---------- */
   function drawHist() {
     var me = S.me || {};
-    $('hiMonth').textContent = omr(me.sentMonth || 0) + ' OMR';
+
     var b = Number(me.bal) || 0, showBal = Math.abs(b) > 0.0005 || !!me.canAmana;   // mteja mpya asiye na deni/amana haoni salio kabisa
     $('hiBalCard').style.display = showBal ? 'flex' : 'none'; $('hiBalCard').parentNode.style.gridTemplateColumns = showBal ? '' : '1fr';
     $('hiBalLbl').textContent = b < 0 ? 'Deni lako' : 'Salio lako'; $('hiPay').style.display = b < -0.0005 || (S.me && S.me.canAmana) ? 'flex' : 'none'; $('hiPay').textContent = b < -0.0005 ? '💳 Lipa deni' : '➕ Weka amana'; $('hiPay').style.borderColor = $('hiPay').style.color = b < -0.0005 ? 'var(--bad)' : '';
@@ -1380,9 +1380,12 @@
     /* vichujio vya mwezi: miezi yote yenye miamala (mpya kwanza); 'Zote' = miezi yote */
     var mons = {}; S.orders.forEach(function (o) { if (o.at) { var d = new Date(o.at); mons[d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)] = 1; } });
     var ML = Object.keys(mons).sort().reverse(); if (S.mon && !mons[S.mon]) S.mon = '';
-    $('hiMon').innerHTML = '<button data-m="" class="' + (!S.mon ? 'on' : '') + '">Miezi yote</button>' + ML.map(function (m) { return '<button data-m="' + m + '" class="' + (S.mon === m ? 'on' : '') + '">' + monShort(m) + '</button>'; }).join('');
-    $('hiMon').style.display = ML.length > 1 ? 'flex' : 'none';
-    var L = S.orders.filter(function (o) { return filtOk(o) && monOk(o); });
+
+    var P = hiRange(), L = S.orders.filter(function (o) { return filtOk(o) && (o.at || 0) >= P.from && (o.at || 0) < P.to; });
+    hiPerDraw(P);
+    var sent = 0; S.orders.forEach(function (o) { if (DONE_ST[o.st] && o.dir !== 'to' && (o.at || 0) >= P.from && (o.at || 0) < P.to) sent += Number(o.omr) || 0; });
+    $('hiSentL').textContent = 'Umetuma · ' + P.label; $('hiMonth').textContent = omr(Math.round(sent * 1000) / 1000) + ' OMR';
+    $('hiStBtn').textContent = '📄 Pakua PDF · ' + P.label;
     document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'Miamala iliyofanyika na salio/deni baada ya kila moja'; });
     var pm = $('hiStMon'); if (pm) { var cur = monKey(Date.now()), lastD = new Date(); lastD.setMonth(lastD.getMonth() - 1); var showM = S.mon && S.mon !== cur && S.mon !== monKey(lastD.getTime()); pm.style.display = showM ? '' : 'none'; if (showM) pm.textContent = monShort(S.mon) + (S.mon.slice(0, 4) === String(new Date().getFullYear()) ? ' ' + S.mon.slice(0, 4) : ''); }
     $('hiList').innerHTML = L.length ? L.map(function (o) {
@@ -1394,13 +1397,34 @@
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Mpokeaji') + '</span>'
         + '<span class="mut" style="font-size:12px">' + esc(o.ref) + ' · ' + esc(when(o.at)) + (o.net ? ' · ' + esc(o.net) : '') + '</span></span>'
         + '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="num" style="font-weight:600;font-size:14px">' + omr(o.omr) + ' OMR</span>' + pill(o) + '</span></button>';
-    }).join('') : (S.mon || S.filt !== 'all' ? '<div class="empty">Hakuna miamala kwenye kichujio hiki.</div>' : '<div class="empty">Bado hakuna miamala hapa.<br>Bonyeza <b>Tuma</b> kuanza.</div>');
+    }).join('') : (S.filt !== 'all' || HP.off || HP.k !== 'm' ? '<div class="empty">Hakuna miamala kwenye kichujio hiki.</div>' : '<div class="empty">Bado hakuna miamala hapa.<br>Bonyeza <b>Tuma</b> kuanza.</div>');
   }
-  $('hiStBtn').onclick = function () { openStx(this); };
+  $('hiStBtn').onclick = function () { if ($('hiPerErr').textContent) return; statementPdf(hiRange(), this); };
   function monKey(t) { var d = new Date(t); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
   function monOk(o) { return !S.mon || (o.at && monKey(o.at) === S.mon); }
   function monShort(m) { var M = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'], y = m.slice(0, 4), k = +m.slice(5, 7) - 1; return M[k] + (y === String(new Date().getFullYear()) ? '' : ' ' + y); }
-  $('hiMon').onclick = function (e) { var b = e.target.closest('[data-m]'); if (!b) return; S.mon = b.getAttribute('data-m'); drawHist(); haptic(); };
+  /* kichujio kimoja cha historia na PDF: Siku / Wiki / Mwezi / Tarehe (‹ › kurudi nyuma). PDF inafuata kipindi hiki — kikomo mwezi mmoja, tarehe tu. */
+  var HP = { k: 'm', off: 0, f: '', t: '' };
+  function hiRange() {
+    if (HP.k !== 'c') return stxRange(HP.k, HP.off);
+    var f = new Date(HP.f + 'T00:00:00').getTime(), t = new Date(HP.t + 'T00:00:00').getTime();
+    return { from: f, to: t + 864e5, label: dtShort(f) + ' – ' + dtShort(t), custom: 1 };
+  }
+  function hiPerDraw(P) {
+    document.querySelectorAll('#hiPer button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === HP.k); });
+    var c = HP.k === 'c'; $('hiNav').style.display = c ? 'none' : 'flex'; $('hiCust').style.display = c ? 'grid' : 'none';
+    if (!c) { $('hiPerL').textContent = P.label; $('hiNext').disabled = HP.off >= 0; $('hiNext').style.opacity = HP.off >= 0 ? '.35' : ''; }
+  }
+  $('hiPer').onclick = function (e) { var b = e.target.closest('[data-k]'); if (!b) return; HP.k = b.getAttribute('data-k'); HP.off = 0; $('hiPerErr').textContent = '';
+    if (HP.k === 'c') { var now = Date.now(); HP.t = dtLocal(now); HP.f = dtLocal(now - 6 * 864e5); $('hiFrom').value = HP.f; $('hiTo').value = HP.t; $('hiFrom').max = $('hiTo').max = HP.t; }
+    drawHist(); haptic(); };
+  $('hiPrev').onclick = function () { HP.off--; drawHist(); haptic(); };
+  $('hiNext').onclick = function () { if (HP.off < 0) { HP.off++; drawHist(); haptic(); } };
+  ['hiFrom', 'hiTo'].forEach(function (id) { $(id).onchange = function () {
+    var f = $('hiFrom').value, t = $('hiTo').value; $('hiPerErr').textContent = ''; if (!f || !t) return;
+    if (t < f) return fail($('hiPerErr'), '"Hadi" lazima iwe baada ya "Kuanzia"', $('hiTo'));
+    if ((new Date(t) - new Date(f)) / 864e5 > 30.5) return fail($('hiPerErr'), 'Kipindi kisizidi siku 31 — chagua mwezi mmoja tu', $('hiTo'));
+    HP.f = f; HP.t = t; drawHist(); }; });
   $('hiFilt').onclick = function (e) { var b = e.target.closest('[data-f]'); if (!b) return; S.filt = b.getAttribute('data-f'); drawHist(); };
   $('hiList').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b && b.getAttribute('data-ref') !== '—') openTrack(b.getAttribute('data-ref')); };
 
