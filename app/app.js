@@ -968,6 +968,23 @@
   }
 
   /* ---------- fuatilia ---------- */
+  /* oda iliyosimama (imeghairiwa/imekataliwa/imesitishwa/pesa imerudi): ratiba inaishia na hatua nyekundu ✕ badala ya "Bado" */
+  var END_ST = { no: 1, cancel: 1, rstop: 1, stop: 1, returned: 1, refunded: 1, used: 1, lost: 1 };
+  function endSteps(o, steps) {
+    if (!END_ST[o.st]) return steps;
+    var done = steps.filter(function (s2) { return o.step >= s2[2]; });
+    var txt = o.st === 'cancel' ? 'Umeghairi oda hii' : o.st === 'no' ? (o.label || 'Oda imesitishwa — malipo hayajaonekana') : o.st === 'rstop' ? (o.label || 'Oda imesitishwa') : o.st === 'returned' ? 'Imesitishwa — pesa imerudi kwenye salio lako' : o.st === 'refunded' ? 'Imesitishwa — umerudishiwa pesa' : o.st === 'used' ? 'Imesitishwa — pesa imetumika kwenye oda nyingine' : o.st === 'lost' ? 'Imesitishwa — pesa haikurudi' : 'Imesitishwa — pesa haijatumwa';
+    var at = o.endAt || o.stAt || o.rfAt || 0;
+    return done.concat([[txt, at ? when(at) : 'Haitaendelea', 99, 'end']]);
+  }
+  function stepsHtml(o, steps) {
+    steps = endSteps(o, steps);
+    return '<div class="card steps" style="padding:16px 16px 6px">' + steps.map(function (s2, k) {
+      var end = s2[3] === 'end', done = !end && o.step >= s2[2], now = !end && !done && o.step === s2[2] - 1, last = k === steps.length - 1;
+      return '<div class="st' + (done ? ' done' : '') + (now ? ' now' : '') + (end ? ' end' : '') + '"><div style="display:flex;flex-direction:column;align-items:center"><span class="dot">' + (done ? svg('check', 14, '#fff', 3) : end ? '<span style="color:#fff;font-weight:800;font-size:14px;line-height:1">✕</span>' : '') + '</span>' + (!last ? '<span class="bar"></span>' : '') + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 ' + (!last ? '8' : '10') + 'px"><span style="font-weight:800;font-size:15px;' + (done ? '' : end ? 'color:var(--bad)' : 'color:var(--mut)') + '">' + esc(s2[0]) + '</span><span class="mut" style="font-size:13px">' + esc(s2[1]) + '</span></div></div>';
+    }).join('') + '</div>';
+  }
   function openTrack(ref) { S.cur = ref; S.stack.push('track'); show('track', false); }
   function drawRevTrack(o) {
     var rchk = o.st === 'rchk', rno = o.st === 'rno', rpay = o.st === 'rpay', rdone = o.st === 'rdone';
@@ -987,10 +1004,7 @@
     else if (rpay) h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>✅ TZS zimeingia.</b> Tunakulipa OMR ' + omr(o.omr) + ' sasa — utapata risiti hapa na kwenye WhatsApp.</div>';
     else h += '<div class="card mut" style="font-size:14px;line-height:1.55">⏳ Wakala wetu Tanzania anaangalia kama TZS ' + tzs(o.tzs) + ' zimeingia. Ikithibitishwa, tunakulipa OMR Oman.</div>'
       + '<label class="btn ghost" style="position:relative;cursor:pointer">📎 Badilisha risiti ya TZS<input type="file" accept="image/*,application/pdf" id="tProof" style="position:absolute;opacity:0;width:1px;height:1px"></label>';
-    h += '<div class="card steps" style="padding:16px 16px 6px">' + steps.map(function (s2, k) {
-      var done = o.step >= s2[2], now = !done && o.step === s2[2] - 1;
-      return '<div class="st' + (done ? ' done' : '') + (now ? ' now' : '') + '"><div style="display:flex;flex-direction:column;align-items:center"><span class="dot">' + (done ? svg('check', 14, '#fff', 3) : '') + '</span>' + (k < 2 ? '<span class="bar"></span>' : '') + '</div>'
-        + '<div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 ' + (k < 2 ? '8' : '10') + 'px"><span style="font-weight:800;font-size:15px;' + (done ? '' : 'color:var(--mut)') + '">' + esc(s2[0]) + '</span><span class="mut" style="font-size:13px">' + esc(s2[1]) + '</span></div></div>'; }).join('') + '</div>';
+    h += stepsHtml(o, steps);
     $('tBody').innerHTML = h;
     var tp = $('tProof'); if (tp) tp.onchange = function () {
       var f = this.files && this.files[0]; if (!f) return; toast('Inaandaa risiti…');
@@ -1015,6 +1029,7 @@
       + '<div class="row" style="justify-content:space-between"><span style="font-size:13px;color:var(--on-brand-mut)">' + (o.kind === 'bill' ? ((BL[o.net] || {}).ic || '🧾') + ' ' + esc(o.net) + ' · ' + esc(o.rp) : 'Kwa ' + esc(o.rn || 'mpokeaji') + (o.net ? ' · ' + esc(o.net) : '')) + '</span>' + pill(o) + '</div>'
       + '<div class="num" style="font-size:28px;font-weight:700;color:var(--lime)">' + tzs(o.tzs) + ' TZS</div>'
       + '<div style="font-size:13px;color:var(--on-brand-mut)">Umetuma ' + omr(o.omr) + ' OMR · Rate ' + tzs(o.rate) + (o.rp ? ' · ' + esc(o.rp) : '') + (o.bonus ? ' · 🎁 zawadi TZS ' + tzs(o.bonus) : '') + '</div>' + (o.bt ? '<div style="font-size:12px;color:var(--on-brand-mut);font-weight:700">📦 Kundi ' + esc(o.bt) + ' · mpokeaji ' + o.bn + ' kati ya ' + o.bc + '</div>' : '') + '</div>';
+    var TL_DONE = false;
     if (o.st === 'refunded') {
       h += '<div class="card" style="background:var(--ok-soft);font-size:14px;line-height:1.55"><b>↩️ Umerudishiwa pesa.</b> Muamala huu ulisitishwa, pesa ikarudi, na OMR <b>' + omr(o.rfOmr || o.back || o.omr) + '</b> zimerudishwa kwako' + (o.rfAt ? ' (' + when(o.rfAt) + ')' : '') + '.' + (o.note ? '<div style="margin-top:6px">Sababu ya kusitisha: ' + esc(o.note) + '</div>' : '') + '</div>';
     } else if (o.st === 'used') {
@@ -1057,11 +1072,8 @@
         ? '<div class="tokbox"><span class="lbl">🔑 TOKEN YA UMEME</span><span class="num" style="font-size:24px;font-weight:700;letter-spacing:.06em;line-height:1.3">' + esc(o.token) + '</span><button class="btn dark" type="button" data-tok="' + esc(o.token) + '">Nakili token</button><span class="mut" style="font-size:12px">Ingiza token hii kwenye mita ' + esc(o.rp) + '</span></div>'
         : '<div class="tokbox" style="border-style:dotted"><span class="lbl">🔑 TOKEN YA UMEME</span><span class="mut" style="font-size:14px">Token itaonekana hapa wakala akishalipa — utapata pia taarifa juu ya simu.</span></div>';
       if (o.st === 'part') h += '<div class="card" style="border-color:#BFE3C9;background:var(--ok-soft,#EAF6EE);display:flex;flex-direction:column;gap:4px"><b style="color:var(--ok-ink,#1F7A32)">⏳ Imetumwa sehemu</b><div style="font-size:14px">TZS <b class="num">' + tzs(o.paidTzs || 0) + '</b> kati ya ' + tzs(o.tzs) + ' zimeshafika kwa ' + esc(o.rn || 'mpokeaji') + '. Zilizobaki <b class="num">' + tzs(Math.max(0, o.tzs - (o.paidTzs || 0))) + '</b> zinatumwa hivi punde.</div></div>';
-      h += '<div class="card steps" style="padding:16px 16px 6px">' + steps.map(function (s, k) {
-        var done = o.step >= s[2], now = !done && o.step === s[2] - 1;
-        return '<div class="st' + (done ? ' done' : '') + (now ? ' now' : '') + '"><div style="display:flex;flex-direction:column;align-items:center"><span class="dot">' + (done ? svg('check', 14, '#fff', 3) : '') + '</span>' + (k < 2 ? '<span class="bar"></span>' : '') + '</div>'
-          + '<div style="display:flex;flex-direction:column;gap:2px;padding:2px 0 ' + (k < 2 ? '8' : '10') + 'px"><span style="font-weight:800;font-size:15px;' + (done ? '' : 'color:var(--mut)') + '">' + s[0] + '</span><span class="mut" style="font-size:13px">' + esc(s[1]) + '</span></div></div>';
-      }).join('') + '</div>';
+      h += stepsHtml(o, steps);
+      TL_DONE = true;
       if (o.receipt) {
         h += '<div style="display:flex;flex-direction:column;gap:10px"><span class="lbl">Risiti ya malipo Tanzania</span>'
           + '<button id="tRc" class="card" style="padding:8px;cursor:zoom-in;min-height:120px;display:flex;align-items:center;justify-content:center" aria-label="Ona risiti kubwa"><span class="spin" aria-hidden="true" style="color:var(--brand)"></span></button>'
@@ -1075,6 +1087,7 @@
         h += '<div class="card mut" style="font-size:14px">Ukurasa huu unajisasisha wenyewe. Pesa ikifika, risiti itaonekana hapa na pia utatumiwa kwenye WhatsApp.</div>';
       }
     }
+    if (!TL_DONE && o.st !== 'hold') h += stepsHtml(o, steps);   // oda iliyosimama: ratiba inaonyesha ilipoishia (✕), si "Bado"
     /* tuma tena kwa mpokeaji huyu huyu (jina, namba, mtandao vinajaa; kiasi kile kile kinapendekezwa) */
     if (o.rn && o.st !== 'cancel') h += '<button class="btn dark" id="tAgain" style="margin-top:4px">↻ Mtumie tena ' + esc(firstName(o.rn)) + (o.kind === 'bill' ? ' · ' + esc(o.net || 'bili') : '') + '</button>';
     $('tBody').innerHTML = h;
