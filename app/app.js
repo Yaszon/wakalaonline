@@ -9,7 +9,7 @@
     del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
   var S = { wt: LS.get('yzw_t', ''), me: LS.get('yzw_me', null), orders: LS.get('yzw_orders', []), info: LS.get('yzw_info', null),
-            rec: null, kind: 'mobile', proof: '', stack: [], cur: null, filt: 'all', poll: 0 };
+            rec: null, kind: 'mobile', proof: '', stack: [], cur: null, filt: 'all', mon: '', poll: 0 };
 
   /* ---------- seva ---------- */
   function server() { return String(window.YZ_SERVER || '').trim(); }
@@ -1274,6 +1274,7 @@
     var fl = 'Zilizokamilika';   // PDF: miamala iliyofanikiwa tu (iliyofika / OMR umelipwa); historia ndani ya app inaonyesha zote
     if (period === 'this') { from = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(now); }
     if (period === 'last') { var d = new Date(now.getFullYear(), now.getMonth() - 1, 1); from = d.getTime(); to = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); label = monthName(d); }
+    if (period === 'mon' && S.mon) { var dm = new Date(+S.mon.slice(0, 4), +S.mon.slice(5, 7) - 1, 1); from = dm.getTime(); to = new Date(dm.getFullYear(), dm.getMonth() + 1, 1).getTime(); label = monthName(dm); }
     busy(btn, true, 'Inaandaa PDF…');
     loadOrders().then(function () {
       var L = S.orders.filter(function (o) { return o.at >= from && o.at < to && !!DONE_ST[o.st]; }).sort(function (a, b) { return a.at - b.at; });
@@ -1315,8 +1316,14 @@
     $('hiBal').textContent = omr(Math.abs(b)) + ' OMR';
     $('hiBal').style.color = b < 0 ? 'var(--bad)' : '';
     document.querySelectorAll('#hiFilt button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-f') === S.filt); });
-    var L = S.orders.filter(filtOk);
+    /* vichujio vya mwezi: miezi yote yenye miamala (mpya kwanza); 'Zote' = miezi yote */
+    var mons = {}; S.orders.forEach(function (o) { if (o.at) { var d = new Date(o.at); mons[d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)] = 1; } });
+    var ML = Object.keys(mons).sort().reverse(); if (S.mon && !mons[S.mon]) S.mon = '';
+    $('hiMon').innerHTML = '<button data-m="" class="' + (!S.mon ? 'on' : '') + '">Miezi yote</button>' + ML.map(function (m) { return '<button data-m="' + m + '" class="' + (S.mon === m ? 'on' : '') + '">' + monShort(m) + '</button>'; }).join('');
+    $('hiMon').style.display = ML.length > 1 ? 'flex' : 'none';
+    var L = S.orders.filter(function (o) { return filtOk(o) && monOk(o); });
     document.querySelectorAll('#hiStHint').forEach(function (x) { x.textContent = 'Miamala iliyokamilika tu'; });
+    var pm = $('hiStMon'); if (pm) { var cur = monKey(Date.now()), lastD = new Date(); lastD.setMonth(lastD.getMonth() - 1); var showM = S.mon && S.mon !== cur && S.mon !== monKey(lastD.getTime()); pm.style.display = showM ? '' : 'none'; if (showM) pm.textContent = monShort(S.mon) + (S.mon.slice(0, 4) === String(new Date().getFullYear()) ? ' ' + S.mon.slice(0, 4) : ''); }
     $('hiList').innerHTML = L.length ? L.map(function (o) {
       if (o.dir === 'to') return '<button class="li" data-ref="' + esc(o.ref) + '"><span class="avs" style="background:#E3EAF7;color:#1B2E52">🇴🇲</span>'
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nunua Rial · ' + esc(o.rn || '') + '</span>'
@@ -1326,9 +1333,13 @@
         + '<span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.rn || 'Mpokeaji') + '</span>'
         + '<span class="mut" style="font-size:12px">' + esc(o.ref) + ' · ' + esc(when(o.at)) + (o.net ? ' · ' + esc(o.net) : '') + '</span></span>'
         + '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="num" style="font-weight:600;font-size:14px">' + omr(o.omr) + ' OMR</span>' + pill(o) + '</span></button>';
-    }).join('') : '<div class="empty">Bado hakuna miamala hapa.<br>Bonyeza <b>Tuma</b> kuanza.</div>';
+    }).join('') : (S.mon || S.filt !== 'all' ? '<div class="empty">Hakuna miamala kwenye kichujio hiki.</div>' : '<div class="empty">Bado hakuna miamala hapa.<br>Bonyeza <b>Tuma</b> kuanza.</div>');
   }
   document.querySelectorAll('[data-st]').forEach(function (b) { b.onclick = function () { statementPdf(b.getAttribute('data-st'), b); }; });
+  function monKey(t) { var d = new Date(t); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
+  function monOk(o) { return !S.mon || (o.at && monKey(o.at) === S.mon); }
+  function monShort(m) { var M = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'], y = m.slice(0, 4), k = +m.slice(5, 7) - 1; return M[k] + (y === String(new Date().getFullYear()) ? '' : ' ' + y); }
+  $('hiMon').onclick = function (e) { var b = e.target.closest('[data-m]'); if (!b) return; S.mon = b.getAttribute('data-m'); drawHist(); haptic(); };
   $('hiFilt').onclick = function (e) { var b = e.target.closest('[data-f]'); if (!b) return; S.filt = b.getAttribute('data-f'); drawHist(); };
   $('hiList').onclick = function (e) { var b = e.target.closest('[data-ref]'); if (b && b.getAttribute('data-ref') !== '—') openTrack(b.getAttribute('data-ref')); };
 
