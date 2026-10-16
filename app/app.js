@@ -150,8 +150,17 @@
   function svg(name, size, color, sw) { return '<svg aria-hidden="true" width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="' + (color || 'currentColor') + '" stroke-width="' + (sw || 1.8) + '" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</svg>'; }
 
   /* ---------- skrini ---------- */
+  var TAB_LAST = 0;
+  function tabSlide(id) {   // kidonge kinaanzia tab iliyotangulia, kisha kinateleza
+    var n = document.querySelector('#s-' + id + ' nav.tabs'); if (!n) return;
+    var to = Number(n.getAttribute('data-ti')) || 0, ind = n.querySelector('.tind'); if (!ind) return;
+    ind.style.transition = 'none'; n.style.setProperty('--ti', TAB_LAST); void ind.offsetWidth;
+    ind.style.transition = ''; requestAnimationFrame(function () { n.style.setProperty('--ti', to); });
+    var b = n.querySelector('button.on svg'); if (b) { b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; }
+    TAB_LAST = to;
+  }
   function show(id, push) {
-    S.reveal = false;
+    S.reveal = false; setTimeout(function () { tabSlide(id); }, 0);
     document.querySelectorAll('.scr').forEach(function (s) { s.classList.toggle('on', s.id === 's-' + id); });
     if (push !== false && S.stack[S.stack.length - 1] !== id) S.stack.push(id);
     window.scrollTo(0, 0);
@@ -179,7 +188,9 @@
   document.querySelectorAll('nav.tabs').forEach(function (n) {
     var on = n.getAttribute('data-tab');
     var tabs = [['home', 'Nyumbani', 'home'], ['send', 'Tuma', 'send'], ['hist', 'Historia', 'hist'], ['acct', 'Akaunti', 'acct']];
-    n.innerHTML = tabs.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (t[0] === on ? 'on' : '') + '"' + (t[0] === on ? ' aria-current="page"' : '') + '>' + svg(t[2]) + t[1] + '</button>'; }).join('');
+    var idx = tabs.map(function (t) { return t[0]; }).indexOf(on);
+    n.innerHTML = '<span class="tind" aria-hidden="true"></span>' + tabs.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (t[0] === on ? 'on' : '') + '"' + (t[0] === on ? ' aria-current="page"' : '') + '>' + svg(t[2]) + t[1] + '</button>'; }).join('');
+    n.setAttribute('data-ti', idx); n.style.setProperty('--ti', idx);
     n.onclick = function (e) {
       var b = e.target.closest('button'); if (!b) return; var go = b.getAttribute('data-go');
       if (go === 'send') { var on = document.querySelector('.scr.on'); if (on && on.id === 's-send') return; return openSend(null); }

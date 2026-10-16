@@ -41,7 +41,8 @@ input,select{background:none}
 .num{font-family:Sora,Manrope,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 #app{max-width:480px;margin:0 auto;min-height:100vh}
 .scr{display:none;flex-direction:column;min-height:100vh}
-.scr.on{display:flex;animation:enter .28s cubic-bezier(.2,.8,.2,1)}
+.scr.on{display:flex}
+.scr.on>.pad{animation:enter .28s cubic-bezier(.2,.8,.2,1)}   /* si .scr yenyewe: transform ingeondoa tabs (position:fixed) chini wakati wa kubadilisha skrini */
 @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .pad{padding:calc(16px + var(--safe-t)) 18px 120px;display:flex;flex-direction:column;gap:18px;flex:1}
 .top{display:flex;align-items:center;gap:12px;min-height:48px}
@@ -71,7 +72,16 @@ input,select{background:none}
 /* nav ya chini inayoelea */
 nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--safe-b));width:calc(100% - 28px);max-width:452px;height:68px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:6px;z-index:20}
 nav.tabs button{background:none;border:none;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-size:11px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
-nav.tabs button.on{color:var(--ok-ink);background:var(--lime-soft);font-weight:800}
+nav.tabs button.on{color:var(--ok-ink);font-weight:800}
+/* tabs za kidigitali: kidonge kinateleza kwenda tab mpya, ikoni inaruka kidogo, mstari wa mwanga juu */
+nav.tabs{overflow:hidden;isolation:isolate}
+nav.tabs .tind{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/4);border-radius:18px;background:var(--lime-soft);z-index:-1;transform:translateX(calc(var(--ti,0)*100%));transition:transform .42s cubic-bezier(.34,1.45,.5,1)}
+nav.tabs .tind::before{content:"";position:absolute;top:-6px;left:50%;width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--brand);transform:translateX(-50%);box-shadow:0 0 10px rgba(166,211,60,.9)}
+nav.tabs button{position:relative;z-index:1;transition:color .25s}
+nav.tabs button svg{transition:transform .35s cubic-bezier(.34,1.6,.5,1)}
+nav.tabs button.on svg{transform:translateY(-2px) scale(1.12);animation:tabPop .45s cubic-bezier(.34,1.6,.5,1)}
+nav.tabs button:active svg{transform:scale(.88)}
+@keyframes tabPop{0%{transform:translateY(0) scale(.8)}60%{transform:translateY(-4px) scale(1.2)}100%{transform:translateY(-2px) scale(1.12)}}
 
 /* kadi kuu */
 .hero{position:relative;overflow:hidden;background:var(--brand);border-radius:28px;padding:22px 20px 20px;color:var(--on-brand);display:flex;flex-direction:column;gap:14px;box-shadow:0 14px 34px rgba(31,122,50,.32)}
