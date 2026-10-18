@@ -1,0 +1,27 @@
+<!doctype html><html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WakalaOnline</title><meta name="theme-color" content="#0B2415">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<style>
+html,body{margin:0;height:100%;background:#0B2415;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.c{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;box-sizing:border-box}
+svg{width:84px;height:84px}.p{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke:#B5E04F;stroke-width:11.5;stroke-dasharray:100;stroke-dashoffset:100;animation:d 1.6s cubic-bezier(.3,.9,.3,1) infinite}
+.h{animation-delay:.25s}@keyframes d{0%{stroke-dashoffset:100}55%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
+small{opacity:.7;font-size:14px}button{margin-top:6px;padding:12px 22px;border:0;border-radius:12px;background:#B5E04F;color:#0B2415;font:inherit;font-weight:700;cursor:pointer}
+</style></head><body>
+<div class="c" id="c"><svg viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(50 50) skewX(-8) translate(-51 -48.5)"><path class="p" pathLength="100" d="M15 31 L30 73 L47.5 46 L64 73 L83 24"/><path class="p h" pathLength="100" d="M68.6 34 L83 24 L86.9 41.1"/></g></svg><small>WakalaOnline</small></div>
+<script>
+(function(){
+  var API='https://script.google.com/macros/s/AKfycbz3RIMj2c5hLu3wyCLnDqWL87YmZI7Zo7-onFnBgkhnCjtgVNChaqEoypkEoQSA3CRh/exec', K='yzw_web', c=null; try{ c=JSON.parse(localStorage.getItem(K)||'null'); }catch(_){}
+  function run(h){ document.open(); document.write(h); document.close(); }
+  function fail(){ document.getElementById('c').innerHTML='<small>Haikuweza kufungua — angalia mtandao.</small><button onclick="location.reload()">Jaribu tena</button>'; }
+  var done=false, ac=window.AbortController?new AbortController():null, t=setTimeout(function(){ if(ac) ac.abort(); },c?5000:25000);
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'w_web',v:c&&c.v||''}),signal:ac?ac.signal:undefined})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ clearTimeout(t); if(done) return; done=true;
+      if(j&&j.ok&&j.html){ try{ localStorage.setItem(K,JSON.stringify({v:j.v,html:j.html})); }catch(_){} return run(j.html); }
+      if(c&&c.html) return run(c.html); fail(); })
+    .catch(function(){ clearTimeout(t); if(done) return; done=true; if(c&&c.html) return run(c.html); fail(); });
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script></body></html>
