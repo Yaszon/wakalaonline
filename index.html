@@ -158,6 +158,14 @@
 
   /* ---- app ---- */
   .app { background: var(--brand-ink); color: #fff; }
+  .dlbar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 50; display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; border-radius: 18px; background: #0B1A12; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: 520px; margin: 0 auto; }
+  .dlbar[hidden] { display: none; }
+  .dlbar-ic svg { width: 38px; height: 38px; background: #0E4A22; border-radius: 11px; padding: 7px; display: block; }
+  .dlbar-t { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+  .dlbar-t small { color: rgba(255,255,255,.65); font-size: .8rem; }
+  .dlbar .btn { min-height: 42px; padding: 0 18px; font-size: .95rem; }
+  .dlbar-x { background: none; border: 0; color: rgba(255,255,255,.6); font-size: 1rem; padding: 6px; cursor: pointer; }
+  body.has-dlbar footer { padding-bottom: 96px; }
   .app .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding-block: 72px; }
   @media (max-width: 860px) { .app .wrap { grid-template-columns: 1fr; padding-block: 52px; } }
   .app p { color: rgba(255,255,255,.78); margin-top: 14px; font-size: 1.08rem; }
@@ -209,7 +217,7 @@
       <a href="#mawasiliano">Mawasiliano</a>
       <a href="/maswali/">Maswali</a>
     </nav>
-    <a class="btn btn-lime" style="min-height:44px;padding:0 18px;font-size:.95rem" href="app/">Tuma sasa</a>
+    <a class="btn btn-lime dl-apk" style="min-height:44px;padding:0 18px;font-size:.95rem" href="https://wa.me/96897232813?text=Naomba%20link%20ya%20app%20ya%20WakalaOnline" target="_blank" rel="noopener">Pakua app</a>
   </div>
 </header>
 
@@ -220,12 +228,13 @@
       <h1 style="margin-top:14px">Tuma pesa nyumbani, <span class="lime">haraka.</span></h1>
       <p class="lead">Rate nzuri, risiti papo hapo, na unafuatilia kila oda mpaka ifike Tanzania. Kwa simu, benki, LUKU na bili.</p>
       <div class="cta">
-        <a class="btn btn-lime" href="app/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
-          Tuma sasa — bila kupakua
+        <a class="btn btn-lime dl-apk" href="https://wa.me/96897232813?text=Naomba%20link%20ya%20app%20ya%20WakalaOnline" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+          <span class="dl-txt">Pakua app ya WakalaOnline</span>
         </a>
-        <a class="btn btn-ghost" href="https://wa.me/96897232813?text=Habari%20WakalaOnline%2C%20nataka%20kutuma%20pesa" target="_blank" rel="noopener">Au kwa WhatsApp</a>
+        <a class="btn btn-ghost" href="app/">Au tumia kwenye wavuti</a>
       </div>
+      <p class="tiny dl-why" style="margin-top:12px">📲 Ukiwa na app: unajulishwa pesa ikifika, wapokeaji wanahifadhiwa, na kufuli ya PIN. Bure.</p>
       <p class="tiny">Huduma ya FastConnect Agency Limited · Kiasi cha chini OMR 1</p>
     </div>
 
@@ -333,23 +342,24 @@
 <section class="app" id="app">
   <div class="wrap">
     <div>
-      <p class="eyebrow" style="color:var(--lime)">App ya WakalaOnline (Android)</p>
-      <h2 style="margin-top:10px">Tuma, fuatilia, na upate risiti — yote kwenye app moja.</h2>
-      <p>Inafanya kazi moja kwa moja kwenye kivinjari ya simu yoyote (Android na iPhone), bila kupakua. Unaingia kwa code ya WhatsApp; hakuna password ya kukumbuka.</p>
+      <p class="eyebrow" style="color:var(--lime)">Pakua app ya WakalaOnline · Bure</p>
+      <h2 style="margin-top:10px">Pakua app — tuma, fuatilia, na upate risiti kwenye simu yako.</h2>
+      <p>Wateja wenye app wanatuma kwa haraka zaidi na wanajua pesa yao iko wapi kila wakati. Unaingia kwa code ya WhatsApp; hakuna password ya kukumbuka.</p>
       <ul>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Rate ya leo na hesabu ya TZS papo hapo</li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Wapokeaji wako wanahifadhiwa; tuma tena kwa kubonyeza mara moja</li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Tuma kwa wapokeaji wengi kwa malipo moja</li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Taarifa kwenye simu pesa ikifika, na taarifa ya miamala ya mwezi (PDF)</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Kufuli ya PIN — hakuna mtu mwingine anayeona miamala yako</li>
       </ul>
       <div class="cta">
-        <a class="btn btn-lime" href="app/">Fungua app sasa</a>
-        <a class="btn btn-ghost" id="apk" href="https://wa.me/96897232813?text=Naomba%20link%20ya%20app%20ya%20WakalaOnline" target="_blank" rel="noopener">
+        <a class="btn btn-lime dl-apk" id="apk" href="https://wa.me/96897232813?text=Naomba%20link%20ya%20app%20ya%20WakalaOnline" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
-          Pakua app (APK)
+          <span class="dl-txt">Pakua app (Android)</span>
         </a>
+        <a class="btn btn-ghost" href="app/">Fungua kwenye wavuti</a>
       </div>
-      <p style="font-size:.9rem;margin-top:14px;color:rgba(255,255,255,.6)">Ukitaka iwe kama app ya kawaida: fungua wakalaonline.app/app kwenye Chrome au Safari, kisha chagua "Add to Home screen". Toleo la APK ni la Android na lina taarifa za simu (notifications).</p>
+      <p class="dl-ios" style="font-size:.95rem;margin-top:14px;color:rgba(255,255,255,.75)"><b>iPhone:</b> fungua <a href="app/" style="color:var(--lime)">wakalaonline.app/app</a> kwenye Safari → bonyeza kitufe cha Share → <b>"Add to Home Screen"</b>. App itakaa kwenye simu yako kama app nyingine.</p>
     </div>
     <div class="phone" aria-hidden="true">
       <div class="sc"><small>Rate ya sasa · 1 OMR</small><b id="phoneRate" class="num">— — —</b> <span style="font-weight:700">TZS</span></div>
@@ -383,6 +393,13 @@
     </div>
   </div>
 </section>
+
+<div class="dlbar" id="dlbar" hidden>
+  <span class="dlbar-ic" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none" stroke="#B5E04F" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"><path d="M12 28 L30 78 L50 44 L70 78 L88 28 M70 28 L88 28 L88 46"/></svg></span>
+  <span class="dlbar-t"><b>App ya WakalaOnline</b><small>Bure · taarifa pesa ikifika</small></span>
+  <a class="btn btn-lime dl-apk" href="https://wa.me/96897232813?text=Naomba%20link%20ya%20app%20ya%20WakalaOnline" target="_blank" rel="noopener"><span class="dl-txt2">Pakua</span></a>
+  <button type="button" class="dlbar-x" id="dlbarX" aria-label="Funga">✕</button>
+</div>
 
 <footer>
   <div class="wrap">
@@ -428,15 +445,29 @@
     var d = j.at ? new Date(j.at) : new Date();
     $('rateAt').textContent = 'Saa ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     if (j.rateBig && j.bigMin && j.rateBig > j.rate) { $('rateNote').hidden = false; $('rateNote').innerHTML = 'Ukituma ' + nf.format(j.bigMin) + ' OMR au zaidi: <b>' + nf.format(j.rateBig) + ' TZS</b>'; }
-    if (j.appUrl) $('apk').href = j.appUrl;
     calc();
   }
+  /* Pakua app: kila kitufe cha .dl-apk kinaelekea APK; iPhone → wavuti + "Add to Home Screen" */
+  var UA = navigator.userAgent || '', IOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && 'ontouchend' in document);
+  var STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  function setApk(u) { if (IOS) return; var a = document.querySelectorAll('.dl-apk'); for (var k = 0; k < a.length; k++) { a[k].href = u; a[k].removeAttribute('target'); } }
+  if (IOS) {
+    var a = document.querySelectorAll('.dl-apk'); for (var k = 0; k < a.length; k++) { a[k].href = '#app'; a[k].removeAttribute('target'); }
+    var t = document.querySelectorAll('.dl-txt'); for (k = 0; k < t.length; k++) t[k].textContent = 'Weka app kwenye iPhone';
+    var t2 = document.querySelector('.dl-txt2'); if (t2) t2.textContent = 'Jinsi';
+  } else { var io = document.querySelector('.dl-ios'); if (io && /Android/i.test(UA)) io.hidden = true; }
+  (function () {
+    var seen = null; try { seen = localStorage.getItem('wo_dlbar'); } catch (e) {}
+    if (STANDALONE || (seen && Date.now() - Number(seen) < 3 * 864e5) || !/Android|iPhone|iPad|iPod/i.test(UA)) return;
+    setTimeout(function () { $('dlbar').hidden = false; document.body.classList.add('has-dlbar'); }, 2500);
+    $('dlbarX').onclick = function () { $('dlbar').hidden = true; document.body.classList.remove('has-dlbar'); try { localStorage.setItem('wo_dlbar', String(Date.now())); } catch (e) {} };
+  })();
   var done = false;
   setTimeout(function () { if (!done) showRate(null); }, 12000);
   try {
     fetch(SERVER, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'w_info' }), redirect: 'follow' })
       .then(function (r) { return r.json(); })
-      .then(function (j) { done = true; showRate(j && j.ok ? j : null);
+      .then(function (j) { done = true; if (j && j.appUrl) setApk(j.appUrl); showRate(j && j.ok ? j : null);
         try { if (j && j.ok && j.revOn && j.rateRev) { $('destRev').hidden = false; $('revRate').textContent = Number(j.rateRev).toLocaleString('en-US'); } } catch (e) {}   // Nunua Rial: inaonekana tu mmiliki akiiwasha
       })
       .catch(function () { done = true; showRate(null); });
