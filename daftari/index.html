@@ -1,0 +1,52 @@
+<!doctype html><html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WakalaOnline Daftari</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#06231A">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#EDF2EF;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#10231F;padding:16px}
+.w{width:100%;max-width:420px}
+.hd{border-radius:24px;padding:20px;color:#fff;background:linear-gradient(135deg,#0B2415,#06231A 60%,#0E4F22);display:flex;gap:14px;align-items:center;margin-bottom:18px}
+.hd svg{width:52px;height:52px;flex:none;border-radius:14px}
+.hd b{display:block;font-size:20px}.hd span{font-size:13.5px;opacity:.75}
+label{display:block;font-size:13.5px;font-weight:600;color:#5E6B66;margin:12px 2px 6px}
+input{width:100%;font:inherit;font-size:16px;padding:14px 16px;border-radius:14px;border:1px solid #D7E0DB;background:#fff;outline:none}
+input:focus{border-color:#1A7A33;box-shadow:0 0 0 3px rgba(26,122,51,.15)}
+button{width:100%;margin-top:18px;padding:15px;border:0;border-radius:14px;background:#0E6E63;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}
+#st{min-height:20px;margin-top:12px;font-size:13.5px;color:#5E6B66;text-align:center}
+.ld{text-align:center;color:#5E6B66;font-size:14px}
+.sp{width:46px;height:46px;margin:0 auto 12px;border-radius:50%;border:4px solid #CFE3D7;border-top-color:#1A7A33;animation:r 0.9s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+</style></head><body>
+<div class="w" id="box"><div class="ld"><div class="sp"></div>Inafungua Daftari…</div></div>
+<script>
+(function(){
+  var API='https://script.google.com/macros/s/AKfycbz3RIMj2c5hLu3wyCLnDqWL87YmZI7Zo7-onFnBgkhnCjtgVNChaqEoypkEoQSA3CRh/exec', KEY='yz_api_cfg', box=document.getElementById('box');
+  function cfg(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){ return null; } }
+  function call(b){ return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }); }
+  var LOGO='<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#0B2415"/><g transform="translate(50 50) scale(.86) skewX(-8) translate(-51 -48.5)"><path d="M15 31 L30 73 L47.5 46 L64 73 L83 24" fill="none" stroke="#B5E04F" stroke-width="11.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M68.6 34 L83 24 L86.9 41.1" fill="none" stroke="#B5E04F" stroke-width="11.5" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
+  function login(msg){
+    var c=cfg()||{};
+    box.innerHTML='<div class="hd">'+LOGO+'<div><b>WakalaOnline Daftari</b><span>Ingia kwa username na PIN uliyopewa.</span></div></div>'+
+      '<form id="f"><label>Username<input id="u" required autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></label>'+
+      '<label>PIN<input id="p" required type="password" inputmode="numeric" autocomplete="current-password"></label><button type="submit">Ingia</button><div id="st"></div></form>';
+    document.getElementById('u').value=c.user||''; document.getElementById('st').textContent=msg||'';
+    document.getElementById('f').onsubmit=function(ev){ ev.preventDefault();
+      var st=document.getElementById('st'), b=box.querySelector('button'), user=document.getElementById('u').value.trim().toLowerCase(), pin=document.getElementById('p').value.trim();
+      st.textContent='Inaingia…'; b.disabled=true;
+      call({action:'login',user:user,pin:pin}).then(function(j){
+        if(!j||!j.ok){ b.disabled=false; st.textContent=(j&&j.msg)||'Username au PIN si sahihi'; return; }
+        localStorage.setItem(KEY,JSON.stringify({token:j.token,user:j.user||user,role:j.role||'owner',name:j.name||''})); boot();
+      }).catch(function(){ b.disabled=false; st.textContent='Imeshindikana — angalia mtandao'; }); };
+  }
+  function boot(){
+    var c=cfg(); if(!c||!c.token) return login();
+    box.innerHTML='<div class="ld"><div class="sp"></div>Inafungua Daftari…</div>';
+    call({action:'webApp',token:c.token}).then(function(j){
+      if(j&&j.ok&&j.html){ document.open(); document.write(j.html); document.close(); return; }
+      if(j&&j.error==='bad_pin'){ localStorage.removeItem(KEY); return login('Ingia tena (muda umeisha au PIN imebadilishwa).'); }
+      box.innerHTML='<div class="ld">'+((j&&(j.msg||j.error))||'Imeshindikana')+'<br><br><button type="button" onclick="location.reload()">Jaribu tena</button></div>';
+    }).catch(function(){ box.innerHTML='<div class="ld">Haikuweza kufikia seva — angalia mtandao.<br><br><button type="button" onclick="location.reload()">Jaribu tena</button></div>'; });
+  }
+  boot();
+})();
+</script></body></html>

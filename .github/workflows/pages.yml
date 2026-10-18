@@ -18,6 +18,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - name: Firebase kwa Daftari ya wavuti (daftari/lib/fb)
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i --no-audit --no-fund firebase@10.14.1 >/dev/null
+          mkdir -p "$GITHUB_WORKSPACE/daftari/lib/fb"
+          for f in app auth firestore; do cp node_modules/firebase/firebase-$f-compat.js "$GITHUB_WORKSPACE/daftari/lib/fb/"; done
+          ls -la "$GITHUB_WORKSPACE/daftari/lib/fb"
       - uses: actions/configure-pages@v5
         with:
           enablement: true
