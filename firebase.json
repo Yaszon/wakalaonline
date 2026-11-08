@@ -1,0 +1,10 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "rial",
+      "runtime": "nodejs20",
+      "ignore": ["node_modules", ".git", "test", "scripts", "*.md", "*.snippet", "*.log"]
+    }
+  ]
+}
