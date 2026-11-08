@@ -1,0 +1,23 @@
+// Add inside `match /databases/{database}/documents { ... }` in your existing firestore.rules.
+// Orders and settings are written ONLY by Cloud Functions (Admin SDK bypasses these rules).
+
+match /rialOrders/{orderRef} {
+  // A customer can read only their own orders. Nobody can write from the app.
+  allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+  allow write: if false;
+}
+
+match /settings/rialRate {
+  // The rate is shown to customers through getRialQuote; the document itself stays private.
+  allow read, write: if false;
+}
+
+match /amana/{uid} {
+  // A customer can see their own deposit balance; only functions change it.
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow write: if false;
+}
+
+match /ownerTasks/{taskId} {
+  allow read, write: if false; // read it from the owner's Daftari via a function or the console
+}
